@@ -1,0 +1,533 @@
+{
+  "sample-monster": {
+    "size": [
+      2.23,
+      2.945,
+      3.293
+    ],
+    "vertices": 3456,
+    "meshes": 23
+  },
+  "sample-azzurro": {
+    "size": [
+      2.06,
+      2.021,
+      3.148
+    ],
+    "vertices": 4424,
+    "meshes": 26
+  },
+  "sample-convoy": {
+    "size": [
+      2.18,
+      2.423,
+      3.847
+    ],
+    "vertices": 5896,
+    "meshes": 33
+  },
+  "sample-mietitrebbia": {
+    "size": [
+      2.725,
+      2.365,
+      4.42
+    ],
+    "vertices": 4352,
+    "meshes": 22
+  },
+  "sample-fan": {
+    "size": [
+      2.41,
+      2.129,
+      2.569
+    ],
+    "vertices": 2347,
+    "meshes": 19
+  },
+  "sample-buggy": {
+    "size": [
+      1.86,
+      1.686,
+      3.051
+    ],
+    "vertices": 2144,
+    "meshes": 21
+  },
+  "sample-red": {
+    "size": [
+      2.06,
+      2.476,
+      3.562
+    ],
+    "vertices": 5240,
+    "meshes": 61
+  },
+  "sample-antenna": {
+    "size": [
+      2.26,
+      2.564,
+      2.81
+    ],
+    "vertices": 3672,
+    "meshes": 21
+  },
+  "sample-rocket": {
+    "size": [
+      2.01,
+      2.64,
+      3.341
+    ],
+    "vertices": 1936,
+    "meshes": 23
+  },
+  "sample-monoposto": {
+    "size": [
+      1.96,
+      1.949,
+      4.319
+    ],
+    "vertices": 3696,
+    "meshes": 23
+  },
+  "sample-dragster": {
+    "size": [
+      1.992,
+      2.655,
+      4.263
+    ],
+    "vertices": 2760,
+    "meshes": 26
+  },
+  "sample-trike": {
+    "size": [
+      1.71,
+      1.786,
+      3.879
+    ],
+    "vertices": 1908,
+    "meshes": 21
+  },
+  "sample-jet": {
+    "size": [
+      2.523,
+      2.032,
+      3.852
+    ],
+    "vertices": 1536,
+    "meshes": 24
+  },
+  "sample-nove": {
+    "size": [
+      2.015,
+      1.949,
+      4.723
+    ],
+    "vertices": 3896,
+    "meshes": 22
+  },
+  "sample-aereo": {
+    "size": [
+      2.812,
+      1.474,
+      3.457
+    ],
+    "vertices": 2556,
+    "meshes": 19
+  },
+  "sample-pattuglia": {
+    "size": [
+      2.236,
+      2.236,
+      3.505
+    ],
+    "vertices": 5120,
+    "meshes": 29
+  },
+  "sample-muletto": {
+    "size": [
+      1.94,
+      2.008,
+      4.482
+    ],
+    "vertices": 3024,
+    "meshes": 26
+  },
+  "sample-luci": {
+    "size": [
+      2.08,
+      1.831,
+      3.09
+    ],
+    "vertices": 5152,
+    "meshes": 35
+  },
+  "sample-girocottero": {
+    "size": [
+      1.895,
+      2.376,
+      4.126
+    ],
+    "vertices": 3404,
+    "meshes": 21
+  },
+  "sample-mordi": {
+    "size": [
+      2.82,
+      1.757,
+      3.928
+    ],
+    "vertices": 7081,
+    "meshes": 32
+  },
+  "sample-caos": {
+    "size": [
+      2.74,
+      2.551,
+      4.297
+    ],
+    "vertices": 12840,
+    "meshes": 38
+  },
+  "sample-tubi": {
+    "size": [
+      1.94,
+      1.727,
+      4.685
+    ],
+    "vertices": 4072,
+    "meshes": 31
+  },
+  "sample-scheggia": {
+    "size": [
+      1.63,
+      1.667,
+      2.376
+    ],
+    "vertices": 5944,
+    "meshes": 35
+  },
+  "sample-missile": {
+    "size": [
+      1.684,
+      1.791,
+      2.724
+    ],
+    "vertices": 4312,
+    "meshes": 27
+  },
+  "sample-jumbo": {
+    "size": [
+      2.96,
+      1.369,
+      5.225
+    ],
+    "vertices": 7084,
+    "meshes": 29
+  },
+  "cometa": {
+    "size": [
+      2.08,
+      2.086,
+      3.196
+    ],
+    "vertices": 2888,
+    "meshes": 21
+  },
+  "cactus": {
+    "size": [
+      2.265,
+      2.218,
+      2.86
+    ],
+    "vertices": 2664,
+    "meshes": 19
+  },
+  "mirtillo": {
+    "size": [
+      2.23,
+      2.001,
+      3.134
+    ],
+    "vertices": 4968,
+    "meshes": 22
+  },
+  "squalo": {
+    "size": [
+      1.974,
+      2.751,
+      3.341
+    ],
+    "vertices": 2912,
+    "meshes": 20
+  },
+  "sole": {
+    "size": [
+      1.91,
+      2.751,
+      2.762
+    ],
+    "vertices": 2552,
+    "meshes": 21
+  },
+  "ciliegia": {
+    "size": [
+      1.98,
+      1.616,
+      2.714
+    ],
+    "vertices": 2456,
+    "meshes": 19
+  },
+  "maggiolino": {
+    "size": [
+      1.96,
+      2.271,
+      3.268
+    ],
+    "vertices": 5384,
+    "meshes": 23
+  },
+  "turismo": {
+    "size": [
+      2.01,
+      2.751,
+      3.1
+    ],
+    "vertices": 3064,
+    "meshes": 24
+  },
+  "dakar": {
+    "size": [
+      2.23,
+      3.088,
+      3.341
+    ],
+    "vertices": 2736,
+    "meshes": 21
+  },
+  "esploratore": {
+    "size": [
+      2.315,
+      2.853,
+      3.245
+    ],
+    "vertices": 4168,
+    "meshes": 21
+  },
+  "tuono": {
+    "size": [
+      2.425,
+      3.404,
+      3.264
+    ],
+    "vertices": 4096,
+    "meshes": 22
+  },
+  "rosa": {
+    "size": [
+      2.01,
+      2.751,
+      3.148
+    ],
+    "vertices": 2840,
+    "meshes": 20
+  },
+  "acrobata": {
+    "size": [
+      1.93,
+      1.756,
+      2.963
+    ],
+    "vertices": 1956,
+    "meshes": 23
+  },
+  "orso": {
+    "size": [
+      1.81,
+      2.781,
+      2.993
+    ],
+    "vertices": 2492,
+    "meshes": 18
+  },
+  "trattore": {
+    "size": [
+      2.23,
+      3.088,
+      2.926
+    ],
+    "vertices": 3840,
+    "meshes": 21
+  },
+  "fattoria": {
+    "size": [
+      2.13,
+      3.093,
+      3.665
+    ],
+    "vertices": 6096,
+    "meshes": 33
+  },
+  "lama": {
+    "size": [
+      2.01,
+      2.751,
+      3.293
+    ],
+    "vertices": 2864,
+    "meshes": 22
+  },
+  "vipera": {
+    "size": [
+      2.06,
+      2.751,
+      3.051
+    ],
+    "vertices": 2768,
+    "meshes": 20
+  },
+  "cuneo": {
+    "size": [
+      2.11,
+      2.751,
+      3.245
+    ],
+    "vertices": 2840,
+    "meshes": 21
+  },
+  "verdelunga": {
+    "size": [
+      1.91,
+      2.751,
+      3.534
+    ],
+    "vertices": 3016,
+    "meshes": 22
+  },
+  "hotrod": {
+    "size": [
+      2.282,
+      2.755,
+      3.14
+    ],
+    "vertices": 2984,
+    "meshes": 28
+  },
+  "pantera": {
+    "size": [
+      1.845,
+      2.751,
+      3.044
+    ],
+    "vertices": 2764,
+    "meshes": 20
+  },
+  "moto": {
+    "size": [
+      1.453,
+      2.75,
+      2.7
+    ],
+    "vertices": 1264,
+    "meshes": 15
+  },
+  "apetta": {
+    "size": [
+      1.686,
+      2.753,
+      2.885
+    ],
+    "vertices": 2132,
+    "meshes": 21
+  },
+  "tir": {
+    "size": [
+      2.058,
+      2.751,
+      5.912
+    ],
+    "vertices": 3976,
+    "meshes": 43
+  },
+  "duke": {
+    "size": [
+      1.517,
+      1.505,
+      2.796
+    ],
+    "vertices": 1648,
+    "meshes": 16
+  },
+  "chopper": {
+    "size": [
+      1.527,
+      2.751,
+      3.58
+    ],
+    "vertices": 1456,
+    "meshes": 15
+  },
+  "raid": {
+    "size": [
+      2.31,
+      2.751,
+      4.768
+    ],
+    "vertices": 4632,
+    "meshes": 39
+  },
+  "delta": {
+    "size": [
+      2.11,
+      2.751,
+      3.075
+    ],
+    "vertices": 3032,
+    "meshes": 20
+  },
+  "gattodellenevi": {
+    "size": [
+      2.52,
+      2.842,
+      3.964
+    ],
+    "vertices": 4456,
+    "meshes": 25
+  },
+  "rexracer": {
+    "size": [
+      2.21,
+      2.751,
+      4.797
+    ],
+    "vertices": 4104,
+    "meshes": 25
+  },
+  "stegobus": {
+    "size": [
+      2.43,
+      1.901,
+      4.408
+    ],
+    "vertices": 4000,
+    "meshes": 23
+  },
+  "carrarmato": {
+    "size": [
+      2.564,
+      2.058,
+      3.83
+    ],
+    "vertices": 5592,
+    "meshes": 29
+  },
+  "schiacciasassi": {
+    "size": [
+      2.4,
+      3.404,
+      3.426
+    ],
+    "vertices": 4328,
+    "meshes": 22
+  }
+}

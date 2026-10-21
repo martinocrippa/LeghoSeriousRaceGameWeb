@@ -1,0 +1,13 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.vite/
+*.log
+.npm-cache/
+artifacts/
+# Assistant settings and secrets: excluded here rather than only in a machine-wide ignore file, so a fresh clone
+# or a CI checkout is covered too.
+.claude/
+.env
+.env.*

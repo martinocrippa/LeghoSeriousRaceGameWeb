@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!--
+      The game loads nothing from outside its own origin: no CDN, no fonts from the web, no telemetry, no analytics.
+      This says so out loud, so it stays true. `img-src data:` is needed for the garage thumbnails kept in
+      localStorage; `style-src 'unsafe-inline'` because the car cards set their colours through a style attribute;
+      `connect-src 'self'` is the important one — the photos must never leave the browser. It cannot be 'none':
+      Vite's modulepreload polyfill fetches the game's own chunks.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'self'" />
+    <meta name="theme-color" content="#15181a" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Legho, a serious game race: corse a mattoncini per uno o due piloti, con le macchine costruite da voi. Premi START, scegli il bolide e brucia l’asfalto." />
+    <title>Legho — a serious game race</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
