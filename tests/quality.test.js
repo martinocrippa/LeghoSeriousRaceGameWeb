@@ -10,6 +10,7 @@ test('quality levels get lighter in order: pixel ratio, shadow map and dust neve
     assert.ok(lighter.pixelRatio <= heavier.pixelRatio);
     assert.ok(lighter.shadowMap <= heavier.shadowMap);
     assert.ok(lighter.dust <= heavier.dust);
+    assert.ok(lighter.skids <= heavier.skids && lighter.skids > 0);
     assert.ok(lighter.mirrorEvery === 0 || heavier.mirrorEvery === 0 || lighter.mirrorEvery >= heavier.mirrorEvery);
   }
   assert.equal(lowerQuality('high'), 'medium');

@@ -224,7 +224,7 @@ export function createCarModel(input = {}) {
     for (const block of blocks) block.dispose();
     return merged;
   }
-  for (const { x, z, r, tread, group, rim: rimColour } of wheelSpots) {
+  for (const { x, z, r, tread, group, rim: rimColour, steer } of wheelSpots) {
     const wheel = new THREE.Group();
     const tire = new THREE.Mesh(new THREE.CylinderGeometry(spec.knobby ? r * 0.88 : r, spec.knobby ? r * 0.88 : r, tread, 14), wheelMat);
     tire.rotation.z = Math.PI / 2;
@@ -253,6 +253,8 @@ export function createCarModel(input = {}) {
     if (spec.knobby) wheel.add(new THREE.Mesh(knobbyTread(r, tread), wheelMat));
     wheel.position.set(x, r, group === 'trailer' ? z - hitchZ : z);
     wheel.userData.radius = r;
+    wheel.userData.tread = tread;
+    wheel.userData.steer = !!steer;
     wheel.userData.group = group || 'car';
     wheel.traverse(obj => { if (obj.isMesh) obj.castShadow = true; });
     (group === 'trailer' ? hitch : car).add(wheel); wheels.push(wheel);
@@ -1287,6 +1289,19 @@ export function createCarModel(input = {}) {
   body.position.y -= pivotY;
   tilt.add(body);
   for (const wheel of carWheels) { wheel.position.y -= pivotY; tilt.add(wheel); }
+  // What the renderer needs to lean the body with the tyres on the road, steer the wheels and swing the tail out
+  // (src/lean.js). The axles that declare `steer` turn (the harvester steers at the back, as real ones do); without
+  // a mark, the frontmost wheels do. Spin first, then steer: the order changes nothing while both angles are zero.
+  const halfTrack = Math.max(...carWheels.map((wheel) => Math.abs(wheel.position.x) + wheel.userData.tread / 2));
+  const axleZs = carWheels.map((wheel) => wheel.position.z);
+  const frontZ = Math.max(...axleZs), rearZ = Math.min(...axleZs);
+  const marked = carWheels.filter((wheel) => wheel.userData.steer);
+  for (const wheel of marked.length ? marked : carWheels.filter((wheel) => wheel.position.z > frontZ - 0.05)) {
+    wheel.rotation.order = 'YXZ';
+    // Rear-steering wheels turn the other way round to take the same bend.
+    wheel.userData.steerSign = wheel.position.z < (frontZ + rearZ) / 2 ? -1 : 1;
+  }
+  car.userData.stance = { pivotY, halfTrack, wheelbase: frontZ - rearZ, frontZ };
 
   // The trailer body, built in hitch-local coordinates (z <= 0, running back from the coupling). Plain meshes rather
   // than the merged-by-colour batches: only a rig or two carries one, and it must be able to swing on its own.

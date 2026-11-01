@@ -2,13 +2,15 @@ import { createLocalScenery, isLocalSceneryReserved, localGroundHoles } from './
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createCarModel } from './cars.js';
-import { DEFAULT_TRACK } from './track.js';
+import { DEFAULT_TRACK, weatherIndex } from './track.js';
 import { racerPose, sectionAt, sectionFraction } from './sections.js';
 import { critterPose } from './critters.js';
 import { SPIN_TIME, STUCK_TIME } from './race.js';
 import { QUALITY_LEVELS } from './quality.js';
 import { PILOT_COLOR_NUMBERS } from './pilots.js';
 import { seeded } from './random.js';
+import { leansIntoTurns } from './wheels.js';
+import { bendCurvature, leanLimit, leanTarget, stepLean, rest, wheelSteer, slideTarget, slideOffset, leavesMarks, skidColour } from './lean.js';
 
 const ROAD_Y = 0.18;
 /** How much faster the scenery moves in the aerial preview than during a race. */
@@ -103,6 +105,26 @@ function mesh(geometry, mat, parent, x = 0, y = 0, z = 0) {
   if (parent) parent.add(object);
   return object;
 }
+
+/**
+ * Tyre marks: one instanced mesh of flat strips, recycled as a ring, so the road can carry hundreds of them for a
+ * single draw call. A strip at scale zero is an empty slot. It lives in `trackObjects`, so a new race clears it.
+ */
+function createSkids(count) {
+  if (!count) return null;
+  const geometry = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const skidMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.62, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const mesh = new THREE.InstancedMesh(geometry, skidMaterial, count);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const empty = new THREE.Matrix4().makeScale(0, 0, 0), black = new THREE.Color(0x000000);
+  for (let i = 0; i < count; i += 1) { mesh.setMatrixAt(i, empty); mesh.setColorAt(i, black); }
+  mesh.frustumCulled = false;
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  return { mesh, next: 0, count, dirty: false };
+}
+const _skidPosition = new THREE.Vector3(), _skidQuaternion = new THREE.Quaternion(), _skidYaw = new THREE.Quaternion();
+const _skidScale = new THREE.Vector3(), _skidMatrix = new THREE.Matrix4(), _skidColor = new THREE.Color(), _skidAxis = new THREE.Vector3(0, 1, 0);
 
 function worldPoint(track, distance, lane = 0, y = ROAD_Y, target = new THREE.Vector3()) {
   const frame = track.frame(distance);
@@ -597,7 +619,7 @@ export class GameRenderer {
     if (this.weatherLap !== lap) {
       this.weatherLap = lap;
       this.weatherFrom = this.weatherTo ?? this.weatherEntry(0);
-      this.weatherTo = this.weatherEntry(lap - 1);
+      this.weatherTo = this.weatherEntry(weatherIndex(this.track.theme, lap, race?.totalLaps || 1));
       this.weatherMix = this.weatherFrom === this.weatherTo ? 1 : 0;
     }
     const from = this.weatherFrom ?? list[0], to = this.weatherTo ?? list[0];
@@ -612,6 +634,7 @@ export class GameRenderer {
     this.sun.color.lerpColors(scratch.setHex(from.sun), new THREE.Color(to.sun), t);
     this.sun.intensity = mix(from.sunIntensity, to.sunIntensity);
     this.lights.hemi.intensity = mix(from.hemiIntensity, to.hemiIntensity);
+    this.starLevel = mix(from.stars ?? 1, to.stars ?? 1);
     // Rain: the streaks fall and wrap inside a box kept between the players, so both see the same shower.
     const drops = mix(from.rain || 0, to.rain || 0);
     const rain = drops > 1 ? this.buildRain() : this.rain;
@@ -626,6 +649,7 @@ export class GameRenderer {
   applyTheme(track) {
     const { theme, bounds } = track;
     this.weatherLap = null; this.weatherFrom = null; this.weatherTo = null; this.weatherMix = 1;
+    this.starLevel = theme.weather?.[0]?.stars ?? 1;
     if (this.rain) this.rain.visible = false;
     this.scene.background.setHex(theme.sky);
     this.scene.fog.color.setHex(theme.fog);
@@ -968,7 +992,7 @@ export class GameRenderer {
       const group = new THREE.Group();
       group.name = `critter-${critter.id}`;
       const legs = [];
-      const leg = (geometry, mat, x, y, z, sway) => { const part = mesh(geometry, mat, group, x, y, z); legs.push({ mesh: part, sway }); };
+      const leg = (geometry, mat, x, y, z, sway, axis = 'x') => { const part = mesh(geometry, mat, group, x, y, z); legs.push({ mesh: part, sway, axis }); };
       if (critter.kind === 'sheep') {
         // A woolly block on four dark legs: from the chase camera what reads is the white body and the black face.
         // The wool glows a little: under the Crete sunset a plain white turned the colour of the road and the sheep
@@ -1028,6 +1052,40 @@ export class GameRenderer {
           mesh(new THREE.SphereGeometry(r, 8, 6), fur, group, 0, y, z);
         }
         for (const sx of [-1, 1]) for (const sz of [-1, 1]) leg(new THREE.BoxGeometry(0.12, 0.26, 0.14), fur, sx * 0.22, 0.13, sz * 0.24, sx * sz);
+      } else if (critter.kind === 'rat') {
+        // A Roman rat, toy-sized like the squirrel: grey-brown, round ears, pink nose and the long bare pink tail
+        // trailing flat on the cobbles — the tail is what tells it apart from the squirrel at a glance.
+        const fur = tint(0x6e6258), pink = tint(0xe8a0a4), dark = tint(0x1e1a18);
+        const body = mesh(new THREE.SphereGeometry(0.45, 9, 7), fur, group, 0, 0.42, -0.05);
+        body.scale.set(0.8, 0.7, 1.45);
+        const head = mesh(new THREE.ConeGeometry(0.28, 0.6, 8), fur, group, 0, 0.42, 0.72);
+        head.rotation.x = Math.PI / 2;
+        mesh(new THREE.SphereGeometry(0.07, 6, 5), pink, group, 0, 0.42, 1.02).castShadow = false;
+        for (const side of [-1, 1]) {
+          mesh(new THREE.SphereGeometry(0.15, 7, 5), pink, group, side * 0.18, 0.7, 0.55).scale.set(1, 1, 0.35);
+          mesh(new THREE.SphereGeometry(0.045, 5, 4), dark, group, side * 0.13, 0.52, 0.8).castShadow = false;
+        }
+        const tail = mesh(new THREE.CylinderGeometry(0.035, 0.07, 1.4, 6), pink, group, 0, 0.18, -1.1);
+        tail.rotation.x = Math.PI / 2 - 0.15;
+        tail.castShadow = false;
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) leg(new THREE.BoxGeometry(0.1, 0.22, 0.12), pink, sx * 0.24, 0.11, sz * 0.3, sx * sz);
+      } else if (critter.kind === 'gull') {
+        // A seagull of the Roman rooftops: white body, grey wings that flap while it waddles, yellow beak with the
+        // red spot, yellow legs. The wings are the "legs" that swing, about the body's long axis.
+        const white = material(0xf7f5ef, { roughness: 0.9, emissive: 0x55534c, emissiveIntensity: 0.4 });
+        const grey = tint(0x8d949c), yellow = tint(0xf0c23a), dark = tint(0x1e1e22);
+        const body = mesh(new THREE.SphereGeometry(0.45, 10, 8), white, group, 0, 0.85, 0);
+        body.scale.set(0.85, 0.85, 1.5);
+        mesh(new THREE.SphereGeometry(0.3, 9, 7), white, group, 0, 1.3, 0.55);
+        const beak = mesh(new THREE.ConeGeometry(0.09, 0.42, 6), yellow, group, 0, 1.25, 0.95);
+        beak.rotation.x = Math.PI / 2;
+        mesh(new THREE.SphereGeometry(0.05, 5, 4), tint(0xd8322a), group, 0, 1.2, 1.02).castShadow = false;
+        for (const side of [-1, 1]) {
+          mesh(new THREE.SphereGeometry(0.045, 5, 4), dark, group, side * 0.17, 1.38, 0.72).castShadow = false;
+          leg(new THREE.BoxGeometry(0.75, 0.08, 0.85), grey, side * 0.62, 1.0, -0.1, side, 'z');
+          mesh(new THREE.BoxGeometry(0.06, 0.5, 0.06), yellow, group, side * 0.16, 0.3, 0.05).castShadow = false;
+        }
+        mesh(new THREE.BoxGeometry(0.4, 0.1, 0.5), dark, group, 0, 0.92, -0.75).castShadow = false; // black wing tips
       } else {
         // The Increa turtle, as the park scenery used to build it: a domed shell, a lighter plate, head and tail.
         const shell = mesh(new THREE.SphereGeometry(0.75, 10, 8), tint(0x3f6b2f), group, 0, 0.42, 0);
@@ -1042,7 +1100,7 @@ export class GameRenderer {
       // They walk, so they must never be merged into the static batch.
       group.traverse((child) => { child.userData.dynamic = true; });
       this.world.add(group);
-      models.set(critter.id, { group, legs, critter, stride: { boar: 14, squirrel: 22, sheep: 9, donkey: 6 }[critter.kind] || 7 });
+      models.set(critter.id, { group, legs, critter, stride: { boar: 14, squirrel: 22, sheep: 9, donkey: 6, rat: 24, gull: 11 }[critter.kind] || 7 });
     }
   }
 
@@ -1062,7 +1120,7 @@ export class GameRenderer {
         group.position.copy(victim.root.position);
         group.position.y += 1.6 + Math.abs(Math.sin(this.clock * 13)) * 0.55;
         group.rotation.set(0, victim.root.rotation.y + Math.sin(this.clock * 17) * 0.7, Math.sin(this.clock * 11) * 0.25);
-        for (const part of legs) part.mesh.rotation.x = Math.sin(this.clock * 24) * 0.8 * part.sway;
+        for (const part of legs) part.mesh.rotation[part.axis] = Math.sin(this.clock * 24) * 0.8 * part.sway;
         continue;
       }
       const pose = critterPose(critter, time);
@@ -1073,7 +1131,7 @@ export class GameRenderer {
       const heading = Math.atan2(frame.dz * pose.dir, -frame.dx * pose.dir);
       group.rotation.set(0, heading + (1 - Math.min(1, pose.turn / 0.35)) * Math.PI, 0);
       const step = pose.walking ? Math.sin(time * model.stride) * 0.35 : 0;
-      for (const part of legs) part.mesh.rotation.x = step * part.sway;
+      for (const part of legs) part.mesh.rotation[part.axis] = step * part.sway;
     }
   }
 
@@ -1640,12 +1698,16 @@ export class GameRenderer {
   /** Slow rotation and a soft twinkle of the bright stars; no-op on daytime circuits. */
   animateSky(step) {
     if (!this.starLayers) return;
+    // `starLevel` comes from the weather (Rome: no stars at sunset, all of them at night); the moon waits for dark.
+    const level = this.starLevel ?? 1;
+    this.stars.visible = level > 0.02;
+    for (const child of this.stars.children) if (!child.isPoints) child.visible = level > 0.6;
     // The whole dome turns slowly, so the moon crosses the sky over a race; the two layers twinkle out of step.
     this.stars.rotation.y += step * 0.012;
     const [faint, bright] = this.starLayers.map((layer) => layer.material);
-    bright.opacity = 0.72 + Math.sin(this.clock * 3.1) * 0.24;
+    bright.opacity = (0.72 + Math.sin(this.clock * 3.1) * 0.24) * level;
     bright.size = 4.2 + Math.sin(this.clock * 2.3) * 0.8;
-    faint.opacity = 0.84 + Math.sin(this.clock * 1.7 + 1.1) * 0.12;
+    faint.opacity = (0.84 + Math.sin(this.clock * 1.7 + 1.1) * 0.12) * level;
     faint.size = 2.1 + Math.sin(this.clock * 1.3) * 0.25;
   }
 
@@ -1775,6 +1837,7 @@ export class GameRenderer {
     this.boxModels.clear();
     disposeObject(this.trackObjects);
     this.trackObjects.clear();
+    this.skids = null;
     this.projectileModels.clear();
     this.cameraInitialized = [false, false];
     for (const object of this.effects || []) { this.scene.remove(object); if (object.userData.kind !== 'debris') { object.material.dispose(); object.geometry.dispose(); } }
@@ -2178,6 +2241,8 @@ export class GameRenderer {
       for (const camera of this.cameras) { camera.near = RACE_NEAR; camera.far = RACE_FAR; camera.updateProjectionMatrix(); }
     }
     this.trackObjects.visible = true;
+    this.skids = createSkids(this.quality.skids);
+    if (this.skids) this.trackObjects.add(this.skids.mesh);
     this.resetObstacles();
     const rampOrange = material(0xf5a243, { side: THREE.DoubleSide });
     const rampYellow = material(0xffde81, { side: THREE.DoubleSide });
@@ -2278,6 +2343,53 @@ export class GameRenderer {
     propeller.add(blades);
     propeller.position.y = 1.4;
     propeller.visible = false;
+    // The parachute: a pack on the roof while the bonus waits for a ramp, and in the air a canopy of red, white
+    // and yellow gores on four lines, opening as the car flies.
+    const parachute = new THREE.Group();
+    const pack = mesh(new THREE.BoxGeometry(0.7, 0.4, 0.55), material(0xe5203a), parachute, 0, 1.55, -0.2);
+    pack.castShadow = false;
+    const canopy = new THREE.Group();
+    const gores = [0xe5203a, 0xf4f0e2, 0xffd74a];
+    for (let i = 0; i < 9; i += 1) {
+      const gore = mesh(new THREE.SphereGeometry(1.9, 3, 6, (i / 9) * Math.PI * 2, (Math.PI * 2) / 9, 0, Math.PI / 2), material(gores[i % 3], { side: THREE.DoubleSide }), canopy, 0, 0, 0);
+      gore.castShadow = false;
+    }
+    canopy.scale.y = 0.55;
+    canopy.position.y = 3.5;
+    const line = material(0x3b4148);
+    for (const [x, z] of [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]]) {
+      // From the canopy's rim down to the roof, as a thin rod: each one is pointed at the roof once, here.
+      const cord = mesh(new THREE.CylinderGeometry(0.025, 0.025, 1, 4), line, canopy, 0, 0, 0);
+      const top = new THREE.Vector3(x, 0, z), foot = new THREE.Vector3(0, (1.5 - 3.5) / 0.55, 0);
+      cord.position.copy(top).add(foot).multiplyScalar(0.5);
+      cord.scale.y = top.distanceTo(foot);
+      cord.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), top.clone().sub(foot).normalize());
+      cord.castShadow = false;
+    }
+    canopy.visible = false;
+    parachute.add(canopy);
+    parachute.userData.canopy = canopy;
+    parachute.userData.pack = pack;
+    parachute.visible = false;
+    root.add(parachute);
+    // The hang-glider: an orange delta wing on an A-frame over the roof. Folded small on the ground, spread in the air.
+    const glider = new THREE.Group();
+    const wingShape = new THREE.BufferGeometry();
+    wingShape.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 2.2, -2.9, 0, -1.3, 2.9, 0, -1.3, 0, 0.35, -0.6], 3));
+    wingShape.setIndex([0, 1, 3, 0, 3, 2, 1, 2, 3]);
+    wingShape.computeVertexNormals();
+    const wing = mesh(wingShape, material(0xff7a1a, { side: THREE.DoubleSide }), glider, 0, 1.4, 0);
+    wing.castShadow = false;
+    const keel = mesh(new THREE.BoxGeometry(0.08, 0.08, 3.4), material(0x3b4148), glider, 0, 1.42, 0.3);
+    keel.castShadow = false;
+    for (const side of [-1, 1]) {
+      const strut = mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.3, 4), material(0xc9cdd1), glider, side * 0.35, 0.8, 0.1);
+      strut.rotation.z = side * 0.28;
+      strut.castShadow = false;
+    }
+    glider.position.y = 0.9;
+    glider.visible = false;
+    root.add(glider);
     propeller.userData.blades = blades;
     root.add(propeller);
     const trail = new THREE.Group();
@@ -2325,7 +2437,7 @@ export class GameRenderer {
       marker.castShadow = false;
     }
     this.scene.add(root);
-    const model = { root, car, shield, jelly, cream, propeller, trail, dust, marker, spec: racer.spec, previousLane: racer.lane, baseScale: car.scale.clone() };
+    const model = { root, car, shield, jelly, cream, propeller, parachute, glider, trail, dust, marker, spec: racer.spec, previousLane: racer.lane, baseScale: car.scale.clone() };
     this.racerModels.set(racer.id, model);
     return model;
   }
@@ -2497,6 +2609,33 @@ export class GameRenderer {
     }
   }
 
+  /**
+   * Lays one strip under each rear tyre, as long as the ground covered this frame so the strips join into a line.
+   * The strips follow the car's heading and its tail swing, and take the colour of the surface under them.
+   */
+  dropSkids(model, racer, stance, step) {
+    const skids = this.skids;
+    const swing = model.slide.angle;
+    const offset = slideOffset(swing, stance?.frontZ ?? 0);
+    // Exactly the ground covered: overlapping strips double the alpha and the line comes out dashed.
+    const length = Math.max(0.2, (racer.speed || 0) * step);
+    _skidYaw.setFromAxisAngle(_skidAxis, swing);
+    _skidQuaternion.copy(model.root.quaternion).multiply(_skidYaw);
+    _skidColor.set(skidColour(this.track.surfaceAt ? this.track.surfaceAt(racer.progress) : 'asphalt'));
+    const cos = Math.cos(swing), sin = Math.sin(swing);
+    for (const tyre of model.rearTyres) {
+      // 12 mm over the tarmac (the car rides 15 mm up): any closer and depth precision lets the road cover it.
+      _skidPosition.set(tyre.x * cos + tyre.z * sin + offset.x, -0.003, -tyre.x * sin + tyre.z * cos + offset.z)
+        .applyQuaternion(model.root.quaternion).add(model.root.position);
+      _skidScale.set(tyre.width * 0.85, 1, length);
+      _skidMatrix.compose(_skidPosition, _skidQuaternion, _skidScale);
+      skids.mesh.setMatrixAt(skids.next, _skidMatrix);
+      skids.mesh.setColorAt(skids.next, _skidColor);
+      skids.next = (skids.next + 1) % skids.count;
+    }
+    skids.dirty = true;
+  }
+
   render(race, dt = 1 / 60) {
     if (!race?.racers?.length) return;
     const step = Math.min(0.08, Math.max(0, dt));
@@ -2534,10 +2673,43 @@ export class GameRenderer {
         const targetPitch = ramp ? -Math.atan2(ramp.height || 2.1, ramp.length) : racer.y > 0.4 ? 0.06 : -Math.atan(slope);
         model.car.rotation.x = THREE.MathUtils.lerp(model.car.rotation.x, targetPitch, 0.14);
       }
-      // Lean into the turn about the axle line (see the `tilt` group in cars.js): body and wheels roll together,
-      // so a tall rear wing no longer slides sideways and looks unbolted.
+      // Bends, drawn livelier (src/lean.js), and visual only: nothing here feeds the simulation. The body leans about
+      // the axle line (the `tilt` group in cars.js: body and wheels roll together, so a tall rear wing does not slide
+      // sideways and look unbolted): cars roll out of the bend, motorbikes and trikes lean in, on a spring so the body
+      // settles and rocks back instead of snapping. The steering wheels turn with the road, and in the tight bends
+      // the tail swings out a little. On a bridge, in the loop or in the air everything rights itself.
       const tilt = model.car.userData.tilt || model.car.userData.body;
-      if (tilt) tilt.rotation.z = -steering * 0.4;
+      const stance = tilt === model.car.userData.tilt ? model.car.userData.stance : null;
+      if (!model.lean) {
+        const inward = leansIntoTurns(racer.spec);
+        model.lean = { angle: 0, speed: 0, inward, limit: leanLimit(inward, stance?.halfTrack ?? 1) };
+        model.slide = { angle: 0, speed: 0 };
+        model.steerWheels = (model.car.userData.wheels || []).filter((wheel) => wheel.userData.steerSign);
+        model.steerAngle = 0;
+        // The rear axle, the one that scrubs the road when the tail slides: where its tyres sit and how wide they are.
+        const carWheels = (model.car.userData.wheels || []).filter((wheel) => wheel.userData.group !== 'trailer');
+        const rearZ = Math.min(...carWheels.map((wheel) => wheel.position.z));
+        model.rearTyres = carWheels.filter((wheel) => wheel.position.z < rearZ + 0.05).map((wheel) => ({ x: wheel.position.x, z: wheel.position.z, width: wheel.userData.tread || 0.27 }));
+      }
+      const grounded = !pose && !(racer.y > 0.3) && !(racer.spinning > 0);
+      const curvature = grounded ? bendCurvature(this.track, racer.progress) : 0;
+      const g = ((racer.speed || 0) ** 2 * curvature) / 9.81;
+      if (tilt) {
+        tilt.rotation.z = stepLean(model.lean, grounded ? leanTarget(g, steering, model.lean.inward, model.lean.limit) : 0, step);
+        if (stance) {
+          const at = rest(tilt.rotation.z, stance, model.lean.inward);
+          tilt.position.x = at.x; tilt.position.y = at.y;
+        }
+      }
+      if (model.steerWheels.length) {
+        const target = grounded ? wheelSteer(curvature, stance?.wheelbase ?? 2, steering) : 0;
+        model.steerAngle += (target - model.steerAngle) * (1 - Math.exp(-step / 0.08));
+        for (const wheel of model.steerWheels) wheel.rotation.y = model.steerAngle * wheel.userData.steerSign;
+      }
+      stepLean(model.slide, grounded ? slideTarget(g) : 0, step);
+      if (this.skids && leavesMarks({ grounded, slide: model.slide.angle, drifting: racer.drifting, spinning: racer.spinning, slipping: racer.slipping })) {
+        this.dropSkids(model, racer, stance, step);
+      }
       // An articulated trailer lags the tractor, so it points where the cab came from. A deterministic function of
       // the steering, clamped so the container can never fold into the cab.
       const hitch = model.car.userData.hitch;
@@ -2556,13 +2728,40 @@ export class GameRenderer {
         // It folds away in the last second instead of blinking out of existence.
         model.propeller.scale.setScalar(Math.min(1, racer.propeller));
       }
+      // The two flying presents. Both come out properly only in the air; on the ground they wait, packed and folded.
+      const flying = racer.y > 0.4;
+      model.parachute.visible = racer.parachute > 0;
+      if (model.parachute.visible) {
+        const { canopy, pack } = model.parachute.userData;
+        model.parachuteOpen = flying ? Math.min(1, (model.parachuteOpen || 0) + step * 3) : 0;
+        canopy.visible = model.parachuteOpen > 0;
+        pack.visible = !canopy.visible;
+        if (canopy.visible) {
+          canopy.scale.set(model.parachuteOpen, 0.55 * model.parachuteOpen, model.parachuteOpen);
+          canopy.rotation.z = Math.sin(this.clock * 2.4) * 0.06;
+        }
+      }
+      model.glider.visible = racer.glider > 0;
+      if (model.glider.visible) {
+        model.gliderSpread = THREE.MathUtils.lerp(model.gliderSpread ?? 0.45, flying ? 1 : 0.45, 1 - Math.exp(-step * 6));
+        model.glider.scale.set(model.gliderSpread, 1, 0.7 + model.gliderSpread * 0.3);
+        // In the air it banks with the bends, like the bikes: into the turn.
+        model.glider.rotation.z = flying ? -steering * 1.6 : 0;
+      }
       model.cream.visible = racer.creamed > 0;
       if (model.cream.visible) model.cream.scale.setScalar(0.8 + Math.min(1, racer.creamed / 2.6) * 0.35);
       // Spun out on the oil: one full turn on the spot, fast at first and slowing as the tyres find grip again.
       if (racer.spinning > 0) {
         const k = 1 - racer.spinning / SPIN_TIME;
         model.car.rotation.y = (1 - (1 - k) ** 3) * Math.PI * 2;
-      } else if (model.car.rotation.y !== 0) model.car.rotation.y = 0;
+        model.car.position.x = 0; model.car.position.z = 0;
+        model.slide.angle = 0; model.slide.speed = 0;
+      } else {
+        // Not spinning: the tail swing, pivoted on the front axle.
+        const at = slideOffset(model.slide.angle, stance?.frontZ ?? 0);
+        model.car.rotation.y = model.slide.angle;
+        model.car.position.x = at.x; model.car.position.z = at.z;
+      }
       model.jelly.visible = racer.stuck > 0;
       if (model.jelly.visible) {
         // Melting: from full size down to a puddle over the half second the car is stuck, with a wobble.
@@ -2626,6 +2825,11 @@ export class GameRenderer {
       cube.position.y = 1.72 + Math.sin(this.clock * 2.1 + box.distance) * 0.18;
     }
     this.syncObstacles(race, step);
+    if (this.skids?.dirty) {
+      this.skids.mesh.instanceMatrix.needsUpdate = true;
+      this.skids.mesh.instanceColor.needsUpdate = true;
+      this.skids.dirty = false;
+    }
     this.updateCritters(race.time, race);
     if (this.rainbowMaterial) this.rainbowMaterial.color.setHSL((this.clock * 1.4) % 1, 1, 0.5);
     this.updateProjectiles(race);

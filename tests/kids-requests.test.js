@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RaceSimulation, MAX_DAMAGE } from '../src/race.js';
-import { getTrack } from '../src/track.js';
+import { getTrack, weatherIndex } from '../src/track.js';
 import { OBSTACLE_KINDS, OBSTACLE_REGROW, normalizeObstacle } from '../src/obstacles.js';
 import { ATTACK_TIME, checkCritters, critterPose, normalizeCritter } from '../src/critters.js';
 
@@ -104,6 +104,23 @@ test('critters walk verge to verge and back, and their pose depends only on the 
   const problems = [];
   checkCritters([normalizeCritter({ id: 'x', kind: 'sheep', distance: 110 })], { length: 500, ramps: [{ id: 'r', distance: 100 }] }, (m) => problems.push(m));
   assert.equal(problems.length, 1, 'un animale nell’atterraggio di una rampa viene rifiutato');
+});
+
+test('Rome: cobbles all round, two crossings over and under, rats, boars and seagulls, and the night on the last lap', () => {
+  const roma = getTrack('roma');
+  assert.ok(roma.surfaces.length === 1 && roma.surfaces[0].kind === 'cobbles' && roma.surfaces[0].to === roma.length, 'tutta sui sanpietrini');
+  assert.equal(roma.elevationBumps.filter((bump) => bump.bridge).length, 2, 'un otto con un altro cerchio: due incroci, due ponti');
+  assert.ok(roma.elevationBumps.filter((bump) => !bump.bridge).length >= 3, 'i saliscendi dei colli');
+  assert.deepEqual([...new Set(roma.critters.map((c) => c.kind))].sort(), ['boar', 'gull', 'rat'], 'topi, cinghiali e gabbiani');
+  for (const kind of ['colosseo', 'sanpietro', 'mose', 'concerto']) assert.ok(roma.landmarks.some((l) => l.kind === kind), kind);
+  // Sunset on the first lap, night on the last, however many laps the race has.
+  const names = (laps) => Array.from({ length: laps }, (_, i) => roma.theme.weather[weatherIndex(roma.theme, i + 1, laps)].name);
+  assert.deepEqual(names(3), ['TRAMONTO', 'SERA', 'NOTTE']);
+  assert.deepEqual(names(2), ['TRAMONTO', 'NOTTE']);
+  assert.equal(names(5).at(-1), 'NOTTE');
+  assert.equal(roma.theme.weather[0].stars, 0, 'al tramonto niente stelle');
+  // The other weather circuits keep cycling once per lap.
+  assert.deepEqual([1, 2, 3].map((lap) => weatherIndex(getTrack('arca').theme, lap, 4)), [0, 1, 0]);
 });
 
 test('the rainbow: faster, untouchable, and whoever it touches blows up', () => {

@@ -6,7 +6,7 @@ import {RaceSimulation} from '../src/race.js';
 import {createLocalScenery,localLayout,isLocalSceneryReserved} from '../src/local-scenery.js';
 import {cupTrackIds} from '../src/cup.js';
 
-for(const id of ['brugherio','milano','como','increa','villasanta','crete','bergamo','aprica','stadio','notte','adda','bernina','arca','regnano','magra','alba','intervallo','varese']) {
+for(const id of ['brugherio','milano','como','increa','villasanta','crete','bergamo','aprica','stadio','notte','adda','bernina','arca','regnano','magra','alba','intervallo','varese','roma']) {
  test(`${id}: landmarks remain off the road and two players finish the circuit`,()=>{
   const track=getTrack(id),scene=createLocalScenery(track),points=track.points(500);
   scene.updateMatrixWorld(true);

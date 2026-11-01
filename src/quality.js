@@ -1,13 +1,14 @@
 /**
  * Graphics quality profiles. Pure data and helpers (no three.js, no DOM) so the choice can be tested in Node and
  * applied by the renderer: pixel ratio cap, shadow map size, how often the rear mirror re-renders,
- * how many dust puffs follow each car, how many wind streaks fly past during a turbo.
+ * how many dust puffs follow each car, how many wind streaks fly past during a turbo, how many tyre marks stay on
+ * the road (one draw call whatever the number: only the memory and the upload grow).
  * "medium" is the default; touch devices start on "low".
  */
 export const QUALITY_LEVELS = {
-  high: { id: 'high', label: 'SUPER', pixelRatio: 1.5, shadowMap: 2048, mirrorEvery: 1, mirrorSamples: 2, dust: 12, wind: 44 },
-  medium: { id: 'medium', label: 'NORMALE', pixelRatio: 1.25, shadowMap: 1024, mirrorEvery: 2, mirrorSamples: 0, dust: 8, wind: 26 },
-  low: { id: 'low', label: 'LEGGERA', pixelRatio: 1, shadowMap: 512, mirrorEvery: 0, mirrorSamples: 0, dust: 0, wind: 0 },
+  high: { id: 'high', label: 'SUPER', pixelRatio: 1.5, shadowMap: 2048, mirrorEvery: 1, mirrorSamples: 2, dust: 12, wind: 44, skids: 900 },
+  medium: { id: 'medium', label: 'NORMALE', pixelRatio: 1.25, shadowMap: 1024, mirrorEvery: 2, mirrorSamples: 0, dust: 8, wind: 26, skids: 600 },
+  low: { id: 'low', label: 'LEGGERA', pixelRatio: 1, shadowMap: 512, mirrorEvery: 0, mirrorSamples: 0, dust: 0, wind: 0, skids: 300 },
 };
 export const QUALITY_ORDER = ['high', 'medium', 'low'];
 export const QUALITY_STORAGE_KEY = 'brick-racers:quality';

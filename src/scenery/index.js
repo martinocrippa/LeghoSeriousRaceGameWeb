@@ -25,5 +25,6 @@ import * as milano from './milano.js';
 import * as alba from './alba.js';
 import * as intervallo from './intervallo.js';
 import * as varese from './varese.js';
+import * as roma from './roma.js';
 
-export const SCENERY = { como, stadio, increa, villasanta, crete, brugherio, brianza, adda, bernina, arca, regnano, aprica, magra, milano, alba, intervallo, varese };
+export const SCENERY = { como, stadio, increa, villasanta, crete, brugherio, brianza, adda, bernina, arca, regnano, aprica, magra, milano, alba, intervallo, varese, roma };

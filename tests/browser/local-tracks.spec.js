@@ -1,11 +1,11 @@
 import {test,expect} from '@playwright/test';
 import {openScreen} from './helpers.js';
 
-for(const [id,name,landmark] of [['brugherio','Brugherio in Festa','sanbartolomeo'],['milano','Milano Sprint','duomo'],['como','Il Giro del Lago di Como','comocity'],['increa','Parco Increa Rally','school'],['villasanta','Villasanta Centro','home'],['crete','Crete Senesi al Tramonto','amiata'],['bergamo','Bergamo di Notte','cittaalta'],['aprica','Aprica: Corso Roma','chalet'],['stadio','Stadio degli Azzurri d’Italia','arena'],['notte','Notte Stellata in Brianza','montevecchia'],['adda','L’Adda d’Autunno','madonnadelbosco'],['bernina','Passo del Bernina','ghiacciaio'],['arca','Il Campo dell’Arca','chiesa'],['regnano','Regnano Castello','castello'],['magra','Golfo del Magra al Tramonto','cave'],['alba','La Scuola all’Alba','anfiteatro'],['intervallo','L’Aula all’Intervallo','banchi'],['varese','Varese Town','diamante']]) {
+for(const [id,name,landmark] of [['brugherio','Brugherio in Festa','sanbartolomeo'],['milano','Milano Sprint','duomo'],['como','Il Giro del Lago di Como','comocity'],['increa','Parco Increa Rally','school'],['villasanta','Villasanta Centro','home'],['crete','Crete Senesi al Tramonto','amiata'],['bergamo','Bergamo di Notte','cittaalta'],['aprica','Aprica: Corso Roma','chalet'],['stadio','Stadio degli Azzurri d’Italia','arena'],['notte','Notte Stellata in Brianza','montevecchia'],['adda','L’Adda d’Autunno','madonnadelbosco'],['bernina','Passo del Bernina','ghiacciaio'],['arca','Il Campo dell’Arca','chiesa'],['regnano','Regnano Castello','castello'],['magra','Golfo del Magra al Tramonto','cave'],['alba','La Scuola all’Alba','anfiteatro'],['intervallo','L’Aula all’Intervallo','banchi'],['varese','Varese Town','diamante'],['roma','Roma di Sera','colosseo']]) {
  test(`${id} has its own scenery and supports racing and returning to the track picker`,async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await openScreen(page,'track');
-  await expect(page.locator('[data-track]')).toHaveCount(19);
+  await expect(page.locator('[data-track]')).toHaveCount(20);
   await page.locator(`[data-track="${id}"]`).click();
   await expect(page.locator('#track-title')).toHaveText(name);
   await page.locator('#start-race').click();

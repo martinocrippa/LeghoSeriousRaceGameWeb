@@ -28,7 +28,7 @@ test('using any bonus changes the race at once, and none of them is silently dro
     const sim = ready();
     const [player] = sim.racers;
     player.item = item;
-    const before = { projectiles: sim.projectiles.length, hazards: sim.hazards.length, boost: player.boost, shield: player.shield, gun: player.machinegun, propeller: player.propeller, rainbow: player.rainbow };
+    const before = { projectiles: sim.projectiles.length, hazards: sim.hazards.length, boost: player.boost, shield: player.shield, gun: player.machinegun, propeller: player.propeller, rainbow: player.rainbow, parachute: player.parachute, glider: player.glider };
     sim.update(1 / 60, [{ steer: 0, useItem: true }, { steer: 0 }]);
     assert.equal(player.item, null, `${item}: la cassa si svuota`);
     const changed = sim.projectiles.length > before.projectiles
@@ -36,6 +36,8 @@ test('using any bonus changes the race at once, and none of them is silently dro
       || player.boost > before.boost
       || player.shield > before.shield
       || player.propeller > before.propeller
+      || player.parachute > before.parachute
+      || player.glider > before.glider
       || player.rainbow > before.rainbow
       || player.machinegun > before.gun;
     assert.ok(changed, `${item}: usarlo non ha prodotto niente`);
@@ -92,6 +94,36 @@ test('the propeller keeps the car in the air: the same ramp carries it much furt
   };
   const plain = flight(false), flown = flight(true);
   assert.ok(flown > plain * 1.6, `con l'elica si vola molto più lontano: ${plain.toFixed(1)} m contro ${flown.toFixed(1)} m`);
+});
+
+test('The flying presents: the parachute flies highest and lands softly, the hang-glider flies furthest', () => {
+  const flight = (item) => {
+    const sim = new RaceSimulation({ players: 1, opponents: 0, seed: 11, difficulty: 'normal' });
+    sim.state = 'racing'; sim.countdown = 0;
+    sim.boxes = []; sim.boosts = [];
+    const [car] = sim.racers;
+    const ramp = sim.ramps[0];
+    car.progress = ramp.distance - 2; car.lane = 0; car.speed = 24;
+    if (item) { car.item = item; sim.update(1 / 60, [{ steer: 0, useItem: true }]); }
+    let takeOff = null, landing = null, top = 0, impact = null, bounces = 0;
+    for (let i = 0; i < 60 * 10 && landing === null; i += 1) {
+      sim.update(1 / 60, [{ steer: 0 }]);
+      if (takeOff !== null) top = Math.max(top, car.y);
+      for (const event of sim.drainEvents()) {
+        if (event.type === 'jump' && takeOff === null) takeOff = car.progress;
+        if (event.type === 'land' && takeOff !== null) { if (event.bounce) bounces++; else { landing = car.progress; impact = event.impact; } }
+      }
+    }
+    assert.ok(landing !== null, `${item}: la macchina deve riatterrare`);
+    return { distance: landing - takeOff, top, impact, bounces };
+  };
+  const plain = flight(null), parachute = flight('parachute'), glider = flight('glider'), propeller = flight('propeller');
+  assert.ok(parachute.top > plain.top * 1.8, `il paracadute manda in alto: ${plain.top.toFixed(1)} m contro ${parachute.top.toFixed(1)} m`);
+  assert.ok(parachute.top > propeller.top, 'più in alto anche dell’elica');
+  assert.ok(parachute.impact <= 4.2 + 1e-9 && parachute.bounces === 0, 'si posa piano, senza rimbalzi');
+  assert.ok(glider.distance > plain.distance * 2, `il deltaplano plana lontano: ${plain.distance.toFixed(1)} m contro ${glider.distance.toFixed(1)} m`);
+  assert.ok(glider.distance > propeller.distance && glider.distance > parachute.distance, 'il volo più lungo dei tre');
+  assert.ok(glider.impact <= 1.15 + 1e-9 && glider.bounces === 0);
 });
 
 test('a bomb dropped on an empty road still goes off, by itself, within its fuse', () => {

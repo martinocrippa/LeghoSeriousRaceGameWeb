@@ -6,10 +6,12 @@ import '@fontsource/inter/latin-600.css';
 import './style.css';
 import { CAR_PRESETS, SAMPLE_CARS } from './cars.js';
 import { CAR_PARTS, normalizeParts } from './parts.js';
+import { GARAGE_STORAGE_KEY, parseGarage } from './garage.js';
 import { RaceSimulation, BASE_SPEED, hasExpertControls } from './race.js';
 import { TRACKS, TRACK_DEFINITIONS, DEFAULT_TRACK, getTrack, createTrack, LANE_SIGN } from './track.js';
 import { racerPose } from './sections.js';
 import { createCup, cupTrackIds, recordRaceResult, sortStandings, isCupFinished, raceSeed, pointsForRank } from './cup.js';
+import { raceTimes, formatRaceTime, formatGap } from './gaps.js';
 import { GameRenderer } from './renderer.js';
 import { PILOT_COLORS, PILOTS_STORAGE_KEY, MAX_PILOT_NAME, cleanPilotName, rememberPilot, parsePilots } from './pilots.js';
 import { RECORDS_STORAGE_KEY, recordKey as trackRecordKey, parseRecords, beatsRecord } from './records.js';
@@ -43,25 +45,9 @@ const icon = (name, size=22) => `<svg width="${size}" height="${size}" viewBox="
   timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
 }[name] || ''}</svg>`;
 
+// The saved garage is rebuilt field by field (formats 1, 2 and 3): see src/garage.js for why.
 function loadCars() {
-  try {
-    const raw = JSON.parse(localStorage.getItem('brick-racers:garage') || '[]');
-    if (!Array.isArray(raw)) return [];
-    const isHex = value => /^#[0-9a-f]{6}$/i.test(value);
-    // The saved garage is rebuilt field by field instead of being spread: anything else in localStorage — which any
-    // page on the same origin can write — must not survive into the game. Two fields earn their own check:
-    // `id` goes unescaped into querySelector(`[data-car="…"]`), and `sourceUrl` is the only address the game ever
-    // loads, so it may only be one of our own bundled photos.
-    const isId = value => typeof value === 'string' && /^[\w-]{1,40}$/.test(value);
-    const isSample = value => typeof value === 'string' && /^sample\/[a-z0-9-]+\.jpg$/.test(value);
-    const text = (value, max) => typeof value === 'string' ? value.slice(0, max) : '';
-    // Format 1 cars (before parts and measured height) load unchanged; format 2 adds parts, palette and height.
-    return raw.filter(c => c && isId(c.id) && typeof c.name === 'string' && isHex(c.color) && isHex(c.accent) && ['buggy','racer','truck','classic'].includes(c.shape)).slice(0,12).map(c => ({
-      id:c.id, name:c.name.slice(0,28), color:c.color, accent:c.accent, shape:c.shape,
-      description:text(c.description,200), tagline:text(c.tagline,90), tag:text(c.tag,24), provenance:text(c.provenance,200), qualityNote:text(c.qualityNote,200),
-      sourceUrl:isSample(c.sourceUrl)?c.sourceUrl:undefined,
-      width:Math.max(.7,Math.min(3,Number(c.width)||1.7)), length:Math.max(1.5,Math.min(5,Number(c.length)||3.2)),height:Math.max(.5,Math.min(2.5,Number(c.height)||1)), version:Number(c.version)>=2?2:1, parts:normalizeParts(c.parts), palette:Array.isArray(c.palette)&&c.palette.length&&c.palette.every(isHex)?c.palette.slice(0,5):undefined, thumbnail:typeof c.thumbnail === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(c.thumbnail) ? c.thumbnail : '' }));
-  } catch { return []; }
+  try { return parseGarage(localStorage.getItem(GARAGE_STORAGE_KEY)); } catch { return []; }
 }
 // Records and the pilot roster are validated on the way in: see src/records.js and src/pilots.js for why.
 function loadRecords() {
@@ -78,7 +64,7 @@ let trackId = DEFAULT_TRACK.id, mode = 'single', cup = null, mapPoints = [];
 let lapsOverride = null, opponentsOverride = null, records = loadRecords(), pilotNames = loadPilots();
 let screen = 'menu', menuScreen = 'attract', paused = false, race = null;
 let editingCarId = null;
-let pendingCar = null, previousFocus = null, thumbnailCache = new Map(), uploadEpoch = 0;
+let pendingCar = null, previousFocus = null, thumbnailCache = new Map(), modalEpoch = 0;
 const keys = new Set(), keyEdges = new Set(), touchInputs = [{steer:0,brake:false,useItem:false},{steer:0,brake:false,useItem:false}];
 const padPrevious = [false,false], padJumpPrevious = [false,false];
 const padMenu = { a:false, b:false, cooldown:0 };
@@ -168,7 +154,7 @@ $('#app').innerHTML = `
           <div class="stage-caption"><span id="selected-source"></span><h2 id="selected-name"></h2><p id="selected-description"></p></div>
         </div>
         <div class="garage-panel">
-          <div class="garage-head"><span class="eyebrow">Scorri: prima la scuderia, poi le vostre</span><button id="add-photo" class="button small photo-button">${icon('camera',18)} CREA DALLA FOTO</button></div>
+          <div class="garage-head"><span class="eyebrow">Scorri: prima la scuderia, poi le vostre</span></div>
           <div id="car-grid" class="car-grid"></div>
         </div>
       </div>
@@ -193,7 +179,6 @@ $('#app').innerHTML = `
   </section>
   <div id="modal-overlay" class="modal-overlay" hidden><section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></section></div>
   <div id="toast" class="toast" role="status" hidden></div>
-  <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp" hidden />
 `;
 
 let renderer, rendererFailed = false;
@@ -247,8 +232,7 @@ function renderGarage() {
   const cars = sections.flatMap(s => s.cars);
   $('#car-count').textContent = `${catalog.length} AUTO`;
   $('#car-grid').innerHTML = sections.map(section => `<h3 class="grid-section section-${section.id}"><span>${section.title}</span><small>${section.note}</small><i aria-hidden="true"></i></h3>`
-    + section.cars.map(car => carCard(car, section.id)).join('')).join('')
-    + `<button class="car-card upload-card photo-button"><span class="upload-circle">${icon('camera',28)}</span><h3>LA PROSSIMA È TUA</h3><p>Fotografa una costruzione e mettila in pista</p><span class="upload-link">Crea la tua auto ${icon('arrow',15)}</span></button>`;
+    + section.cars.map(car => carCard(car, section.id)).join('')).join('');
   $('#car-grid').querySelectorAll('[data-car]').forEach(button => button.addEventListener('click',() => { selected[activePilot] = catalog.find(c => c.id === button.dataset.car); updateSelection(); renderGarage(); $(`[data-car="${button.dataset.car}"]`)?.focus({preventScroll:true}); playTone(470,.05); }));
   $('#car-grid').querySelectorAll('[data-photo]').forEach(spot => {
     const flip = event => {
@@ -262,18 +246,17 @@ function renderGarage() {
     spot.addEventListener('click',flip);
     spot.addEventListener('keydown',event => { if(event.key==='Enter'||event.key===' ') flip(event); });
   });
-  $('#car-grid').querySelector('.upload-card').addEventListener('click',openPhoto);
   fillThumbnails(cars);
   if(customCars.some(c=>c.id===selected[activePilot].id)) {
     const editButton = document.createElement('button');
     editButton.className='edit-custom text-button';
     editButton.textContent='Modifica la tua auto';
     editButton.addEventListener('click',()=>{
-      uploadEpoch++;
+      modalEpoch++;
       const car=selected[activePilot];
       editingCarId=car.id;
       pendingCar=structuredClone(car);
-      showPhotoEditor();
+      showCarEditor();
     });
     $('#car-grid').append(editButton);
     const remove = document.createElement('button');
@@ -282,7 +265,7 @@ function renderGarage() {
     remove.addEventListener('click',()=>{
       const id=selected[activePilot].id;
       const next=customCars.filter(c=>c.id!==id);
-      try{localStorage.setItem('brick-racers:garage',JSON.stringify(next));}catch{toast('Il browser non riesce ad aggiornare il garage.');return;}
+      try{localStorage.setItem(GARAGE_STORAGE_KEY,JSON.stringify(next));}catch{toast('Il browser non riesce ad aggiornare il garage.');return;}
       customCars=next;catalog=[...SAMPLE_CARS,...CAR_PRESETS,...customCars];
       selected=selected.map(c=>c.id===id?(customCars[0]||CAR_PRESETS[0]):c);
       renderGarage();toast('Auto rimossa dal garage.');
@@ -340,7 +323,6 @@ document.querySelectorAll('.theme-button').forEach((b) => b.addEventListener('cl
 document.querySelectorAll('.sound-button').forEach(b => b.addEventListener('click',toggleSound));
 document.querySelectorAll('.help-button').forEach(b => b.addEventListener('click',openHelp));
 document.querySelectorAll('.controls-button').forEach(b => b.addEventListener('click',()=>openControls()));
-$('#add-photo').addEventListener('click',openPhoto);
 document.querySelectorAll('.brand').forEach(b => b.addEventListener('click',e => { e.preventDefault(); showScreen('attract'); }));
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click',goBack));
 
@@ -595,7 +577,7 @@ function openModal(content, className='') {
   $('#modal').querySelector('[data-close]')?.addEventListener('click',closeModal);
   $('#modal').querySelector('button,input,select')?.focus();
 }
-function closeModal() { if(bindingsDraft){closeControls();return;} uploadEpoch++; if (screen === 'race' && paused) { resumeRace(); return; } $('#modal-overlay').hidden=true; previousFocus?.focus(); }
+function closeModal() { if(bindingsDraft){closeControls();return;} modalEpoch++; if (screen === 'race' && paused) { resumeRace(); return; } $('#modal-overlay').hidden=true; previousFocus?.focus(); }
 const modalClose = `<button class="icon-button modal-close" data-close aria-label="Chiudi">${icon('close')}</button>`;
 
 function updateControlHints() {
@@ -650,45 +632,23 @@ function helpKeyboardHTML() {
 }
 
 function openHelp() {
-  openModal(`${modalClose}<span class="modal-symbol">${icon('gamepad',34)}</span><span class="eyebrow">POCHI TASTI, TANTA ADRENALINA</span><h2 id="modal-title">Pronti, piloti?</h2><p>L’auto accelera e segue le curve da sola. Tu sterzi per scegliere la traiettoria, prendere i bonus e superare gli avversari!</p>${helpKeyboardHTML()}<div class="bonus-guide"><span>⚡ <b>Turbo</b><small>Vai velocissimo</small></span><span>🚀 <b>Razzo</b><small>Raggiunge chi è davanti</small></span><span>💣 <b>Bomba</b><small>Una sorpresa dietro di te</small></span><span>🫧 <b>Scudo</b><small>Ti protegge dai colpi</small></span><span>🍬 <b>Spara caramelle</b><small>Una pioggia di caramelle per 5 secondi</small></span><span>🟢 <b>Gelatina</b><small>Incolla chi ci passa per mezzo secondo</small></span><span>🛢️ <b>Olio</b><small>Si slitta senza sterzo, e a volte è testacoda</small></span><span>🚀 <b>Tre razzi</b><small>Una raffica di tre, uno dietro l’altro</small></span><span>🎆 <b>Fontana</b><small>Scintille sulla strada: chi ci passa rallenta</small></span><span>🎇 <b>Girandola</b><small>Zigzaga da un bordo all’altro</small></span><span>🍦 <b>Spara gelato</b><small>Tre palline in faccia: si va piano e si sterza male</small></span><span>🌾 <b>Tre balle di fieno</b><small>Rotolano avanti e schiacciano chi trovano</small></span><span>🚁 <b>Elica</b><small>Per 7 secondi resti in aria: dalle rampe voli lontanissimo</small></span><span>🌈 <b>Arcobaleno</b><small>Per 6 secondi più veloce: chi tocchi esplode</small></span></div><p class="help-footnote">Da 1 a 5 giri · fino a 6 bolidi · ${TRACKS.length} piste · Campionato su 3 piste · Prova a tempo con record · <kbd>Esc</kbd> Pausa<br>Nei menu: frecce per muoverti, Invio per confermare, Esc per tornare indietro. Gamepad: levetta o croce, A conferma, B indietro; in gara levetta sinistra, A per il bonus e B per rallentare. Su schermo touch compaiono i pulsanti.</p><button class="start-button" id="help-done">Ho capito! ${icon('check',21)}</button>`,'help-modal');
+  openModal(`${modalClose}<span class="modal-symbol">${icon('gamepad',34)}</span><span class="eyebrow">POCHI TASTI, TANTA ADRENALINA</span><h2 id="modal-title">Pronti, piloti?</h2><p>L’auto accelera e segue le curve da sola. Tu sterzi per scegliere la traiettoria, prendere i bonus e superare gli avversari!</p>${helpKeyboardHTML()}<div class="bonus-guide"><span>⚡ <b>Turbo</b><small>Vai velocissimo</small></span><span>🚀 <b>Razzo</b><small>Raggiunge chi è davanti</small></span><span>💣 <b>Bomba</b><small>Una sorpresa dietro di te</small></span><span>🫧 <b>Scudo</b><small>Ti protegge dai colpi</small></span><span>🍬 <b>Spara caramelle</b><small>Una pioggia di caramelle per 5 secondi</small></span><span>🟢 <b>Gelatina</b><small>Incolla chi ci passa per mezzo secondo</small></span><span>🛢️ <b>Olio</b><small>Si slitta senza sterzo, e a volte è testacoda</small></span><span>🚀 <b>Tre razzi</b><small>Una raffica di tre, uno dietro l’altro</small></span><span>🎆 <b>Fontana</b><small>Scintille sulla strada: chi ci passa rallenta</small></span><span>🎇 <b>Girandola</b><small>Zigzaga da un bordo all’altro</small></span><span>🍦 <b>Spara gelato</b><small>Tre palline in faccia: si va piano e si sterza male</small></span><span>🌾 <b>Tre balle di fieno</b><small>Rotolano avanti e schiacciano chi trovano</small></span><span>🚁 <b>Elica</b><small>Per 7 secondi resti in aria: dalle rampe voli lontanissimo</small></span><span>🌈 <b>Arcobaleno</b><small>Per 6 secondi più veloce: chi tocchi esplode</small></span><span>🪂 <b>Paracadute</b><small>Dalle rampe voli altissimo e scendi piano piano</small></span><span>🪁 <b>Deltaplano</b><small>Dalle rampe plani lontanissimo</small></span></div><p class="help-footnote">Da 1 a 5 giri · fino a 6 bolidi · ${TRACKS.length} piste · Campionato su 3 piste · Prova a tempo con record · <kbd>Esc</kbd> Pausa<br>Nei menu: frecce per muoverti, Invio per confermare, Esc per tornare indietro. Gamepad: levetta o croce, A conferma, B indietro; in gara levetta sinistra, A per il bonus e B per rallentare. Su schermo touch compaiono i pulsanti.</p><button class="start-button" id="help-done">Ho capito! ${icon('check',21)}</button>`,'help-modal');
   $('#help-done').addEventListener('click',closeModal);
   $('#help-keyboard').addEventListener('click',()=>openControls('help'));
 }
-function openPhoto() {
-  uploadEpoch++;
-  pendingCar=null;editingCarId=null;
-  openModal(`${modalClose}<span class="modal-symbol">${icon('camera',32)}</span><span class="eyebrow">DAL TAVOLO ALLA PISTA</span><h2 id="modal-title">Metti in pista la tua costruzione.</h2><p>Fotografa una sola auto, di lato o di tre quarti, su uno sfondo semplice e ben illuminato.</p><button id="drop-zone" class="drop-zone">${icon('camera',44)}<strong>Scegli una foto o trascinala qui</strong><span>JPG, PNG o WebP · massimo 12 MB</span></button><p class="photo-note">Ricaviamo colori e proporzioni e creiamo un modello a mattoncini che puoi personalizzare. È un’interpretazione della foto.</p><div class="privacy-line">${icon('check',16)} La foto resta in questo browser.</div><p id="photo-error" class="form-error" role="alert"></p>`,'photo-modal');
-  $('#drop-zone').addEventListener('click',() => $('#photo-input').click());
-  $('#drop-zone').addEventListener('dragover',e => {e.preventDefault();e.currentTarget.classList.add('dragging');});
-  $('#drop-zone').addEventListener('dragleave',e => e.currentTarget.classList.remove('dragging'));
-  $('#drop-zone').addEventListener('drop',e => {e.preventDefault();const file=e.dataTransfer.files[0];if(file)processPhoto(file);});
-}
-$('#photo-input').addEventListener('change',e=>{const file=e.target.files[0];if(file)processPhoto(file); e.target.value='';});
-async function processPhoto(file) {
-  const zone=$('#drop-zone'); if(!zone||zone.disabled)return;
-  const epoch=++uploadEpoch;
-  zone.disabled=true;zone.innerHTML=`<span class="loading-ring"></span><strong>Stiamo scegliendo i mattoncini…</strong><span>Colori, proporzioni e un po’ di grinta.</span>`;
-  try {
-    if(file.size>12*1024*1024)throw new Error('La foto è troppo grande. Scegli un’immagine sotto i 12 MB.');
-    // The photo pipeline is its own chunk: it loads the first time a photo is chosen, not at startup.
-    const { analyzePhoto } = await import('./photo-analysis.js');
-    const result=await analyzePhoto(file);
-    if(epoch!==uploadEpoch || $('#modal-overlay').hidden || !$('#drop-zone'))return;
-    pendingCar={...result.spec,id:`custom-${Date.now()}`,name:'Il mio bolide',thumbnail:result.thumbnail,description:'La tua costruzione, pronta a bruciare l’asfalto.',qualityNote:result.qualityNote};
-    showPhotoEditor();
-  }catch(error){ if(epoch===uploadEpoch && $('#drop-zone')){openPhoto();$('#photo-error').textContent=error.message || 'Non riesco a leggere questa foto. Prova con un JPG o PNG.';} }
-}
-function showPhotoEditor() {
+/** Edits a car already in the garage. New cars are no longer made in the game: the photo import was removed. */
+function showCarEditor() {
   const car=pendingCar;
-  car.version=2;car.parts=normalizeParts(car.parts);
+  // Format 3 keeps its wheels through an edit: the editor only touches what it shows.
+  car.version=Math.max(2,Number(car.version)||0);car.parts=normalizeParts(car.parts);
   const clampValue=(value,min,max,fallback)=>Math.min(max,Math.max(min,Number(value)||fallback));
   car.length=clampValue(car.length,2.3,3.8,3.2);car.width=clampValue(car.width,1.3,2.3,1.7);car.height=clampValue(car.height,.7,1.7,1.15);
   const range=(id,label,min,max,value)=>`<label class="range-label">${label}<input id="${id}" type="range" min="${min}" max="${max}" step="0.05" value="${value}" /></label>`;
   const chips=CAR_PARTS.map(part=>`<label class="part-chip" title="${escape(part.hint)}"><input type="checkbox" name="part" value="${part.id}" ${car.parts.includes(part.id)?'checked':''} /><span class="chip-emoji" aria-hidden="true">${part.emoji}</span><span>${escape(part.label)}</span></label>`).join('');
-  openModal(`${modalClose}<span class="eyebrow">ECCO LA TUA NUOVA AUTO</span><h2 id="modal-title">Un ultimo tocco da meccanico.</h2><div class="photo-comparison"><figure><img src="${escape(car.thumbnail)}" alt="La tua foto"/><figcaption>LA TUA COSTRUZIONE</figcaption></figure><span>${icon('arrow',24)}</span><figure><img id="generated-car" src="${carThumbnail(car)}" alt="Auto 3D derivata dalla foto"/><figcaption>IL TUO BOLIDE 3D</figcaption></figure></div><form id="car-form"><label>Come la chiami?<input id="car-name" maxlength="28" value="${escape(car.name)}" required autocomplete="off" /></label><div class="form-row"><label>Carrozzeria<select id="car-shape"><option value="buggy">Buggy</option><option value="racer">Da corsa</option><option value="truck">Camioncino</option><option value="classic">Semplice</option></select></label><label>Colore<input id="car-color" type="color" value="${escape(car.color)}" /></label><label>Dettagli<input id="car-accent" type="color" value="${escape(car.accent)}" /></label></div><div class="range-row">${range('car-length','Lunghezza',2.3,3.8,car.length)}${range('car-width','Larghezza',1.3,2.3,car.width)}${range('car-height','Altezza',.7,1.7,car.height)}</div><fieldset class="parts-grid"><legend class="eyebrow">PEZZI${car.parts.length?' · SUGGERITI DALLA FOTO':''}</legend>${chips}</fieldset><p class="photo-note">${escape(car.qualityNote || 'Modello stilizzato: puoi correggere liberamente colori e forma.')}</p><p id="save-error" class="form-error" role="alert"></p><button class="start-button" type="submit">Nel garage! ${icon('arrow',21)}</button></form>`,'photo-modal');
+  openModal(`${modalClose}<span class="eyebrow">LA TUA AUTO</span><h2 id="modal-title">Un ritocco da meccanico.</h2><div class="car-editor-preview"><img id="generated-car" src="${carThumbnail(car)}" alt="Il tuo bolide 3D"/></div><form id="car-form"><label>Come la chiami?<input id="car-name" maxlength="28" value="${escape(car.name)}" required autocomplete="off" /></label><div class="form-row"><label>Carrozzeria<select id="car-shape"><option value="buggy">Buggy</option><option value="racer">Da corsa</option><option value="truck">Camioncino</option><option value="classic">Semplice</option></select></label><label>Colore<input id="car-color" type="color" value="${escape(car.color)}" /></label><label>Dettagli<input id="car-accent" type="color" value="${escape(car.accent)}" /></label></div><div class="range-row">${range('car-length','Lunghezza',2.3,3.8,car.length)}${range('car-width','Larghezza',1.3,2.3,car.width)}${range('car-height','Altezza',.7,1.7,car.height)}</div><fieldset class="parts-grid"><legend class="eyebrow">PEZZI</legend>${chips}</fieldset><p id="save-error" class="form-error" role="alert"></p><button class="start-button" type="submit">Salva le modifiche ${icon('check',21)}</button></form>`,'photo-modal');
   $('#car-shape').value=car.shape;
   let previewFrame=0;
-  const editorEpoch=uploadEpoch;
+  const editorEpoch=modalEpoch;
   const refresh=()=>{
     const oldColor=car.color,oldAccent=car.accent;
     car.name=$('#car-name').value.trim();car.color=$('#car-color').value;car.accent=$('#car-accent').value;car.shape=$('#car-shape').value;
@@ -696,15 +656,25 @@ function showPhotoEditor() {
     car.length=Number($('#car-length').value);car.width=Number($('#car-width').value);car.height=Number($('#car-height').value);
     car.parts=normalizeParts([...$('#car-form').querySelectorAll('input[name=part]:checked')].map(input=>input.value));
     // Sliders fire continuously; render one thumbnail per frame.
-    if(!previewFrame)previewFrame=requestAnimationFrame(()=>{previewFrame=0;const preview=$('#generated-car');if(preview && editorEpoch===uploadEpoch)preview.src=carThumbnail(car);});
+    if(!previewFrame)previewFrame=requestAnimationFrame(()=>{previewFrame=0;const preview=$('#generated-car');if(preview && editorEpoch===modalEpoch)preview.src=carThumbnail(car);});
   };
   ['input','change'].forEach(type=>$('#car-form').addEventListener(type,refresh));
-  $('#car-form').addEventListener('submit',e=>{e.preventDefault();refresh();if(!car.name){$('#car-name').focus();return;}if(!editingCarId&&customCars.length>=12){$('#save-error').textContent='Il garage contiene già 12 auto personali. Rimuovine una per aggiungerne altre.';return;}const next=editingCarId?customCars.map(c=>c.id===editingCarId?car:c):[...customCars,car];try{localStorage.setItem('brick-racers:garage',JSON.stringify(next));}catch{$('#save-error').textContent='Il browser non riesce a salvare altre auto. Libera spazio o abilita la memoria locale.';return;}customCars=next;catalog=[...SAMPLE_CARS,...CAR_PRESETS,...customCars];selected=selected.map(c=>c.id===editingCarId?car:c);selected[activePilot]=car;closeModal();if(menuScreen!=='cars')showScreen('cars');else renderGarage();toast('La tua auto è nel garage. Pronta a correre!');playTone(660,.2);});
+  $('#car-form').addEventListener('submit',e=>{e.preventDefault();refresh();if(!car.name){$('#car-name').focus();return;}const next=customCars.map(c=>c.id===editingCarId?car:c);try{localStorage.setItem(GARAGE_STORAGE_KEY,JSON.stringify(next));}catch{$('#save-error').textContent='Il browser non riesce a salvare le modifiche. Libera spazio o abilita la memoria locale.';return;}customCars=next;catalog=[...SAMPLE_CARS,...CAR_PRESETS,...customCars];selected=selected.map(c=>c.id===editingCarId?car:c);selected[activePilot]=car;closeModal();if(menuScreen!=='cars')showScreen('cars');else renderGarage();toast('Modifiche salvate. Pronta a correre!');playTone(660,.2);});
 }
 
 /* ---------- Gara ---------- */
 const formatTime=t=>`${Math.floor((t||0)/60)}:${String(Math.floor((t||0)%60)).padStart(2,'0')}`;
 const formatLap=t=>`${Math.floor((t||0)/60)}:${String(Math.floor((t||0)%60)).padStart(2,'0')}.${Math.floor(((t||0)%1)*10)}`;
+/**
+ * The gap column of a results row, measured from Pilot 1 (with two pilots, Pilot 2's row shows its gap from Pilot 1).
+ * The reference row shows `own` instead (its time, or nothing), so the column stays aligned.
+ */
+function gapCell(time, reference, own=''){
+  if(!time||!reference)return '<i class="gap"></i>';
+  if(time===reference)return `<i class="gap gap-own">${own}</i>`;
+  const gap=formatGap(time,reference);
+  return `<i class="gap gap-${gap.kind}">${gap.text}</i>`;
+}
 function saveRecords(){ try{localStorage.setItem(RECORDS_STORAGE_KEY,JSON.stringify(records));}catch{ /* records are a bonus */ } }
 function savePilots(){ try{localStorage.setItem(PILOTS_STORAGE_KEY,JSON.stringify(pilotNames));}catch{ /* the roster is a convenience */ } }
 /** "di Ada con Maggiolino" — the pilot when we know it, otherwise just the car. Records saved before names exist. */
@@ -734,7 +704,7 @@ function bindRecordName(key){
 }
 function startRace() {
   if(!ensureRenderer())return;
-  uploadEpoch++; noticeTimer=0;
+  modalEpoch++; noticeTimer=0;
   keys.clear();keyEdges.clear();touchPointers.clear();touchInputs.forEach(x=>{x.steer=0;x.useItem=false;x.brake=false;});
   if(mode==='cup'&&!cup)cup=createCup({trackIds:cupTrackIds(TRACKS.map(t=>t.id),trackId),seed:Date.now()});
   const track=raceTrack(cup?cup.trackIds[cup.index]:trackId);
@@ -781,6 +751,7 @@ function exitRace(){
 function showResults(){
   paused=true;
   const humans=race.racers.slice(0,players),ranked=[...race.racers].sort((a,b)=>a.rank-b.rank);
+  const times=raceTimes(race.racers,race.time,race.finishDistance),reference=times.get(humans[0].id);
   const humanTag=r=>`<small>${players===2?`PILOTA ${r.playerIndex+1}`:'IL TUO BOLIDE'}</small>`;
   const title=humans.some(h=>h.rank===1)?'Che vittoria!':'Che gara!';
   audio.stopMusic();audio.sfx('finish');
@@ -798,19 +769,24 @@ function showResults(){
     return;
   }
   if(cup){
-    cup=recordRaceResult(cup,race.racers);
+    cup=recordRaceResult(cup,race.racers,times);
     const finished=isCupFinished(cup),standings=sortStandings(cup.standings);
-    openModal(`<span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">COPPA · GARA ${cup.index}/${cup.trackIds.length} · ${escape(race.track.name.toUpperCase())}</span><h2 id="modal-title">${title}</h2><p>${finished?'Tutte le piste sono state corse!':'I punti si sommano: il campionato continua.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span><b>+${pointsForRank(r.rank)}</b></div>`).join('')}</div><span class="eyebrow">CLASSIFICA DEL CAMPIONATO</span><div class="result-list standings">${standings.map((s,i)=>`<div class="result-row ${s.isPlayer?'is-human':''}"><strong>${i+1}°</strong><span>${escape(s.name)}</span><b>${s.points} pt</b></div>`).join('')}</div>${finished?`<button id="cup-podium" class="start-button">Vai al podio! ${icon('trophy',21)}</button>`:`<button id="next-race" class="start-button">Prossima pista: ${escape(getTrack(cup.trackIds[cup.index]).name)} ${icon('arrow',21)}</button>`}<button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
+    openModal(`<span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">COPPA · GARA ${cup.index}/${cup.trackIds.length} · ${escape(race.track.name.toUpperCase())}</span><h2 id="modal-title">${title}</h2><p>${finished?'Tutte le piste sono state corse!':'I punti si sommano: il campionato continua.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference,formatRaceTime(reference))}<b>+${pointsForRank(r.rank)}</b></div>`).join('')}</div><span class="eyebrow">CLASSIFICA · DISTACCHI SUL TEMPO TOTALE</span>${standingsHTML(standings)}${finished?`<button id="cup-podium" class="start-button">Vai al podio! ${icon('trophy',21)}</button>`:`<button id="next-race" class="start-button">Prossima pista: ${escape(getTrack(cup.trackIds[cup.index]).name)} ${icon('arrow',21)}</button>`}<button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
     $('#next-race')?.addEventListener('click',startRace);$('#cup-podium')?.addEventListener('click',showCupPodium);$('#results-garage').addEventListener('click',exitRace);
     return;
   }
-  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">BANDIERA A SCACCHI!</span><h2 id="modal-title">${title}</h2><p>${players===2?'Due piloti, il doppio della sfida.':'Ogni giro è una battaglia.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span><b>${r.finished?formatTime(r.finishTime):'In pista'}</b></div>`).join('')}</div><button id="play-again" class="start-button">Un’altra corsa! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Cambia pista</button>`,'results-modal');
+  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">BANDIERA A SCACCHI!</span><h2 id="modal-title">${title}</h2><p>${players===2?'Due piloti, il doppio della sfida.':'Ogni giro è una battaglia.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference)}<b>${formatRaceTime(times.get(r.id))}</b></div>`).join('')}</div><button id="play-again" class="start-button">Un’altra corsa! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Cambia pista</button>`,'results-modal');
   $('#play-again').addEventListener('click',startRace);$('#results-garage').addEventListener('click',exitRace);
+}
+/** Cup standings: points decide the order, the gap is on the total time, from Pilot 1, whose row shows that total. */
+function standingsHTML(standings){
+  const reference=standings.find(s=>s.playerIndex===0)?.total;
+  return `<div class="result-list standings">${standings.map((s,i)=>`<div class="result-row ${s.isPlayer?'is-human':''}"><strong>${i+1}°</strong><span>${escape(s.name)}</span>${gapCell(s.total,reference,reference?formatRaceTime(reference):'')}<b>${s.points} pt</b></div>`).join('')}</div>`;
 }
 function showCupPodium(){
   const standings=sortStandings(cup.standings),top=standings.slice(0,3),order=[1,0,2];
   audio.sfx('podium');
-  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">FINE DEL CAMPIONATO</span><h2 id="modal-title">${top[0]?.isPlayer?'Campioni!':'Che campionato!'}</h2><div class="podium">${order.map(i=>top[i]?`<div class="podium-step step-${i+1} ${top[i].isPlayer?'is-human':''}"><span class="podium-rank">${i+1}°</span><b>${escape(top[i].name)}</b><small>${top[i].points} pt</small></div>`:'').join('')}</div><div class="result-list standings">${standings.map((s,i)=>`<div class="result-row ${s.isPlayer?'is-human':''}"><strong>${i+1}°</strong><span>${escape(s.name)}</span><b>${s.points} pt</b></div>`).join('')}</div><button id="new-cup" class="start-button">Un altro campionato! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
+  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">FINE DEL CAMPIONATO</span><h2 id="modal-title">${top[0]?.isPlayer?'Campioni!':'Che campionato!'}</h2><div class="podium">${order.map(i=>top[i]?`<div class="podium-step step-${i+1} ${top[i].isPlayer?'is-human':''}"><span class="podium-rank">${i+1}°</span><b>${escape(top[i].name)}</b><small>${top[i].points} pt</small></div>`:'').join('')}</div>${standingsHTML(standings)}<button id="new-cup" class="start-button">Un altro campionato! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
   $('#new-cup').addEventListener('click',()=>{cup=createCup({trackIds:cup.trackIds,seed:Date.now()});startRace();});$('#results-garage').addEventListener('click',exitRace);
 }
 function makeTouchControls(){
@@ -869,7 +845,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&screen==='
 window.addEventListener('resize',()=>renderer?.resize());
 window.addEventListener('gamepadconnected',()=>toast('Gamepad collegato! Croce o levetta per muoverti, A conferma, B indietro.'));
 
-const itemInfo={boost:['⚡','Super turbo'],rocket:['🚀','Razzo · ↓ per spararlo dietro'],rockets3:['🚀','Tre razzi · ↓ per spararli dietro'],bomb:['💣','Bomba'],shield:['🫧','Scudo'],machinegun:['🍬','Spara caramelle · 5 s'],jelly:['🟢','Gelatina'],oil:['🛢️','Macchia d’olio'],fountain:['🎆','Fontana di scintille'],spin:['🎇','Girandola'],gelato:['🍦','Spara gelato'],bales:['🌾','Tre balle di fieno'],propeller:['🚁','Elica · salti lunghissimi per 7 s'],rainbow:['🌈','Arcobaleno · chi tocchi esplode']};
+const itemInfo={boost:['⚡','Super turbo'],rocket:['🚀','Razzo · ↓ per spararlo dietro'],rockets3:['🚀','Tre razzi · ↓ per spararli dietro'],bomb:['💣','Bomba'],shield:['🫧','Scudo'],machinegun:['🍬','Spara caramelle · 5 s'],jelly:['🟢','Gelatina'],oil:['🛢️','Macchia d’olio'],fountain:['🎆','Fontana di scintille'],spin:['🎇','Girandola'],gelato:['🍦','Spara gelato'],bales:['🌾','Tre balle di fieno'],propeller:['🚁','Elica · salti lunghissimi per 7 s'],rainbow:['🌈','Arcobaleno · chi tocchi esplode'],parachute:['🪂','Paracadute · salti altissimi per 7 s'],glider:['🪁','Deltaplano · planate lunghissime per 7 s']};
 /** Who climbed on the car: the notice names the animal, the way the children would. */
 const critterNotice={turtle:'La tartaruga si è arrabbiata!',sheep:'La pecora si è arrabbiata!',boar:'Il cinghiale si è arrabbiato!',donkey:'L’asino si è arrabbiato!',squirrel:'Lo scoiattolo si è arrabbiato!'};
 let lastCountdown='',noticeTimer=0,noticeShown=false,hudRefs=[],hudHintFaded=false;
@@ -903,7 +879,7 @@ function updateHUD(dt){
     setText(h,'speed',h.speed,String(Math.round(r.speed*3.6)));
     const dash=(150.8*fraction).toFixed(1);if(h.last.dash!==dash){h.last.dash=dash;h.gauge.style.strokeDasharray=`${dash} 400`;}
     const angle=(-90+180*fraction).toFixed(1);if(h.last.angle!==angle){h.last.angle=angle;h.needle.setAttribute('transform',`rotate(${angle} 60 62)`);}
-    let status=r.finished?'★ GARA COMPLETATA':r.wrecked>0?'🔥 AUTO NUOVA IN ARRIVO!':r.squashed>0?'🌾 SCHIACCIATO!':r.attacked>0?'🐾 TI HA PRESO!':r.stuck>0?'🟢 INCOLLATO!':r.spinning>0?'🌀 TESTACODA!':r.slipping>0?'🛢️ SLITTA!':r.rainbow>0?'🌈 ARCOBALENO!':r.boost>0?'⚡ TURBO!':r.drifting?'💨 DERAPATA!':r.shield>0?'◌ SCUDO ATTIVO':r.stun>0?'OPS! SI RIPARTE…':'';
+    let status=r.finished?'★ GARA COMPLETATA':r.wrecked>0?'🔥 AUTO NUOVA IN ARRIVO!':r.squashed>0?'🌾 SCHIACCIATO!':r.attacked>0?'🐾 TI HA PRESO!':r.stuck>0?'🟢 INCOLLATO!':r.spinning>0?'🌀 TESTACODA!':r.slipping>0?'🛢️ SLITTA!':r.rainbow>0?'🌈 ARCOBALENO!':r.parachute>0&&r.y>0.5?'🪂 PARACADUTE!':r.glider>0&&r.y>0.5?'🪁 SI PLANA!':r.boost>0?'⚡ TURBO!':r.drifting?'💨 DERAPATA!':r.shield>0?'◌ SCUDO ATTIVO':r.stun>0?'OPS! SI RIPARTE…':'';
     if(r.machinegun>0&&!r.finished)status+=`${status?' · ':''}CARAMELLE ${Math.ceil(r.machinegun)} s`;
     setText(h,'status',h.status,status);
   }
@@ -1013,4 +989,4 @@ function animate(now){
 }
 // Startup: paint the START screen first; the 3D renderer follows a frame later, garage and track picker on their own screens.
 updateAttractCar();renderModeScreen();showScreen('attract');requestAnimationFrame(animate);requestAnimationFrame(()=>setTimeout(ensureRenderer,0));
-if(import.meta.env.DEV)window.__BRICK_RACERS__={get race(){return race;},get screen(){return screen;},get menuScreen(){return menuScreen;},get paused(){return paused;},get selected(){return selected;},get renderer(){return renderer;},get trackId(){return trackId;},get mode(){return mode;},get cup(){return cup;},get records(){return records;},get lapsOverride(){return lapsOverride;},get quality(){return quality;},applyQuality,audio,get catalog(){return catalog;},get theme(){return theme;},applyTheme,tracks:TRACKS.map(t=>t.id),startRace,exitRace,showScreen,analyzePhoto:(file)=>import('./photo-analysis.js').then(m=>m.analyzePhoto(file))};
+if(import.meta.env.DEV)window.__BRICK_RACERS__={get race(){return race;},get screen(){return screen;},get menuScreen(){return menuScreen;},get paused(){return paused;},get selected(){return selected;},get renderer(){return renderer;},get trackId(){return trackId;},get mode(){return mode;},get cup(){return cup;},get records(){return records;},get lapsOverride(){return lapsOverride;},get quality(){return quality;},applyQuality,audio,get catalog(){return catalog;},get theme(){return theme;},applyTheme,tracks:TRACKS.map(t=>t.id),startRace,exitRace,showScreen};

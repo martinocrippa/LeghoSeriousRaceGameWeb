@@ -1,6 +1,6 @@
 /**
- * Composable accessories ("pezzi") for cars created from photos.
- * No three.js import here: photo analysis and its Node tests depend on this list.
+ * Composable accessories ("pezzi") of the personal cars, the ones once created from a photo and still editable.
+ * No three.js import here: the Node tests depend on this list.
  */
 export const CAR_PARTS = [
   { id: 'bigWheels', label: 'Ruotone', emoji: '🛞', hint: 'Ruote giganti da fuoristrada' },

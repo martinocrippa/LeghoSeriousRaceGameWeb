@@ -1,0 +1,214 @@
+[
+  {
+    "track": "arca",
+    "seed": 11,
+    "players": 1,
+    "car": "squalo",
+    "time": 95.616667,
+    "racers": [
+      {
+        "id": "p1",
+        "rank": 4,
+        "finished": true,
+        "finishTime": 95.601186,
+        "progress": 2240,
+        "lane": -2.006539
+      },
+      {
+        "id": "ai1",
+        "rank": 1,
+        "finished": true,
+        "finishTime": 85.49849,
+        "progress": 2240,
+        "lane": -3.7
+      },
+      {
+        "id": "ai2",
+        "rank": 5,
+        "finished": false,
+        "finishTime": null,
+        "progress": 2219.161802,
+        "lane": -3.237759
+      },
+      {
+        "id": "ai3",
+        "rank": 3,
+        "finished": true,
+        "finishTime": 93.352385,
+        "progress": 2240,
+        "lane": 1.245564
+      },
+      {
+        "id": "ai4",
+        "rank": 2,
+        "finished": true,
+        "finishTime": 90.116632,
+        "progress": 2240,
+        "lane": -1.75718
+      }
+    ]
+  },
+  {
+    "track": "crete",
+    "seed": 42,
+    "players": 2,
+    "car": "moto",
+    "time": 82.05,
+    "racers": [
+      {
+        "id": "p1",
+        "rank": 5,
+        "finished": true,
+        "finishTime": 79.335872,
+        "progress": 1680,
+        "lane": 1.11572
+      },
+      {
+        "id": "p2",
+        "rank": 6,
+        "finished": true,
+        "finishTime": 82.046225,
+        "progress": 1680,
+        "lane": 5.367174
+      },
+      {
+        "id": "ai1",
+        "rank": 4,
+        "finished": true,
+        "finishTime": 73.661196,
+        "progress": 1680,
+        "lane": -1.877595
+      },
+      {
+        "id": "ai2",
+        "rank": 1,
+        "finished": true,
+        "finishTime": 64.739658,
+        "progress": 1680,
+        "lane": 2.09894
+      },
+      {
+        "id": "ai3",
+        "rank": 2,
+        "finished": true,
+        "finishTime": 71.537114,
+        "progress": 1680,
+        "lane": 1.738861
+      },
+      {
+        "id": "ai4",
+        "rank": 3,
+        "finished": true,
+        "finishTime": 73.592535,
+        "progress": 1680,
+        "lane": -2.74067
+      }
+    ]
+  },
+  {
+    "track": "varese",
+    "seed": 7,
+    "players": 1,
+    "car": "acrobata",
+    "time": 104.266667,
+    "racers": [
+      {
+        "id": "p1",
+        "rank": 5,
+        "finished": true,
+        "finishTime": 104.263812,
+        "progress": 2360,
+        "lane": -0.204386
+      },
+      {
+        "id": "ai1",
+        "rank": 1,
+        "finished": true,
+        "finishTime": 92.883571,
+        "progress": 2360,
+        "lane": 0.941189
+      },
+      {
+        "id": "ai2",
+        "rank": 4,
+        "finished": true,
+        "finishTime": 102.798903,
+        "progress": 2360,
+        "lane": 0.268704
+      },
+      {
+        "id": "ai3",
+        "rank": 2,
+        "finished": true,
+        "finishTime": 98.799089,
+        "progress": 2360,
+        "lane": 4.137573
+      },
+      {
+        "id": "ai4",
+        "rank": 3,
+        "finished": true,
+        "finishTime": 100.262878,
+        "progress": 2360,
+        "lane": 4.17772
+      }
+    ]
+  },
+  {
+    "track": "aprica",
+    "seed": 2026,
+    "players": 2,
+    "car": "maggiolino",
+    "time": 94.516667,
+    "racers": [
+      {
+        "id": "p1",
+        "rank": 6,
+        "finished": true,
+        "finishTime": 94.500419,
+        "progress": 2100,
+        "lane": 4.835821
+      },
+      {
+        "id": "p2",
+        "rank": 5,
+        "finished": true,
+        "finishTime": 91.198618,
+        "progress": 2100,
+        "lane": 4.578667
+      },
+      {
+        "id": "ai1",
+        "rank": 3,
+        "finished": true,
+        "finishTime": 90.239041,
+        "progress": 2100,
+        "lane": 0.396001
+      },
+      {
+        "id": "ai2",
+        "rank": 2,
+        "finished": true,
+        "finishTime": 86.859951,
+        "progress": 2100,
+        "lane": -2.92875
+      },
+      {
+        "id": "ai3",
+        "rank": 1,
+        "finished": true,
+        "finishTime": 85.61943,
+        "progress": 2100,
+        "lane": -2.640418
+      },
+      {
+        "id": "ai4",
+        "rank": 4,
+        "finished": true,
+        "finishTime": 90.272545,
+        "progress": 2100,
+        "lane": 2.960575
+      }
+    ]
+  }
+]

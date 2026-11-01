@@ -22,6 +22,7 @@ import { MAGRA_TRACK } from './tracks/magra.js';
 import { ALBA_TRACK } from './tracks/alba.js';
 import { INTERVALLO_TRACK } from './tracks/intervallo.js';
 import { VARESE_TRACK } from './tracks/varese.js';
+import { ROMA_TRACK } from './tracks/roma.js';
 
 const SAMPLE_COUNT = 2048;
 /** Road surfaces a circuit may switch between along the lap; the renderer picks colours and textures from these. */
@@ -76,6 +77,18 @@ function sampleLoop(controlPoints, length) {
     sample.distance *= scale;
   }
   return samples;
+}
+
+/**
+ * Which entry of `theme.weather` a lap shows (zero-based). The list normally cycles once per lap (Arca: rain, sun,
+ * rain…); with `weatherAcrossRace` it is spread over the whole race instead, so Rome reaches the night on the last
+ * lap whether the race is two laps long or five.
+ */
+export function weatherIndex(theme, lap, laps) {
+  const count = theme?.weather?.length || 0;
+  if (!count) return 0;
+  if (!theme.weatherAcrossRace) return (((lap - 1) % count) + count) % count;
+  return laps > 1 ? Math.round((Math.min(Math.max(lap, 1), laps) - 1) * (count - 1) / (laps - 1)) : 0;
 }
 
 export function createTrack(definition) {
@@ -152,7 +165,10 @@ export function createTrack(definition) {
   // Terrain follows the road's hills but not its bridges (a bridge stands on pillars over flat ground).
   const terrainBumps = bumps.filter((bump) => !bump.bridge);
   const terrainAt = (d) => terrainBumps.reduce((sum, bump) => sum + bumpHeight(bump, wrap(d)), 0);
-  const coarse = terrainBumps.length ? Array.from({ length: 256 }, (_, i) => { const d = i / 256 * length; return { ...frame(d), h: terrainAt(d) }; }) : [];
+  // One sample every 1.5 m or so: with a fixed 256 a long circuit sampled its hills every 4 m, and on a slope the
+  // nearest sample could sit 0.3 m above the road and poke through it (Crete, Magra, Rome).
+  const coarseCount = Math.max(256, Math.ceil(length / 1.5));
+  const coarse = terrainBumps.length ? Array.from({ length: coarseCount }, (_, i) => { const d = i / coarseCount * length; return { ...frame(d), h: terrainAt(d) }; }) : [];
   // Only samples within `outer` metres influence a point, so they are bucketed in `outer`-sized cells and a query
   // reads its 3x3 neighbourhood instead of all 256 (the renderer asks for tens of thousands of terrain vertices).
   const inner = roadWidth / 2 + 2, outer = 60, exactBand = 14;
@@ -344,6 +360,7 @@ export const TRACK_DEFINITIONS = [
   ALBA_TRACK,
   INTERVALLO_TRACK,
   VARESE_TRACK,
+  ROMA_TRACK,
 ];
 
 export const TRACKS = TRACK_DEFINITIONS.map(createTrack);

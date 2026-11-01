@@ -18,7 +18,7 @@ Serve **Node.js 22.12 o più recente** (va bene anche la 24 LTS) e un browser co
 
 Poi apri l’indirizzo stampato dal terminale, di norma <http://127.0.0.1:5173>. La finestra del server va lasciata aperta mentre si gioca; si chiude per spegnere il gioco. Aprire `index.html` con doppio clic **non** funziona.
 
-Internet serve solo per l’installazione: da lì in poi auto, font, musica e analisi delle foto lavorano in locale.
+Internet serve solo per l’installazione: da lì in poi auto, font e musica lavorano in locale.
 
 ### Comandi
 
@@ -35,17 +35,17 @@ L’accelerazione è automatica: i bambini scelgono la traiettoria. Nei menu bas
 
 ![Il garage](docs/garage.png)
 
-- **Diciannove circuiti** con scenografie a mattoncini ispirate a luoghi veri (elenco in fondo). Colline, ponti, gallerie, sopraelevate, giri della morte, scorciatoie, rotonde e ostacoli solidi sulla strada: banchi, birilli, bidoni e massi saltano per aria se li colpisce un razzo (e ricrescono dopo un po’), contro colonne e rotonde il colpo scoppia. Su Parco Increa, sulle Crete, a Regnano e a Villasanta gli animali attraversano la strada (tartarughe, pecore, cinghiali, l’asino e gli scoiattoli): chi ne investe uno se lo ritrova sul tetto per un secondo e mezzo.
+- **Venti circuiti** con scenografie a mattoncini ispirate a luoghi veri (elenco in fondo). Colline, ponti, gallerie, sopraelevate, giri della morte, scorciatoie, rotonde e ostacoli solidi sulla strada: banchi, birilli, bidoni e massi saltano per aria se li colpisce un razzo (e ricrescono dopo un po’), contro colonne e rotonde il colpo scoppia. Su Parco Increa, sulle Crete, a Regnano e a Villasanta gli animali attraversano la strada (tartarughe, pecore, cinghiali, l’asino e gli scoiattoli): chi ne investe uno se lo ritrova sul tetto per un secondo e mezzo.
 - **Cinquantanove bolidi**: 34 di fantasia e **25 ricreati a mano dalle costruzioni dei bambini**, con la foto originale consultabile da un pulsantino sulla scheda. Ogni auto non nata da una foto riceve dal proprio nome qualche stranezza deterministica — una torretta storta, una bandierina da un lato solo, un cerchione spaiato: le costruzioni dei bambini non sono mai simmetriche.
-- **Tre modalità**: gara singola, campionato su tre piste con classifica e podio, prova a tempo con record e nome del pilota. Uno o due piloti sullo stesso PC, schermo diviso.
-- **Quattordici bonus** nelle casse: turbo, razzo, tre razzi, bomba con miccia, scudo, mitragliatrice di caramelle, gelatina (mezzo secondo incollati), macchia d’olio (si slitta, e a volte è testacoda), fontana di scintille, girandola, spara gelato, tre balle di fieno (schiacciano chi trovano: un secondo piatto come un biscotto), elica (sette secondi in cui dalle rampe si vola lontanissimo) e arcobaleno (sei secondi più veloce e intoccabile: chi tocchi esplode).
+- **Tre modalità**: gara singola, campionato su tre piste con classifica e podio, prova a tempo con record e nome del pilota. In classifica, accanto al tempo, il distacco dal Pilota 1 (“+1,8 s”, “−0,9 s”; con la “~” se è una stima perché quell’auto era ancora in pista). Uno o due piloti sullo stesso PC, schermo diviso.
+- **Sedici bonus** nelle casse: turbo, razzo, tre razzi, bomba con miccia, scudo, mitragliatrice di caramelle, gelatina (mezzo secondo incollati), macchia d’olio (si slitta, e a volte è testacoda), fontana di scintille, girandola, spara gelato, tre balle di fieno (schiacciano chi trovano: un secondo piatto come un biscotto), elica (sette secondi in cui dalle rampe si vola lontanissimo), arcobaleno (sei secondi più veloce e intoccabile: chi tocchi esplode) e, chiesti dai bambini, paracadute (dalle rampe si vola altissimo e si scende piano) e deltaplano (la planata più lunga di tutte).
 - **Musica scritta come dati**, non file audio: cinque brani chiptune, uno per atmosfera, più il punk della schermata iniziale.
 - **Esplora la pista**: prima di scegliere, un elicottero sorvola il circuito in una decina di secondi. Dalla schermata iniziale ne incatena a caso, come la demo di un cabinato.
-- **Crea dalla foto**: fotografi una costruzione, il browser la ritaglia dallo sfondo, misura proporzioni e colori, propone i pezzi e apre un editor con anteprima 3D. Fino a 12 auto personali salvate nel browser. Non è una ricostruzione fedele, ed è dichiarato: riesce quando l’oggetto sta su un tavolo di colore uniforme, altrimenti il gioco lo dice e lascia tutto alla personalizzazione manuale.
+- **Auto personali**: chi aveva già creato un’auto dalla foto con le versioni precedenti la ritrova nel garage, e può ancora modificarla con *Modifica la tua auto*. Le auto nuove non si creano più nel gioco.
 
 ## Privacy
 
-Non esce niente dal computer, nemmeno dalla versione online: nessuna statistica, nessun tracciamento. Le foto sono analizzate dal browser sui pixel in locale; garage, record, comandi e nomi stanno nel `localStorage` con il prefisso `brick-racers:` e si azzerano svuotando i dati del sito. `index.html` dichiara una Content-Security-Policy che vieta qualunque origine esterna, e il test `tests/browser/csp.spec.js` fallisce se qualcosa prova a caricare qualcosa da fuori.
+Non esce niente dal computer, nemmeno dalla versione online: nessuna statistica, nessun tracciamento. Il gioco non legge foto: le sole che mostra sono quelle delle costruzioni dei bambini, incluse nel gioco stesso. Garage, record, comandi e nomi stanno nel `localStorage` con il prefisso `brick-racers:` e si azzerano svuotando i dati del sito. `index.html` dichiara una Content-Security-Policy che vieta qualunque origine esterna, e il test `tests/browser/csp.spec.js` fallisce se qualcosa prova a caricare qualcosa da fuori.
 
 ## Se ci metti mano
 
@@ -100,6 +100,7 @@ Tracciati inventati per la guida facilitata; le definizioni stanno in `src/track
 | La Scuola all’Alba | Dentro la scuola prima della campanella | 3 giri · 980 m |
 | L’Aula all’Intervallo | Tra i banchi, le matite e le merende | 3 giri · 760 m |
 | Varese Town | Dall’autostrada alla collina, e giù al lago | 2 giri · 1180 m |
+| Roma di Sera | Il doppio otto sui sanpietrini, dal tramonto alla notte: Colosseo, San Pietro, il Mosè e il concerto rock dei preti | 3 giri · 1000 m |
 
 Con **Coppa · 3 piste** la pista scelta apre la serie e le due successive seguono in ordine: da Brugherio arrivano Milano e Como, da Como arrivano Parco Increa e Villasanta.
 

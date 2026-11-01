@@ -184,7 +184,6 @@ a { color: inherit; text-decoration: none; }
 .stage-caption p { font-size: var(--fs-body); color: var(--muted); margin-top: 6px; line-height: 1.5; max-width: 46ch; }
 .garage-panel { display: flex; flex-direction: column; min-height: 0; gap: var(--s3); }
 .garage-head { display: flex; gap: var(--s3); align-items: center; border-bottom: var(--bw) solid var(--edge); padding-bottom: 10px; flex-wrap: wrap; }
-.garage-head .photo-button { margin-left: auto; color: var(--photo); border-color: var(--photo-line); }
 /* The band that divides the two families of cars inside the one scrolling list. */
 .grid-section { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--s3); margin: var(--s5) 0 var(--s1); font-family: var(--font-title); font-size: 15px; letter-spacing: 1px; color: var(--strong); font-weight: 400; }
 .grid-section:first-child { margin-top: var(--s1); }
@@ -211,11 +210,6 @@ a { color: inherit; text-decoration: none; }
 .car-card h3 { font-family: var(--font-ui); font-size: var(--fs-label); letter-spacing: .5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
 .car-card-bottom p { color: var(--muted); font-size: var(--fs-label); margin-top: var(--s1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .color-dot { width: 12px; height: 12px; border: var(--bw) solid #000; box-shadow: 0 0 0 1px var(--edge-2); background: var(--car-color); flex-shrink: 0; }
-.upload-card { border: var(--bw) dashed var(--photo); background: var(--photo-tint); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 190px; text-align: center; color: var(--photo); padding: var(--s4); gap: 6px; }
-.upload-circle { display: grid; place-items: center; width: 50px; height: 50px; background: var(--photo); color: var(--on-photo); margin-bottom: var(--s2); }
-.upload-card h3 { font-family: var(--font-ui); font-size: var(--fs-label); letter-spacing: 1px; white-space: normal; }
-.upload-card p { font-size: var(--fs-label); color: var(--muted); white-space: normal; }
-.upload-link { font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 1px; display: flex; align-items: center; gap: 5px; margin-top: 6px; }
 .edit-custom, .remove-custom { grid-column: 1 / -1; justify-self: start; margin: var(--s1) 0 0; }
 .edit-custom { color: var(--photo); }
 .remove-custom { color: var(--danger); font-size: var(--fs-micro); }
@@ -354,6 +348,11 @@ a { color: inherit; text-decoration: none; }
 .result-row > span { flex: 1; }
 .result-row small { display: block; font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 1.5px; margin-top: var(--s1); opacity: .7; }
 .result-row > b { font-family: var(--font-ui); font-size: var(--fs-body); letter-spacing: .5px; }
+/* Gap from Pilot 1: green for who came in after, red for who beat them. The sign says it too, for colour-blind eyes. */
+.result-row > .gap { font-style: normal; font-family: var(--font-ui); font-size: var(--fs-label); letter-spacing: .5px; min-width: 76px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.result-row > .gap-behind { color: var(--ok); }
+.result-row > .gap-ahead { color: var(--danger-text); }
+.result-row > .gap-own { color: var(--muted); }
 .standings { margin-top: var(--s2); }
 .podium { display: grid; grid-template-columns: repeat(3, 1fr); align-items: end; gap: var(--s2); margin: 20px 0 var(--s2); }
 .podium-step { background: var(--surface-2); border: var(--bw) solid var(--edge-2); padding: var(--s3) var(--s2); display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s1); align-items: center; font-size: var(--fs-label); color: var(--muted); min-height: 84px; min-width: 0; }
@@ -382,19 +381,10 @@ kbd { font-family: var(--font-ui); display: inline-block; background: var(--bg-2
 .bonus-guide small { font-size: var(--fs-micro); color: var(--muted); text-align: center; }
 .help-footnote { font-size: var(--fs-label) !important; margin: 18px 0 !important; }
 
-/* Photo import and editor */
-.drop-zone { width: 100%; background: var(--done-tint); border: var(--bw-strong) dashed var(--p2); padding: 34px 16px; display: flex; flex-direction: column; align-items: center; gap: 14px; color: var(--text); margin: 20px 0 var(--s3); }
-.drop-zone strong { font-family: var(--font-ui); font-size: var(--fs-body); letter-spacing: .5px; }
-.drop-zone span { font-size: var(--fs-label); color: var(--muted); }
-.drop-zone.dragging { background: var(--done-line); border-color: var(--attention); }
-.modal .photo-note { font-size: var(--fs-label); line-height: 1.7; color: var(--muted); }
-.privacy-line { display: flex; gap: 6px; align-items: center; font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 1px; color: var(--ok); margin-top: var(--s3); }
+/* Editor of a saved car */
 .form-error { font-size: var(--fs-label); color: var(--danger-text) !important; line-height: 1.6; margin-top: 10px; }
-.photo-comparison { display: flex; align-items: center; gap: 14px; margin: 20px 0; }
-.photo-comparison figure { margin: 0; flex: 1; min-width: 0; }
-.photo-comparison img { height: 132px; width: 100%; object-fit: contain; background: var(--bg-2); border: var(--bw) solid var(--edge); }
-.photo-comparison figcaption { font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 1.5px; color: var(--muted); text-align: center; margin-top: var(--s2); }
-.photo-comparison > span { color: var(--accent); }
+.car-editor-preview { margin: 20px 0; }
+.car-editor-preview img { display: block; height: 150px; width: 100%; object-fit: contain; background: var(--bg-2); border: var(--bw) solid var(--edge); }
 .modal form label { font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 1.5px; color: var(--muted); display: flex; flex-direction: column; gap: var(--s2); text-transform: uppercase; }
 .modal input:not([type=range]):not([type=checkbox]), .modal select { width: 100%; border: var(--bw) solid var(--edge-2); background: var(--bg-2); padding: var(--s3); color: var(--strong); font-size: var(--fs-body); min-width: 0; font-family: var(--font-body); }
 .modal input[type=color] { height: 44px; padding: var(--s1); cursor: pointer; }
@@ -415,8 +405,6 @@ kbd { font-family: var(--font-ui); display: inline-block; background: var(--bg-2
 .part-chip:has(input:checked) { border-color: var(--accent); background: var(--accent-tint); }
 .part-chip:has(input:focus-visible) { outline: 3px solid var(--attention); outline-offset: 2px; }
 .chip-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
-.loading-ring { width: 34px; height: 34px; border: var(--bw-strong) solid var(--edge-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Keyboard mapping */
 .keyboard-modal { max-width: 700px; }

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import path from 'node:path';
-import { openScreen } from './helpers.js';
+import { openScreen, seedGarage, SAVED_CARS } from './helpers.js';
 
-test('arcade flow: start screen, garage, photo import, two independent drivers, pause, finish and replay', async ({ page }) => {
+test('arcade flow: start screen, garage, editing a saved car, two independent drivers, pause, finish and replay', async ({ page }) => {
   const errors=[];
   page.on('pageerror', e=>errors.push(e.message));
+  await seedGarage(page,[SAVED_CARS[0]]);
   await page.goto('/');
   await expect(page.locator('#press-start')).toBeVisible();
   await expect(page.locator('#stage-attract #viewport canvas')).toHaveCount(1);
@@ -25,21 +25,24 @@ test('arcade flow: start screen, garage, photo import, two independent drivers, 
   await page.locator('[data-pilot="1"]').click();
   await page.locator('[data-car="maggiolino"]').click();
   await expect(page.locator('#selected-name')).toHaveText('Maggiolino Matto');
-  await page.locator('#add-photo').click();
-  await page.locator('#photo-input').setInputFiles(path.resolve('sample/turbo-elica.jpg'));
+  // "Crea dalla foto" is gone: no button, no upload card, no file input. Saved cars stay and can still be edited.
+  await expect(page.locator('#add-photo, .upload-card, input[type=file]')).toHaveCount(0);
+  await page.locator(`[data-car="${SAVED_CARS[0].id}"]`).click();
+  await page.locator('.edit-custom').click();
   await expect(page.locator('#car-form')).toBeVisible();
   await page.locator('#car-name').fill('Fulmine di prova');
   await page.locator('#car-shape').selectOption('buggy');
   await page.locator('.part-chip:has(input[value="fan"])').click();
   await expect(page.locator('.part-chip input[value="fan"]')).toBeChecked();
   await page.locator('#car-width').evaluate(input=>{input.value='2.1';input.dispatchEvent(new Event('input',{bubbles:true}));});
-  await page.screenshot({path:'artifacts/photo-editor.png'});
+  await page.screenshot({path:'artifacts/car-editor.png'});
   await page.locator('#car-form button[type=submit]').click();
   await expect(page.locator('#selected-name')).toHaveText('Fulmine di prova');
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('brick-racers:garage')));
   expect(saved.length).toBe(1);
+  expect(saved[0].id).toBe(SAVED_CARS[0].id);
   expect(saved[0].version).toBe(2);
-  expect(saved[0].parts).toContain('fan');
+  expect(saved[0].parts).toEqual(['highWing','fan']);
   expect(saved[0].width).toBe(2.1);
   await page.locator('#to-track').click();
   await expect(page.locator('#screen-track')).toBeVisible();
@@ -79,6 +82,11 @@ test('arcade flow: start screen, garage, photo import, two independent drivers, 
   await page.locator('#resume-race').click();
   await page.evaluate(()=>{const race=window.__BRICK_RACERS__.race;for(let i=0;i<900&&race.state!=='finished';i++)race.update(.25,[{useItem:i%2===0},{useItem:i%2===0}]);});
   await expect(page.locator('#play-again')).toBeVisible();
+  // Gaps are measured from Pilot 1: its row has none, every other row (Pilot 2's too) has one, signed, decimal comma.
+  await expect(page.locator('.result-row .gap-own')).toHaveCount(1);
+  const gaps=await page.locator('.result-row .gap:not(.gap-own)').allTextContents();
+  expect(gaps).toHaveLength(await page.evaluate(()=>window.__BRICK_RACERS__.race.racers.length-1));
+  for(const gap of gaps)expect(gap).toMatch(/^(~ )?([+−]\d+,\d s|[+−]\d+:\d\d,\d|0,0 s)$/);
   await page.screenshot({path:'artifacts/results.png'});
   await page.locator('#play-again').click();
   expect(await page.evaluate(()=>window.__BRICK_RACERS__.race.time)).toBe(0);
@@ -90,26 +98,28 @@ test('arcade flow: start screen, garage, photo import, two independent drivers, 
   await expect(page.locator('#screen-cars')).toBeVisible();
   await page.reload();
   await openScreen(page,'cars');
-  await expect(page.locator('.car-card[data-car]')).toHaveCount(inCatalogo+1);
+  await expect(page.locator('.car-card[data-car]')).toHaveCount(inCatalogo);
   const mia=page.locator('.car-card[data-car^="custom-"]');
   await expect(mia).toHaveCount(1);
+  await expect(mia.locator('h3')).toHaveText('Fulmine di prova');
   await expect(mia.locator('img')).toHaveAttribute('src',/^data:image\/(webp|png)/);
   await mia.click();
   await page.locator('.remove-custom').click();
-  await expect(page.locator('.car-card[data-car]')).toHaveCount(inCatalogo);
+  await expect(page.locator('.car-card[data-car]')).toHaveCount(inCatalogo-1);
   expect(errors).toEqual([]);
 });
 
 test('mobile screens and touch race stay inside the viewport', async ({ page }) => {
   await page.setViewportSize({width:390,height:844});
+  await seedGarage(page,[SAVED_CARS[0]]);
   await openScreen(page,'cars');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({path:'artifacts/garage-mobile.png',fullPage:true});
-  await page.locator('#add-photo').click();
-  await page.locator('#photo-input').setInputFiles(path.resolve('sample/turbo-elica.jpg'));
+  await page.locator(`[data-car="${SAVED_CARS[0].id}"]`).click();
+  await page.locator('.edit-custom').click();
   await expect(page.locator('#car-form')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({path:'artifacts/photo-editor-mobile.png'});
+  await page.screenshot({path:'artifacts/car-editor-mobile.png'});
   await page.keyboard.press('Escape');
   await expect(page.locator('#modal-overlay')).toBeHidden();
   await page.locator('#to-track').click();
@@ -138,6 +148,10 @@ test('a cup runs three races on different circuits with cumulative standings and
     await expect.poll(()=>page.evaluate(()=>window.__BRICK_RACERS__.race.state)).toBe('racing');
     await raceUntilFinished();
     await expect(page.locator('.standings .result-row')).toHaveCount(6);
+    // The standings gap is on the total time: Pilot 1's row shows that total, the others their distance from it.
+    await expect(page.locator('.standings .gap-own')).toHaveText(/^~?\d+:\d\d,\d$/);
+    await expect(page.locator('.standings .gap:not(.gap-own)')).toHaveCount(5);
+    if(stage===3)await page.screenshot({path:'artifacts/cup-results.png'});
     if(stage<3){await expect(page.locator('#next-race')).toBeVisible();await page.locator('#next-race').click();}
   }
   expect(new Set(labels).size).toBe(3);
@@ -176,10 +190,21 @@ test('time trial runs alone against the clock and stores the track record', asyn
   expect(errors).toEqual([]);
 });
 
-test('a broken image displays a recoverable upload error',async({page})=>{
+test('personal cars saved in formats 1 and 2 still load, race and keep the photo peek only on the children\'s cars',async({page})=>{
+  const errors=[];
+  page.on('pageerror', e=>errors.push(e.message));
+  await seedGarage(page);
   await openScreen(page,'cars');
-  await page.locator('#add-photo').click();
-  await page.locator('#photo-input').setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('not an image')});
-  await expect(page.locator('#photo-error')).not.toBeEmpty();
-  await expect(page.locator('#drop-zone')).toBeEnabled();
+  for(const car of SAVED_CARS)await expect(page.locator(`[data-car="${car.id}"] h3`)).toHaveText(car.name);
+  // The children's cars still show their real photo; personal cars never had a bundled one.
+  await expect(page.locator(`[data-car="${SAVED_CARS[1].id}"] .photo-peek`)).toHaveCount(0);
+  await expect(page.locator('.photo-peek').first()).toHaveAttribute('aria-label','Guarda la foto vera');
+  await page.locator(`[data-car="${SAVED_CARS[1].id}"]`).click();
+  await expect(page.locator('#selected-name')).toHaveText('Vecchia gloria');
+  await page.locator('#to-track').click();
+  await page.locator('#start-race').click();
+  await expect.poll(()=>page.evaluate(()=>window.__BRICK_RACERS__.race?.state)).toBe('racing');
+  expect(await page.evaluate(()=>window.__BRICK_RACERS__.race.racers[0].name)).toBe('Vecchia gloria');
+  await page.evaluate(()=>{for(let i=0;i<8;i++)window.__BRICK_RACERS__.race.update(.25);});
+  expect(errors).toEqual([]);
 });

@@ -30,8 +30,8 @@ test('the default circuit is numerically identical to the original single track'
   assert.deepEqual(getTrackFrame(412.5), { x: -63.51345566747331, z: 3.5220728955430167, dx: 0.4553892083717536, dz: -0.8902924625641553 });
   assert.equal(wrapDistance(-25), 525);
   assert.equal(getTrack('non-esiste'), DEFAULT_TRACK);
-  assert.equal(TRACKS.length, 19);
-  assert.equal(new Set(TRACKS.map((track) => track.id)).size, 19);
+  assert.equal(TRACKS.length, 20);
+  assert.equal(new Set(TRACKS.map((track) => track.id)).size, 20);
 });
 
 test('createTrack rejects unusable definitions', () => {

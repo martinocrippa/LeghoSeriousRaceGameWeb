@@ -22,6 +22,9 @@ export const CRITTER_KINDS = Object.freeze({
   // The Regnano donkey takes its time; the Villasanta squirrels dart across and are gone before you see them.
   donkey: { radius: 1.2, height: 1.9, speed: 1.1, pause: 3.2 },
   squirrel: { radius: 0.6, height: 0.9, speed: 3.6, pause: 1.1 },
+  // Rome: the rats scurry across in a hurry, the seagulls waddle and stop to stare at you.
+  rat: { radius: 0.6, height: 0.8, speed: 3.2, pause: 1.4 },
+  gull: { radius: 0.8, height: 1.3, speed: 1.4, pause: 2.8 },
 });
 /** How long an angry animal sits on the car it was hit by. Exactly what the children asked for. */
 export const ATTACK_TIME = 1.5;

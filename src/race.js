@@ -35,15 +35,15 @@ const WRECK_IMMUNITY = 1.6;
  */
 const REPAIR_TIME = 12;
 /**
- * What comes out of a crate, and how often. Fourteen kinds; after the fireworks the children asked for an
- * ice-cream gun, a throw of three hay bales and the propeller, and then for the rainbow. Weights must add up to 1,
- * and the rainbow's share comes from the items after the machine gun so that every number up to it still opens
- * the same crate as before.
+ * What comes out of a crate, and how often. Sixteen kinds; after the fireworks the children asked for an
+ * ice-cream gun, a throw of three hay bales and the propeller, then for the rainbow, then for a parachute
+ * and a hang-glider. Weights must add up to 1, and every new share comes from the items after the machine gun so
+ * that every number up to it still opens the same crate as before.
  */
 const ITEM_WEIGHTS = Object.freeze([
   ['boost', 0.18], ['rocket', 0.14], ['shield', 0.11], ['bomb', 0.07], ['machinegun', 0.06],
-  ['jelly', 0.05], ['oil', 0.05], ['rockets3', 0.05], ['fountain', 0.05], ['spin', 0.05],
-  ['gelato', 0.05], ['bales', 0.06], ['propeller', 0.04], ['rainbow', 0.04],
+  ['jelly', 0.04], ['oil', 0.04], ['rockets3', 0.04], ['fountain', 0.04], ['spin', 0.04],
+  ['gelato', 0.05], ['bales', 0.05], ['propeller', 0.04], ['rainbow', 0.04], ['parachute', 0.03], ['glider', 0.03],
 ]);
 export const ITEM_KINDS = Object.freeze(ITEM_WEIGHTS.map(([id]) => id));
 /** Turns one number in [0,1) into a crate's contents. Pure, so the distribution can be tested directly. */
@@ -95,6 +95,20 @@ const PROPELLER_TIME = 7;
 const PROPELLER_GRAVITY = 8.5;
 const PROPELLER_LAUNCH = 1.22;
 const GRAVITY = 22;
+/**
+ * Two flying presents, cousins of the propeller: they too change nothing on the ground and everything off
+ * a ramp. The parachute throws the car much higher, then opens on the way down and lets it drift gently onto the
+ * road. The hang-glider gives a smaller kick and then glides, sinking slowly: the longest flight of the three.
+ * Both are a cap on how fast the car may fall, and with either one running the landing never bounces.
+ */
+const PARACHUTE_TIME = 7;
+const PARACHUTE_LAUNCH = 2.2;
+const PARACHUTE_FALL = 4.2;
+const GLIDER_TIME = 7;
+const GLIDER_LAUNCH = 1.3;
+const GLIDER_FALL = 1.15;
+/** How much harder a launch is with a flying present running; the strongest one counts. */
+const launchBoost = (racer) => Math.max(1, racer.propeller > 0 ? PROPELLER_LAUNCH : 1, racer.parachute > 0 ? PARACHUTE_LAUNCH : 1, racer.glider > 0 ? GLIDER_LAUNCH : 1);
 /** The fountain rains sparks over a stretch of road; whoever drives through it loses grip for a moment. */
 const FOUNTAIN_SPAN = 16;
 // The bomb's fuse, in seconds, and how far down the road its blast reaches.
@@ -180,7 +194,7 @@ export class RaceSimulation {
         finished: false, finishTime: null, rank: i + 1, lap: 1,
         immunity: 0, steering: 0, drift: 0, slipping: 0, drifting: false, _jumpCooldown: 0,
         damage: 0, wrecked: 0, _repairTimer: 0, slowed: 0, _salvo: null, creamed: 0, _scoops: null, _bumped: 0, propeller: 0,
-        _launched: 1, _bounces: 0, squashed: 0, attacked: 0, rainbow: 0, spinning: 0,
+        _launched: 1, _bounces: 0, squashed: 0, attacked: 0, rainbow: 0, spinning: 0, parachute: 0, glider: 0,
         section: null, _sectionExit: 0, _shortcutChoice: { key: '', take: false },
         _verticalVelocity: 0, _airborne: false, _targetLane: i % 2 ? 2.3 : -2.3,
         _thinkTimer: this._random() * 0.6, _useTimer: 2 + this._random() * 2,
@@ -258,7 +272,7 @@ export class RaceSimulation {
     }
     for (const racer of this.racers) {
       if (racer.finished) continue;
-      for (const timer of ['boost', 'shield', 'stun', 'immunity', 'slipping', 'slowed', 'creamed', '_bumped', 'propeller', 'rainbow', 'spinning']) racer[timer] = Math.max(0, racer[timer] - dt);
+      for (const timer of ['boost', 'shield', 'stun', 'immunity', 'slipping', 'slowed', 'creamed', '_bumped', 'propeller', 'rainbow', 'spinning', 'parachute', 'glider']) racer[timer] = Math.max(0, racer[timer] - dt);
       // Flattened by a bale, or with an angry animal on the roof: both end with an event, so the car can pop back
       // up with a boing and the animal can be seen jumping off.
       if (racer.squashed > 0) {
@@ -309,7 +323,7 @@ export class RaceSimulation {
       if (this.expertControls && racer.isPlayer && !racer.section && !pinned) {
         racer._jumpCooldown = Math.max(0, racer._jumpCooldown - dt);
         if (input.jump && !racer._airborne && racer._jumpCooldown === 0) {
-          racer._verticalVelocity = JUMP_SPEED * (racer.propeller > 0 ? PROPELLER_LAUNCH : 1);
+          racer._verticalVelocity = JUMP_SPEED * launchBoost(racer);
           racer._airborne = true;
           racer._launched = 1;
           racer._bounces = 0;
@@ -458,11 +472,14 @@ export class RaceSimulation {
       // With the propeller running the car falls far more slowly, which is the whole of the bonus: same jump,
       // much longer flight.
       racer._verticalVelocity -= (racer.propeller > 0 ? PROPELLER_GRAVITY : GRAVITY) * dt;
+      // The parachute opens and the hang-glider glides: either way the car may only sink so fast.
+      if (racer.parachute > 0) racer._verticalVelocity = Math.max(racer._verticalVelocity, -PARACHUTE_FALL);
+      if (racer.glider > 0) racer._verticalVelocity = Math.max(racer._verticalVelocity, -GLIDER_FALL);
       if (racer.y <= 0) {
         const impact = -racer._verticalVelocity;
         const spring = racer._launched > 1 ? BOUNCE_LAUNCHED : BOUNCE;
         racer.y = 0;
-        if (impact > BOUNCE_FLOOR && racer._bounces < BOUNCES) {
+        if (impact > BOUNCE_FLOOR && racer._bounces < BOUNCES && !(racer.parachute > 0) && !(racer.glider > 0)) {
           // Still enough speed left to come back up: hop, and count it so it cannot bounce for ever.
           racer._bounces += 1;
           racer._verticalVelocity = impact * spring;
@@ -484,7 +501,7 @@ export class RaceSimulation {
         racer.y = ramp.height;
         // `launch` turns an ordinary ramp into a real take-off (the Bernina ski jump). It scales with the car's own
         // speed as well, so the flight lands on the road at every difficulty instead of only at one of them.
-        const launch = (ramp.launch || 1) * (racer.propeller > 0 ? PROPELLER_LAUNCH : 1);
+        const launch = (ramp.launch || 1) * launchBoost(racer);
         racer._verticalVelocity = launch > 1 ? 8.8 * launch * (0.6 + 0.4 * (racer.speed / BASE_SPEED.normal)) : 8.8;
         racer._airborne = true;
         racer._launched = launch;
@@ -538,6 +555,8 @@ export class RaceSimulation {
     racer.item = null;
     if (item === 'boost') racer.boost = 3;
     else if (item === 'propeller') racer.propeller = PROPELLER_TIME;
+    else if (item === 'parachute') racer.parachute = PARACHUTE_TIME;
+    else if (item === 'glider') racer.glider = GLIDER_TIME;
     else if (item === 'rainbow') {
       // Whatever was slowing the car down is shaken off at once: a rainbow car stuck in jelly would be a sad joke.
       racer.rainbow = RAINBOW_TIME;
@@ -1065,6 +1084,11 @@ export class RaceSimulation {
         b.lane = clamp(b.lane - push, -this._maxLane, this._maxLane);
       }
     }
+  }
+
+  /** Progress at the finish line: the results screen estimates from it the time of who is still racing. */
+  get finishDistance() {
+    return this._finishDistance;
   }
 
   _updateRanks() {
