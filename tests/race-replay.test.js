@@ -8,8 +8,8 @@ import { getTrack } from '../src/track.js';
 /**
  * Four seeded races, first recorded on the code as it was before the lean in bends, the steering front wheels, the
  * rear sliding out and the tyre marks (src/lean.js): those are drawing only, and replayed every racer finished in
- * the same place at the same time. Re-recorded once since, on purpose, when the parachute and the hang-glider went
- * into the crates. If a change to the simulation moves them on purpose again, re-record with
+ * the same place at the same time. Re-recorded since, on purpose, when the parachute and the hang-glider went into
+ * the crates and when the parachute became a jump-or-brake gamble. If a change to the simulation moves them on purpose again, re-record with
  * `node scripts/record-race-replay.mjs > tests/fixtures/race-replay.json` (the recorder repeats the loop below).
  */
 const recorded = JSON.parse(readFileSync(new URL('./fixtures/race-replay.json', import.meta.url), 'utf8'));

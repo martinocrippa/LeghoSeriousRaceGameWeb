@@ -2343,8 +2343,8 @@ export class GameRenderer {
     propeller.add(blades);
     propeller.position.y = 1.4;
     propeller.visible = false;
-    // The parachute: a pack on the roof while the bonus waits for a ramp, and in the air a canopy of red, white
-    // and yellow gores on four lines, opening as the car flies.
+    // The parachute: a canopy of red, white and yellow gores on four lines, over the roof when it flies and
+    // trailing behind the tail, like a dragster's, when it brakes. The pack shows for the instant before it opens.
     const parachute = new THREE.Group();
     const pack = mesh(new THREE.BoxGeometry(0.7, 0.4, 0.55), material(0xe5203a), parachute, 0, 1.55, -0.2);
     pack.castShadow = false;
@@ -2728,19 +2728,27 @@ export class GameRenderer {
         // It folds away in the last second instead of blinking out of existence.
         model.propeller.scale.setScalar(Math.min(1, racer.propeller));
       }
-      // The two flying presents. Both come out properly only in the air; on the ground they wait, packed and folded.
+      // The two flying presents. The parachute opens at once, above the car in a jump, behind it on the ground, and a
+      // braking one folds away in its last half second. The hang-glider comes out properly only in the air.
       const flying = racer.y > 0.4;
-      model.parachute.visible = racer.parachute > 0;
+      model.parachute.visible = !!racer.chute;
       if (model.parachute.visible) {
         const { canopy, pack } = model.parachute.userData;
-        model.parachuteOpen = flying ? Math.min(1, (model.parachuteOpen || 0) + step * 3) : 0;
-        canopy.visible = model.parachuteOpen > 0;
+        const braking = racer.chute === 'brake';
+        const target = braking ? Math.min(1, racer.parachute * 2) : 1;
+        model.parachuteOpen = Math.min(target, (model.parachuteOpen || 0) + step * 3);
+        canopy.visible = model.parachuteOpen > 0.05;
         pack.visible = !canopy.visible;
         if (canopy.visible) {
-          canopy.scale.set(model.parachuteOpen, 0.55 * model.parachuteOpen, model.parachuteOpen);
-          canopy.rotation.z = Math.sin(this.clock * 2.4) * 0.06;
+          // A braking one is smaller, so it does not hide the car from the chase camera. Turned on its back the dome
+          // faces the road behind and the lines reach forward to the tail.
+          const size = model.parachuteOpen * (braking ? 0.65 : 1);
+          canopy.scale.set(size, 0.55 * size, size);
+          canopy.position.set(0, braking ? 1.3 : 3.5, braking ? -2.7 : 0);
+          canopy.rotation.x = braking ? -Math.PI / 2 : 0;
+          canopy.rotation.z = Math.sin(this.clock * (braking ? 9 : 2.4)) * (braking ? 0.1 : 0.06);
         }
-      }
+      } else model.parachuteOpen = 0;
       model.glider.visible = racer.glider > 0;
       if (model.glider.visible) {
         model.gliderSpread = THREE.MathUtils.lerp(model.gliderSpread ?? 0.45, flying ? 1 : 0.45, 1 - Math.exp(-step * 6));
