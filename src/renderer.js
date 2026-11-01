@@ -4,7 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createCarModel } from './cars.js';
 import { DEFAULT_TRACK, weatherIndex } from './track.js';
 import { racerPose, sectionAt, sectionFraction } from './sections.js';
-import { critterPose } from './critters.js';
+import { KNOCK_RISE, KNOCK_SLIDE, KNOCK_TIME, livePose } from './critters.js';
 import { SPIN_TIME, STUCK_TIME } from './race.js';
 import { QUALITY_LEVELS } from './quality.js';
 import { PILOT_COLOR_NUMBERS } from './pilots.js';
@@ -1099,14 +1099,20 @@ export class GameRenderer {
       }
       // They walk, so they must never be merged into the static batch.
       group.traverse((child) => { child.userData.dynamic = true; });
+      // Its size, for lying it on its side without sinking it into the road: `rise` is half its height (the body's
+      // middle, roughly), `half` half its width.
+      const box = new THREE.Box3().setFromObject(group);
+      const size = { rise: Math.max(0.2, box.max.y / 2), half: Math.max(0.2, Math.abs(box.min.x), Math.abs(box.max.x)) };
       this.world.add(group);
-      models.set(critter.id, { group, legs, critter, stride: { boar: 14, squirrel: 22, sheep: 9, donkey: 6, rat: 24, gull: 11 }[critter.kind] || 7 });
+      models.set(critter.id, { group, legs, critter, size, stride: { boar: 14, squirrel: 22, sheep: 9, donkey: 6, rat: 24, gull: 11 }[critter.kind] || 7 });
     }
   }
 
   /**
    * Walks every animal to where `time` puts it. During a race that is the race clock, and an animal sitting on a
-   * car is drawn on that car's roof, stamping, until it jumps back down to its walk.
+   * car is drawn on that car's roof, stamping, until it jumps back down to its walk. One bowled over by a shot
+   * barrel-rolls to the verge, lies on its side kicking its legs, then pops back up (see `poseKnockedCritter`).
+   * The race's own copy of the animal is used when there is one: getting back up shifts its walk clock.
    */
   updateCritters(time, race) {
     const models = this.world?.userData.critters;
@@ -1114,7 +1120,8 @@ export class GameRenderer {
     const state = race?.critters ? new Map(race.critters.map((critter) => [critter.id, critter])) : null;
     for (const model of models.values()) {
       const { group, legs, critter } = model;
-      const attack = state?.get(critter.id)?.attack;
+      const live = state?.get(critter.id) || critter;
+      const attack = live.attack;
       const victim = attack ? this.racerModels.get(attack.racerId) : null;
       if (victim) {
         group.position.copy(victim.root.position);
@@ -1123,9 +1130,10 @@ export class GameRenderer {
         for (const part of legs) part.mesh.rotation[part.axis] = Math.sin(this.clock * 24) * 0.8 * part.sway;
         continue;
       }
-      const pose = critterPose(critter, time);
+      const pose = livePose(live, time);
       const frame = this.track.frame(critter.distance);
       worldPoint(this.track, critter.distance, pose.lane, ROAD_Y + 0.04, group.position);
+      if (pose.knocked) { this.poseKnockedCritter(model, live.knock, time, frame); continue; }
       // The lane axis is (dz, -dx), so walking one way or the other is half a turn apart; during the pause the
       // animal swings round to face the way it is about to go.
       const heading = Math.atan2(frame.dz * pose.dir, -frame.dx * pose.dir);
@@ -1133,6 +1141,46 @@ export class GameRenderer {
       const step = pose.walking ? Math.sin(time * model.stride) * 0.35 : 0;
       for (const part of legs) part.mesh.rotation[part.axis] = step * part.sway;
     }
+  }
+
+  /**
+   * A bowled-over animal, cartoon style and never hurt. It swings round to face down the road and barrel-rolls a
+   * turn and a quarter towards the verge (the race slides it there in KNOCK_SLIDE seconds), lies on its side with
+   * its legs kicking in the air, and in the last KNOCK_RISE seconds pops back up with a boing, turning to face the
+   * verge — exactly how its walk takes over again, from the pause on that side, so there is no jump.
+   */
+  poseKnockedCritter(model, knock, time, frame) {
+    const { group, legs, size } = model;
+    const elapsed = Math.max(0, time - knock.at);
+    const turn = (from, to, k) => from + Math.atan2(Math.sin(to - from), Math.cos(to - from)) * k;
+    const walking = Math.atan2(frame.dz * knock.dir, -frame.dx * knock.dir);
+    const along = Math.atan2(frame.dx, frame.dz);
+    const verge = Math.atan2(frame.dz * knock.side, -frame.dx * knock.side);
+    const getUp = KNOCK_TIME - KNOCK_RISE;
+    let roll, yaw, hop = 0, kick = 0;
+    if (elapsed < KNOCK_SLIDE) {
+      const k = elapsed / KNOCK_SLIDE;
+      roll = (1 - (1 - k) * (1 - k)) * Math.PI * 2.5;
+      yaw = turn(walking, along, Math.min(1, elapsed / 0.15));
+      hop = Math.sin(k * Math.PI) * 0.45;
+      kick = 1;
+    } else if (elapsed < getUp) {
+      roll = Math.PI / 2 + Math.sin(elapsed * 9) * 0.06;
+      yaw = along;
+      kick = 1;
+    } else {
+      const k = Math.min(1, (elapsed - getUp) / KNOCK_RISE);
+      roll = (Math.PI / 2) * (1 - easeOutBack(k));
+      // Back on its feet, it shakes the dust off with a little wiggle that has died away by the time it walks.
+      yaw = turn(along, verge, Math.min(1, k * 1.6)) + Math.sin(time * 34) * 0.18 * Math.sin(Math.max(0, k - 0.5) * 2 * Math.PI);
+    }
+    // Rolled about its feet, it would sink into the road: lift it by how far its body now reaches below them.
+    const c = Math.cos(roll), sn = Math.sin(roll);
+    group.position.y += Math.sqrt((size.rise * c) ** 2 + (size.half * sn) ** 2) - size.rise * c + hop;
+    // Rolling about its own forward axis: with +x towards positive lanes, a negative angle tips the top that way.
+    group.rotation.set(0, yaw, -knock.side * roll);
+    const swing = kick ? Math.sin(time * 19) * 0.75 : 0;
+    for (const part of legs) part.mesh.rotation[part.axis] = swing * part.sway;
   }
 
   /** Iron shortcut bridges and loop-the-loops (track.sections): deck, rails and the ironwork that holds them up. */
@@ -1579,6 +1627,15 @@ export class GameRenderer {
         else {
           this.spawnExplosion(position, OBSTACLE_DEBRIS[event.kind] || ['#d8d4c8', '#8d9299'], 1.3);
           this.spawnFlash(position, 0xffb03a, 3.6, 0.32);
+        }
+      } else if (event.type === 'critter-hit' || event.type === 'critter-up') {
+        // An animal bowled over: a puff of dust and a white flash where the shot met it, no fire and no bricks —
+        // nothing breaks. Getting back up gets a small pop of its own, like a prop growing back.
+        const position = worldPoint(this.track, event.distance, event.lane, ROAD_Y + 0.8);
+        if (event.type === 'critter-up') this.spawnFlash(position, 0xfff6d5, 1.8, 0.2);
+        else {
+          this.spawnFlash(position, 0xffffff, 2.6, 0.24);
+          this.spawnExplosion(position, ['#e8e4d8', '#c9bfa8', '#fff6d5'], 0.7);
         }
       } else if (['squashed', 'unsquashed', 'attacked', 'released', 'rainbow-block', 'critter-scared'].includes(event.type)) {
         const model = this.racerModels.get(event.racerId);

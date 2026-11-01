@@ -1,7 +1,7 @@
 import { DEFAULT_TRACK } from './track.js';
 import { nextSeed, shuffled } from './random.js';
 import { OBSTACLE_REGROW } from './obstacles.js';
-import { ATTACK_TIME, CRITTER_CALM, critterPose } from './critters.js';
+import { ATTACK_TIME, CRITTER_CALM, KNOCK_TIME, critterPose, knockSide, knockdown, resumeOffset } from './critters.js';
 
 export const MACHINEGUN_DURATION = 5;
 const MACHINEGUN_INTERVAL = 0.2;
@@ -172,8 +172,9 @@ export class RaceSimulation {
     // rocket blowing it apart, which is only a difference in what the renderer shows.
     this.obstacles = (track.obstacles || []).map((obstacle) => ({ ...obstacle, down: 0, squashed: false }));
     // Animals crossing the road (critters.js). `attack` is the car one is sitting on, `calm` how long it leaves
-    // the next car alone.
-    this.critters = (track.critters || []).map((critter) => ({ ...critter, attack: null, calm: 0 }));
+    // the next car alone; `knocked` counts the seconds a shot keeps it off its feet, and `knock` says where it
+    // tumbles to (see `_knockCritter`). `offset` is copied so that getting back up can shift this race's walk only.
+    this.critters = (track.critters || []).map((critter) => ({ ...critter, attack: null, calm: 0, knocked: 0, knock: null }));
     // Bridges (optional shortcuts) and loops (the road itself); see sections.js.
     this.sections = track.sections || [];
     this._bridgeIds = new Set(this.sections.filter((section) => section.optional).map((section) => section.id));
@@ -276,6 +277,17 @@ export class RaceSimulation {
       critter.calm = Math.max(0, critter.calm - dt);
       // It jumps down when its time is up, or as soon as the car is no longer held (a new car after a wreck).
       if (critter.attack && (this.time >= critter.attack.until || !(this.racers.find((racer) => racer.id === critter.attack.racerId)?.attacked > 0))) critter.attack = null;
+      if (critter.knocked > 0) {
+        critter.knocked = Math.max(0, critter.knocked - dt);
+        if (critter.knocked === 0) {
+          // Back on its feet on the verge: its walk picks up from the pause on that side, so it turns round and
+          // crosses again instead of jumping to wherever the unshifted clock would have put it.
+          const { side } = critter.knock;
+          critter.offset = resumeOffset(critter, side, this.time);
+          critter.knock = null;
+          this._event('critter-up', { critterId: critter.id, kind: critter.kind, side, distance: critter.distance, lane: side * critter.edge });
+        }
+      }
     }
     for (const racer of this.racers) {
       if (racer.finished) continue;
@@ -442,7 +454,7 @@ export class RaceSimulation {
       }
       // An animal on the road: it moves, so the opponent steers for where it is now and leaves it a wide berth.
       for (const critter of this.critters) {
-        if (critter.attack || this._forward(racer.progress, critter.distance) > 26) continue;
+        if (critter.attack || critter.knocked > 0 || this._forward(racer.progress, critter.distance) > 26) continue;
         const { lane } = critterPose(critter, this.time);
         if (Math.abs(lane - racer._targetLane) > critter.radius + 2.2) continue;
         racer._targetLane = clamp(lane > 0 ? lane - critter.radius - 2.4 : lane + critter.radius + 2.4, -wide, wide);
@@ -763,7 +775,8 @@ export class RaceSimulation {
   _hitCritters(racer, previous) {
     if (!this.critters.length || racer.finished || racer.wrecked > 0) return;
     for (const critter of this.critters) {
-      if (critter.attack || critter.calm > 0 || racer.y > critter.height) continue;
+      // A bowled-over animal is busy rolling to the verge: it is not in anybody's way.
+      if (critter.attack || critter.knocked > 0 || critter.calm > 0 || racer.y > critter.height) continue;
       const { lane } = critterPose(critter, this.time);
       const reach = critter.radius + 1.1;
       if (Math.abs(racer.lane - lane) > reach) continue;
@@ -791,6 +804,41 @@ export class RaceSimulation {
       this._event('attacked', { racerId: racer.id, critterId: critter.id, kind: critter.kind });
       return;
     }
+  }
+
+  /**
+   * A weapon caught an animal: it is bowled over and rolls off to the verge (critters.js, `knockSide`), lies there
+   * a moment and gets back up. Cartoon only — no damage, nothing is hurt — and the race stays deterministic because
+   * nothing here draws a random number. `lane` is where the shot or blast came from. Returns whether it was knocked:
+   * one sitting on a car, or already down, is left alone.
+   */
+  _knockCritter(critter, { lane, source, ownerId = null }) {
+    if (critter.attack || critter.knocked > 0) return false;
+    const pose = critterPose(critter, this.time);
+    const side = knockSide(pose.lane, lane, pose.dir);
+    critter.knock = knockdown(critter, pose.lane, side, this.time, pose.dir);
+    critter.knocked = KNOCK_TIME;
+    this._event('critter-hit', { critterId: critter.id, kind: critter.kind, source, ownerId, side, distance: critter.distance, lane: pose.lane });
+    return true;
+  }
+
+  /**
+   * Did this shot reach an animal? The same reach rules as for a prop (`_smashObstacles`): on its lane, below the top
+   * of it, and sitting on it or swept past it this frame. Returns the animal knocked over, or null.
+   */
+  _shootCritters(projectile, previous) {
+    for (const critter of this.critters) {
+      if (critter.attack || critter.knocked > 0) continue;
+      if (projectile.y - PROJECTILE_HEIGHT > critter.height) continue;
+      const { lane } = critterPose(critter, this.time);
+      if (Math.abs(projectile.lane - lane) > critter.radius + (projectile.type === 'bale' ? 1 : 0.5)) continue;
+      const swept = projectile.back
+        ? this._crossed(projectile.distance, previous, critter.distance)
+        : this._crossed(previous, projectile.distance, critter.distance);
+      if (this._close(projectile.distance, critter.distance) > critter.radius + 0.6 && !swept) continue;
+      if (this._knockCritter(critter, { lane: projectile.lane, source: projectile.type, ownerId: projectile.ownerId })) return critter;
+    }
+    return null;
   }
 
   /** Sparks under the wheels: the car keeps going but slides along slowly for a moment. A shield ignores them. */
@@ -965,6 +1013,9 @@ export class RaceSimulation {
         continue;
       }
       if (smash && projectile.type !== 'bale') { projectile.ttl = 0; continue; }
+      // An animal in the way is bowled over to the verge. The shot is spent on it as on a car; a bale rolls on, as
+      // it does over a car. They used to fly straight through ("le armi non fanno nulla agli animali").
+      if (this._shootCritters(projectile, previous) && projectile.type !== 'bale') { projectile.ttl = 0; continue; }
       for (const racer of this.racers) {
         const bullet = projectile.type === 'bullet';
         const width = bullet ? 1.1 : projectile.type === 'bale' ? 2.1 : 1.8;
@@ -1025,6 +1076,12 @@ export class RaceSimulation {
             this._breakObstacle(obstacle, { source: 'bomb', ownerId: hazard.ownerId });
           }
         }
+        for (const critter of this.critters) {
+          const { lane } = critterPose(critter, this.time);
+          if (this._close(critter.distance, hazard.distance) < BOMB_BLAST && Math.abs(lane - hazard.lane) < 3.4 + critter.radius) {
+            this._knockCritter(critter, { lane: hazard.lane, source: 'bomb', ownerId: hazard.ownerId });
+          }
+        }
         hazard.ttl = 0;
         this._event('pop', { distance: hazard.distance, lane: hazard.lane, source: 'bomb' });
         continue;
@@ -1046,6 +1103,25 @@ export class RaceSimulation {
           else this._hit(racer, 'bomb', hazard.ownerId);
           // Oil stays on the road: the next car slides on it too, until it dries.
           if (hazard.type !== 'oil') hazard.ttl = 0;
+          this._event('pop', { distance: hazard.distance, lane: hazard.lane, source: hazard.type });
+          break;
+        }
+      }
+      // An animal that wanders into the oil, the jelly or the sparks goes over too and rolls off to the verge. Jelly
+      // is spent on it as on a car, oil and sparks stay; a bomb waits for its fuse, and its blast does the rest.
+      if (hazard.ttl <= 0 || hazard.type === 'bomb') continue;
+      for (const critter of this.critters) {
+        if (critter.attack || critter.knocked > 0) continue;
+        const { lane } = critterPose(critter, this.time);
+        // Only on the tarmac: one resting on the verge is out of the way, and the sparks must not bowl it over
+        // again the moment it gets back up.
+        if (Math.abs(lane) > this._maxLane + 1.1) continue;
+        const reached = hazard.type === 'fountain'
+          ? this._close(critter.distance, hazard.distance) < hazard.span / 2 && Math.abs(lane - hazard.lane) < 3.2
+          : this._close(critter.distance, hazard.distance) < 2.3 && Math.abs(lane - hazard.lane) < 1.2 + critter.radius;
+        if (!reached || !this._knockCritter(critter, { lane: hazard.lane, source: hazard.type, ownerId: hazard.ownerId })) continue;
+        if (hazard.type === 'jelly') {
+          hazard.ttl = 0;
           this._event('pop', { distance: hazard.distance, lane: hazard.lane, source: hazard.type });
           break;
         }

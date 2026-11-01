@@ -853,6 +853,8 @@ window.addEventListener('gamepadconnected',()=>toast('Gamepad collegato! Croce o
 const itemInfo={boost:['⚡','Super turbo'],rocket:['🚀','Razzo · ↓ per spararlo dietro'],rockets3:['🚀','Tre razzi · ↓ per spararli dietro'],bomb:['💣','Bomba'],shield:['🫧','Scudo'],machinegun:['🍬','Spara caramelle · 5 s'],jelly:['🟢','Gelatina'],oil:['🛢️','Macchia d’olio'],fountain:['🎆','Fontana di scintille'],spin:['🎇','Girandola'],gelato:['🍦','Spara gelato'],bales:['🌾','Tre balle di fieno'],propeller:['🚁','Elica · salti lunghissimi per 7 s'],rainbow:['🌈','Arcobaleno · chi tocchi esplode'],parachute:['🪂','Paracadute · aprilo in un salto: voli 5 s (a terra frena!)'],glider:['🪁','Deltaplano · planate lunghissime per 7 s']};
 /** Who climbed on the car: the notice names the animal, the way the children would. */
 const critterNotice={turtle:'La tartaruga si è arrabbiata!',sheep:'La pecora si è arrabbiata!',boar:'Il cinghiale si è arrabbiato!',donkey:'L’asino si è arrabbiato!',squirrel:'Lo scoiattolo si è arrabbiato!'};
+/** An animal bowled over by your shot: it rolls off to the side and gets back up, and the notice says so kindly. */
+const critterHitNotice={turtle:'Colpita! La tartaruga rotola via!',sheep:'Colpita! La pecora rotola via!',boar:'Colpito! Il cinghiale rotola via!',donkey:'Colpito! L’asino rotola via!',squirrel:'Colpito! Lo scoiattolo rotola via!',rat:'Colpito! Il topo rotola via!',gull:'Colpito! Il gabbiano rotola via!'};
 let lastCountdown='',noticeTimer=0,noticeShown=false,hudRefs=[],hudHintFaded=false;
 const noticeEl=$('#race-notice'),countdownEl=$('#countdown'),keyHintEl=$('#race-key-hint');
 /** HUD elements are looked up once per race and written only when a value changes: the race loop stays off the layout engine. */
@@ -918,6 +920,8 @@ function updateHUD(dt){
     // An animal on the roof: a growl, and the notice says which one.
     if(ev.type==='attacked'){playTone(95,.45,'sawtooth',human?.08:.03);if(human){playTone(150,.3,'square',.05);noticeEl.textContent=critterNotice[ev.kind]||'Un animale ti è saltato addosso!';noticeTimer=1.8;audio.duck();}}
     if(ev.type==='released'&&human)playTone(560,.1,'square',.04);
+    // A shot bowls an animal over: a cartoon boing going down, and for whoever fired it a notice that it rolled away.
+    if(ev.type==='critter-hit'){const owner=race.racers.findIndex(r=>r.id===ev.ownerId),mine=owner>=0&&owner<players;playTone(520,.1,'triangle',mine?.07:.03);setTimeout(()=>playTone(300,.2,'triangle',mine?.06:.025),90);if(mine){noticeEl.textContent=critterHitNotice[ev.kind]||'Colpito! L’animale rotola via!';noticeTimer=1.6;}}
     if(ev.type==='use-item'&&ev.item==='rainbow'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.12,'triangle',human?.06:.025),i*70));if(human){noticeEl.textContent='ARCOBALENO! Chi tocchi esplode!';noticeTimer=2;}}
     if(ev.type==='rainbow-block'&&human)playTone(1180,.12,'sine',.05);
     // A desk, a cone or a bin going up: a bang, quieter when it happened far from the children.
