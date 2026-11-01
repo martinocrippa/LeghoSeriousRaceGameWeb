@@ -748,6 +748,11 @@ function exitRace(){
   $('#viewport').classList.remove('in-race');renderer.setMode(1);
   showScreen('track');updateSelection();
 }
+/** Where the pilots finished, in words: the line under the results' title. */
+function placeSummary(humans,total){
+  if(humans.length===1)return humans[0].rank===1?'1° posto: hai vinto!':`Al traguardo: ${humans[0].rank}° posto su ${total}.`;
+  return `${humans.map(r=>`Pilota ${r.playerIndex+1}: ${r.rank}° posto`).join(' · ')} su ${total}.`;
+}
 function showResults(){
   paused=true;
   const humans=race.racers.slice(0,players),ranked=[...race.racers].sort((a,b)=>a.rank-b.rank);
@@ -771,11 +776,11 @@ function showResults(){
   if(cup){
     cup=recordRaceResult(cup,race.racers,times);
     const finished=isCupFinished(cup),standings=sortStandings(cup.standings);
-    openModal(`<span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">COPPA · GARA ${cup.index}/${cup.trackIds.length} · ${escape(race.track.name.toUpperCase())}</span><h2 id="modal-title">${title}</h2><p>${finished?'Tutte le piste sono state corse!':'I punti si sommano: il campionato continua.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference,formatRaceTime(reference))}<b>+${pointsForRank(r.rank)}</b></div>`).join('')}</div><span class="eyebrow">CLASSIFICA · DISTACCHI SUL TEMPO TOTALE</span>${standingsHTML(standings)}${finished?`<button id="cup-podium" class="start-button">Vai al podio! ${icon('trophy',21)}</button>`:`<button id="next-race" class="start-button">Prossima pista: ${escape(getTrack(cup.trackIds[cup.index]).name)} ${icon('arrow',21)}</button>`}<button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
+    openModal(`<span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">COPPA · GARA ${cup.index}/${cup.trackIds.length} · ${escape(race.track.name.toUpperCase())}</span><h2 id="modal-title">${title}</h2><p>${placeSummary(humans,race.racers.length)} ${finished?'Tutte le piste sono state corse!':'I punti si sommano: il campionato continua.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference,formatRaceTime(reference))}<b>+${pointsForRank(r.rank)}</b></div>`).join('')}</div><span class="eyebrow">CLASSIFICA · DISTACCHI SUL TEMPO TOTALE</span>${standingsHTML(standings)}${finished?`<button id="cup-podium" class="start-button">Vai al podio! ${icon('trophy',21)}</button>`:`<button id="next-race" class="start-button">Prossima pista: ${escape(getTrack(cup.trackIds[cup.index]).name)} ${icon('arrow',21)}</button>`}<button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
     $('#next-race')?.addEventListener('click',startRace);$('#cup-podium')?.addEventListener('click',showCupPodium);$('#results-garage').addEventListener('click',exitRace);
     return;
   }
-  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">BANDIERA A SCACCHI!</span><h2 id="modal-title">${title}</h2><p>${players===2?'Due piloti, il doppio della sfida.':'Ogni giro è una battaglia.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference)}<b>${formatRaceTime(times.get(r.id))}</b></div>`).join('')}</div><button id="play-again" class="start-button">Un’altra corsa! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Cambia pista</button>`,'results-modal');
+  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">BANDIERA A SCACCHI!</span><h2 id="modal-title">${title}</h2><p>${placeSummary(humans,race.racers.length)} ${players===2?'Due piloti, il doppio della sfida.':'Ogni giro è una battaglia.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference)}<b>${formatRaceTime(times.get(r.id))}</b></div>`).join('')}</div><button id="play-again" class="start-button">Un’altra corsa! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Cambia pista</button>`,'results-modal');
   $('#play-again').addEventListener('click',startRace);$('#results-garage').addEventListener('click',exitRace);
 }
 /** Cup standings: points decide the order, the gap is on the total time, from Pilot 1, whose row shows that total. */
@@ -920,6 +925,8 @@ function updateHUD(dt){
     if((ev.type==='lap'||ev.type==='finish')&&human){
       const t=lapTiming[index];const lapTime=(ev.time??race.time)-t.start;t.last=lapTime;t.best=t.best===null?lapTime:Math.min(t.best,lapTime);t.start=ev.time??race.time;
       if(ev.type==='lap'){noticeEl.textContent=mode==='time'?`Giro in ${formatLap(lapTime)}!`:'Un altro giro! Spingi!';noticeTimer=2.5;playTone(670,.15);}
+      // Over the line: the place, big, before the results come up (in the time trial, the time).
+      if(ev.type==='finish'){const r=race.racers[index];noticeEl.textContent=mode==='time'?`Traguardo in ${formatLap(r.finishTime)}!`:players===2?`PILOTA ${index+1}: ${r.rank}° POSTO!`:r.rank===1?'1° POSTO: HAI VINTO!':`${r.rank}° POSTO SU ${race.racers.length}!`;noticeTimer=3;}
     }
   }
   noticeTimer=Math.max(0,noticeTimer-dt);

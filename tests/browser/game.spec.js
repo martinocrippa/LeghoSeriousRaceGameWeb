@@ -82,6 +82,9 @@ test('arcade flow: start screen, garage, editing a saved car, two independent dr
   await page.locator('#resume-race').click();
   await page.evaluate(()=>{const race=window.__BRICK_RACERS__.race;for(let i=0;i<900&&race.state!=='finished';i++)race.update(.25,[{useItem:i%2===0},{useItem:i%2===0}]);});
   await expect(page.locator('#play-again')).toBeVisible();
+  // Where each pilot finished: under the results' title and, a moment before, big over the finish line.
+  await expect(page.locator('#modal p').first()).toHaveText(/^Pilota 1: \d+° posto · Pilota 2: \d+° posto su 6\. /);
+  await expect(page.locator('#race-notice')).toHaveText(/^PILOTA [12]: \d+° POSTO!$/);
   // Gaps are measured from Pilot 1: its row has none, every other row (Pilot 2's too) has one, signed, decimal comma.
   await expect(page.locator('.result-row .gap-own')).toHaveCount(1);
   const gaps=await page.locator('.result-row .gap:not(.gap-own)').allTextContents();
@@ -148,6 +151,7 @@ test('a cup runs three races on different circuits with cumulative standings and
     await expect.poll(()=>page.evaluate(()=>window.__BRICK_RACERS__.race.state)).toBe('racing');
     await raceUntilFinished();
     await expect(page.locator('.standings .result-row')).toHaveCount(6);
+    await expect(page.locator('#modal p').first()).toHaveText(/^(Al traguardo: [2-6]° posto su 6\.|1° posto: hai vinto!) /);
     // The standings gap is on the total time: Pilot 1's row shows that total, the others their distance from it.
     await expect(page.locator('.standings .gap-own')).toHaveText(/^~?\d+:\d\d,\d$/);
     await expect(page.locator('.standings .gap:not(.gap-own)')).toHaveCount(5);
