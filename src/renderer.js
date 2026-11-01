@@ -2921,7 +2921,8 @@ export class GameRenderer {
       this.renderer.setScissor(left, 0, right - left, this.height);
       this.updateWind(player, camera, racer, step);
       this.renderer.render(this.scene, camera);
-      // The mirror re-renders the world into a small texture: lighter profiles refresh it every other frame, one player at a time.
+      // The mirror re-renders the world into a small texture: lighter profiles refresh it every second or fourth frame,
+      // one player at a time, and redraw the last image in between.
       const { mirrorEvery } = this.quality;
       if (mirrorEvery > 0) this.renderMirror(racer, left, right, (this.frame + player) % mirrorEvery === 0);
       camera.position.copy(restPosition);

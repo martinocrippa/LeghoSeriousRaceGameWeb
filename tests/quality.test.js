@@ -11,7 +11,9 @@ test('quality levels get lighter in order: pixel ratio, shadow map and dust neve
     assert.ok(lighter.shadowMap <= heavier.shadowMap);
     assert.ok(lighter.dust <= heavier.dust);
     assert.ok(lighter.skids <= heavier.skids && lighter.skids > 0);
-    assert.ok(lighter.mirrorEvery === 0 || heavier.mirrorEvery === 0 || lighter.mirrorEvery >= heavier.mirrorEvery);
+    // The mirror never goes: a lighter profile only refreshes it less often. It used to be switched off on the light
+    // profile, and the automatic step down in a heavy race (Roma, at night) made it vanish in mid-race.
+    assert.ok(lighter.mirrorEvery > 0 && lighter.mirrorEvery >= heavier.mirrorEvery);
   }
   assert.equal(lowerQuality('high'), 'medium');
   assert.equal(lowerQuality('medium'), 'low');
