@@ -382,7 +382,9 @@ export function build(kit, scene, track, layout) {
     const height = 9 + Math.floor(random() * 3) * 2.5;
     box(g, 14, height, 10, colours[built % colours.length]);
     box(g, 14.6, 0.8, 10.6, TERRACOTTA, 0, height + 0.4, 0);
-    kit.windows(g, 14, height, 5.05, Math.floor(height / 3));
+    // The windows start 1.8 m up and go every 2.1 m, all under the roof (the third argument is the first row's
+    // height, not the building's: with the building's they floated above the roof).
+    kit.windows(g, 14, 1.8, 5.05, Math.floor((height - 1.8) / 2.1));
     box(g, 2.2, 3, 0.2, 0x5a3a24, 0, 1.5, 5.1);
     built += 1;
   }
