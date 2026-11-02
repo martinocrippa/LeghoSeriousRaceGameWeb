@@ -29,7 +29,7 @@ test('using any bonus changes the race at once, and none of them is silently dro
     const sim = ready();
     const [player] = sim.racers;
     player.item = item;
-    const before = { projectiles: sim.projectiles.length, hazards: sim.hazards.length, boost: player.boost, shield: player.shield, gun: player.machinegun, propeller: player.propeller, rainbow: player.rainbow, parachute: player.parachute, glider: player.glider };
+    const before = { projectiles: sim.projectiles.length, hazards: sim.hazards.length, boost: player.boost, shield: player.shield, gun: player.machinegun, propeller: player.propeller, rainbow: player.rainbow, parachute: player.parachute, glider: player.glider, storm: sim.racers[1].storm };
     sim.update(1 / 60, [{ steer: 0, useItem: true }, { steer: 0 }]);
     assert.equal(player.item, null, `${item}: la cassa si svuota`);
     const changed = sim.projectiles.length > before.projectiles
@@ -39,6 +39,7 @@ test('using any bonus changes the race at once, and none of them is silently dro
       || player.propeller > before.propeller
       || player.parachute > before.parachute
       || player.glider > before.glider
+      || sim.racers[1].storm > before.storm
       || player.rainbow > before.rainbow
       || player.machinegun > before.gun;
     assert.ok(changed, `${item}: usarlo non ha prodotto niente`);
@@ -236,4 +237,27 @@ test('the parachute does not fly through the bridges of Rome: under a deck the c
   }
   assert.ok(under > 10, 'passa davvero sotto il ponte');
   assert.ok(after > 4, `dopo il ponte risale: ${after.toFixed(1)} m`);
+});
+
+test('the storm cloud slows every other car at once for five seconds; a shield soaks it up', async () => {
+  const { STORM_TIME, pickItem } = await import('../src/race.js');
+  const sim = new RaceSimulation({ players: 1, opponents: 3, seed: 9, difficulty: 'normal' });
+  sim.state = 'racing'; sim.countdown = 0;
+  sim.boxes = []; sim.ramps = []; sim.boosts = []; sim.obstacles = []; sim.critters = [];
+  sim.racers.forEach((racer, i) => { racer.progress = 200 + i * 15; racer.lane = (i % 3 - 1) * 3; racer.speed = 24; });
+  const [player, shielded, ...others] = sim.racers;
+  shielded.shield = 6;
+  const before = others.map((racer) => racer.speed);
+  player.item = 'storm';
+  sim.update(1 / 60, [{ steer: 0, useItem: true }]);
+  assert.ok(others.every((racer, i) => racer.storm > 0 && racer.speed < before[i] * 0.7), 'tutti gli altri rallentano di colpo');
+  assert.equal(player.storm, 0, 'chi la usa no');
+  assert.ok(shielded.storm === 0 && shielded.shield === 0, 'lo scudo la assorbe');
+  run(sim, 1, [{ steer: 0 }]);
+  assert.ok(others.every((racer) => racer.speed < player.speed), 'sotto il temporale si va più piano');
+  run(sim, STORM_TIME, [{ steer: 0 }]);
+  assert.ok(others.every((racer) => racer.storm === 0), 'dopo cinque secondi è finito');
+  // Super rare: half a percent of the crates, at the very end of the table.
+  assert.equal(pickItem(0.996), 'storm');
+  assert.equal(pickItem(0.994), 'glider');
 });

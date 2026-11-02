@@ -11,7 +11,8 @@ import { getTrack } from '../src/track.js';
  * the same place at the same time. Re-recorded since, on purpose, when the parachute and the hang-glider went into
  * the crates, when the parachute became a jump-or-brake gamble, and when weapons began to bowl the animals over (only
  * the Crete race moves: at 35.7 s an opponent's rocket is spent on a sheep instead of flying on), and when a shot
- * began to reach an animal as far to the side as the car does (Crete again). If a change to the
+ * began to reach an animal as far to the side as the car does (Crete again), and when the storm cloud took half a
+ * percent of the crates from the hang-glider. If a change to the
  * simulation moves them on purpose again, re-record with
  * `node scripts/record-race-replay.mjs > tests/fixtures/race-replay.json` (the recorder repeats the loop below).
  */

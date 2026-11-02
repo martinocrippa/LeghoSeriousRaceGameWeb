@@ -5,7 +5,7 @@ import { createCarModel } from './cars.js';
 import { DEFAULT_TRACK, weatherIndex } from './track.js';
 import { racerPose, sectionAt, sectionFraction } from './sections.js';
 import { KNOCK_RISE, KNOCK_SLIDE, KNOCK_TIME, livePose } from './critters.js';
-import { SPIN_TIME, STUCK_TIME } from './race.js';
+import { SPIN_TIME, STORM_TIME, STUCK_TIME } from './race.js';
 import { QUALITY_LEVELS } from './quality.js';
 import { PILOT_COLOR_NUMBERS } from './pilots.js';
 import { seeded } from './random.js';
@@ -2385,6 +2385,28 @@ export class GameRenderer {
     }
     cream.visible = false;
     root.add(cream);
+    // The storm cloud: a dark little cloud over the roof, rain under it and now and then a lightning bolt.
+    const storm = new THREE.Group();
+    const cloudMat = material(0x4a5160, { roughness: 1 });
+    for (const [x, y, z, r] of [[0, 4.3, 0, 1], [-0.95, 4.05, 0.1, 0.72], [0.95, 4.05, -0.1, 0.75], [0.35, 4.6, 0.35, 0.7], [-0.4, 4.5, -0.35, 0.65]]) {
+      mesh(new THREE.SphereGeometry(r, 9, 7), cloudMat, storm, x, y, z).castShadow = false;
+    }
+    const rainMat = material(0x9fd3ff, { transparent: true, opacity: 0.7, roughness: 0.3 });
+    const drops = [];
+    for (let i = 0; i < 10; i += 1) {
+      const drop = mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), rainMat, storm, ((i * 7) % 10) / 10 * 2.2 - 1.1, 3.4, ((i * 3) % 10) / 10 * 1.6 - 0.8);
+      drop.castShadow = false;
+      drop.userData.phase = i / 10;
+      drops.push(drop);
+    }
+    const bolt = new THREE.Group();
+    const boltMat = new THREE.MeshStandardMaterial({ color: 0xffe94a, emissive: 0xffe94a, emissiveIntensity: 1.2 });
+    for (const [x, y, tilt] of [[0.1, 3.45, 0.5], [-0.1, 2.75, -0.5], [0.12, 2.05, 0.5]]) mesh(new THREE.BoxGeometry(0.16, 0.8, 0.1), boltMat, bolt, x, y, 0).rotation.z = tilt;
+    bolt.children.forEach((part) => { part.castShadow = false; });
+    storm.add(bolt);
+    storm.userData = { drops, bolt };
+    storm.visible = false;
+    root.add(storm);
     // The propeller: a mast and two blades that pop up over the roof while the bonus runs, so a child can see
     // at a glance who is about to fly off the next ramp.
     const propeller = new THREE.Group();
@@ -2494,7 +2516,7 @@ export class GameRenderer {
       marker.castShadow = false;
     }
     this.scene.add(root);
-    const model = { root, car, shield, jelly, cream, propeller, parachute, glider, trail, dust, marker, spec: racer.spec, previousLane: racer.lane, baseScale: car.scale.clone() };
+    const model = { root, car, shield, jelly, cream, storm, propeller, parachute, glider, trail, dust, marker, spec: racer.spec, previousLane: racer.lane, baseScale: car.scale.clone() };
     this.racerModels.set(racer.id, model);
     return model;
   }
@@ -2812,6 +2834,17 @@ export class GameRenderer {
         model.glider.scale.set(model.gliderSpread, 1, 0.7 + model.gliderSpread * 0.3);
         // In the air it banks with the bends, like the bikes: into the turn.
         model.glider.rotation.z = flying ? -steering * 1.6 : 0;
+      }
+      model.storm.visible = racer.storm > 0;
+      if (model.storm.visible) {
+        // It blows in over the first quarter second, bobs, rains, and flashes a bolt about once a second.
+        const { drops, bolt } = model.storm.userData;
+        const grow = Math.min(1, (STORM_TIME - racer.storm) * 4, racer.storm * 2);
+        model.storm.scale.setScalar(Math.max(0.05, grow));
+        model.storm.position.y = Math.sin(this.clock * 2.2) * 0.12;
+        for (const drop of drops) drop.position.y = 3.6 - ((this.clock * 2.6 + drop.userData.phase) % 1) * 3.2;
+        const flash = (this.clock * 1.1 + racer.storm * 0.37) % 1;
+        bolt.visible = flash < 0.09;
       }
       model.cream.visible = racer.creamed > 0;
       if (model.cream.visible) model.cream.scale.setScalar(0.8 + Math.min(1, racer.creamed / 2.6) * 0.35);

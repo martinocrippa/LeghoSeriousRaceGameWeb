@@ -110,47 +110,47 @@
     "seed": 7,
     "players": 1,
     "car": "acrobata",
-    "time": 104.266667,
+    "time": 103.583333,
     "racers": [
       {
         "id": "p1",
         "rank": 5,
         "finished": true,
-        "finishTime": 104.265834,
+        "finishTime": 103.577631,
         "progress": 2360,
-        "lane": -0.151754
+        "lane": -5.383278
       },
       {
         "id": "ai1",
         "rank": 1,
         "finished": true,
-        "finishTime": 92.040394,
+        "finishTime": 94.903157,
         "progress": 2360,
-        "lane": 1.309097
+        "lane": 1.599633
       },
       {
         "id": "ai2",
         "rank": 4,
         "finished": true,
-        "finishTime": 103.344002,
+        "finishTime": 102.791382,
         "progress": 2360,
-        "lane": 0.187346
+        "lane": 0.079644
       },
       {
         "id": "ai3",
         "rank": 2,
         "finished": true,
-        "finishTime": 98.110248,
+        "finishTime": 100.672683,
         "progress": 2360,
-        "lane": 4.183571
+        "lane": 3.788395
       },
       {
         "id": "ai4",
         "rank": 3,
         "finished": true,
-        "finishTime": 101.484323,
+        "finishTime": 101.928663,
         "progress": 2360,
-        "lane": 3.897298
+        "lane": 4.031648
       }
     ]
   },
@@ -159,55 +159,55 @@
     "seed": 2026,
     "players": 2,
     "car": "maggiolino",
-    "time": 94.516667,
+    "time": 94.5,
     "racers": [
       {
         "id": "p1",
-        "rank": 6,
+        "rank": 5,
         "finished": true,
-        "finishTime": 94.500419,
+        "finishTime": 93.3713,
         "progress": 2100,
-        "lane": 4.835821
+        "lane": 0.704215
       },
       {
         "id": "p2",
-        "rank": 5,
+        "rank": 6,
         "finished": true,
-        "finishTime": 91.198618,
+        "finishTime": 94.496244,
         "progress": 2100,
-        "lane": 4.578667
+        "lane": 2.573234
       },
       {
         "id": "ai1",
         "rank": 3,
         "finished": true,
-        "finishTime": 90.239041,
+        "finishTime": 89.599404,
         "progress": 2100,
-        "lane": 0.396001
+        "lane": 2.246866
       },
       {
         "id": "ai2",
-        "rank": 2,
+        "rank": 4,
         "finished": true,
-        "finishTime": 86.859951,
+        "finishTime": 91.666036,
         "progress": 2100,
-        "lane": -2.92875
+        "lane": -1.853318
       },
       {
         "id": "ai3",
         "rank": 1,
         "finished": true,
-        "finishTime": 85.61943,
+        "finishTime": 86.49802,
         "progress": 2100,
-        "lane": -2.640418
+        "lane": -3.196575
       },
       {
         "id": "ai4",
-        "rank": 4,
+        "rank": 2,
         "finished": true,
-        "finishTime": 90.272545,
+        "finishTime": 87.719409,
         "progress": 2100,
-        "lane": 2.960575
+        "lane": -3.2
       }
     ]
   }

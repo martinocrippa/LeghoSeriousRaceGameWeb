@@ -10,8 +10,8 @@ function ready() {
   return sim;
 }
 
-test('the crate table covers exactly the sixteen kinds and every number between 0 and 1', () => {
-  assert.deepEqual([...ITEM_KINDS], ['boost', 'rocket', 'shield', 'bomb', 'machinegun', 'jelly', 'oil', 'rockets3', 'fountain', 'spin', 'gelato', 'bales', 'propeller', 'rainbow', 'parachute', 'glider']);
+test('the crate table covers exactly the seventeen kinds and every number between 0 and 1', () => {
+  assert.deepEqual([...ITEM_KINDS], ['boost', 'rocket', 'shield', 'bomb', 'machinegun', 'jelly', 'oil', 'rockets3', 'fountain', 'spin', 'gelato', 'bales', 'propeller', 'rainbow', 'parachute', 'glider', 'storm']);
   // The first five keep their numbers: a seed that opened a turbo, a rocket… before still opens the same crate.
   assert.equal(pickItem(0.17), 'boost');
   assert.equal(pickItem(0.55), 'machinegun');

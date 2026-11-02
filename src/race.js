@@ -35,15 +35,17 @@ const WRECK_IMMUNITY = 1.6;
  */
 const REPAIR_TIME = 12;
 /**
- * What comes out of a crate, and how often. Sixteen kinds; after the fireworks the children asked for an
+ * What comes out of a crate, and how often. Seventeen kinds; after the fireworks the children asked for an
  * ice-cream gun, a throw of three hay bales and the propeller, then for the rainbow, then for a parachute
  * and a hang-glider. Weights must add up to 1, and every new share comes from the items after the machine gun so
- * that every number up to it still opens the same crate as before.
+ * that every number up to it still opens the same crate as before. The storm cloud is the rarest: one crate
+ * in two hundred.
  */
 const ITEM_WEIGHTS = Object.freeze([
   ['boost', 0.18], ['rocket', 0.14], ['shield', 0.11], ['bomb', 0.07], ['machinegun', 0.06],
   ['jelly', 0.04], ['oil', 0.04], ['rockets3', 0.04], ['fountain', 0.04], ['spin', 0.04],
-  ['gelato', 0.05], ['bales', 0.05], ['propeller', 0.04], ['rainbow', 0.04], ['parachute', 0.03], ['glider', 0.03],
+  ['gelato', 0.05], ['bales', 0.05], ['propeller', 0.04], ['rainbow', 0.04], ['parachute', 0.03], ['glider', 0.025],
+  ['storm', 0.005],
 ]);
 export const ITEM_KINDS = Object.freeze(ITEM_WEIGHTS.map(([id]) => id));
 /** Turns one number in [0,1) into a crate's contents. Pure, so the distribution can be tested directly. */
@@ -131,6 +133,14 @@ const BOMB_FUSE = 3.2, BOMB_BLAST = 7;
 const SLOW_TIME = 1.1;
 const SLOW_SPEED = 0.72;
 /**
+ * The storm cloud, the rarest present of all (one crate in two hundred): opened, it puts a little thundercloud over
+ * every other car, and for STORM_TIME seconds they all go slower, braked hard at once by the downpour. A shield
+ * soaks it up like any hit; a rainbow car shrugs it off.
+ */
+export const STORM_TIME = 5;
+const STORM_SPEED = 0.55;
+const STORM_BRAKE = 0.6;
+/**
  * Jelly glues the car for half a second: the children found two seconds a punishment rather than a joke. Oil always
  * takes the steering away for a moment; one time in two it also spins the car right round — nose, tail, nose — and
  * costs it half its speed (`racer.spinning`, which the renderer turns into a full turn on the spot).
@@ -210,7 +220,7 @@ export class RaceSimulation {
         finished: false, finishTime: null, rank: i + 1, lap: 1,
         immunity: 0, steering: 0, drift: 0, slipping: 0, drifting: false, _jumpCooldown: 0,
         damage: 0, wrecked: 0, _repairTimer: 0, slowed: 0, _salvo: null, creamed: 0, _scoops: null, _bumped: 0, propeller: 0,
-        _launched: 1, _bounces: 0, squashed: 0, attacked: 0, rainbow: 0, spinning: 0, parachute: 0, chute: null, glider: 0,
+        _launched: 1, _bounces: 0, squashed: 0, attacked: 0, rainbow: 0, spinning: 0, parachute: 0, chute: null, glider: 0, storm: 0,
         section: null, _sectionExit: 0, _shortcutChoice: { key: '', take: false },
         _verticalVelocity: 0, _airborne: false, _targetLane: i % 2 ? 2.3 : -2.3,
         _thinkTimer: this._random() * 0.6, _useTimer: 2 + this._random() * 2,
@@ -299,7 +309,7 @@ export class RaceSimulation {
     }
     for (const racer of this.racers) {
       if (racer.finished) continue;
-      for (const timer of ['boost', 'shield', 'stun', 'immunity', 'slipping', 'slowed', 'creamed', '_bumped', 'propeller', 'rainbow', 'spinning', 'parachute', 'glider']) racer[timer] = Math.max(0, racer[timer] - dt);
+      for (const timer of ['boost', 'shield', 'stun', 'immunity', 'slipping', 'slowed', 'creamed', '_bumped', 'propeller', 'rainbow', 'spinning', 'parachute', 'glider', 'storm']) racer[timer] = Math.max(0, racer[timer] - dt);
       if (racer.chute === 'brake' && racer.parachute === 0) racer.chute = null;
       // Flattened by a bale, or with an angry animal on the roof: both end with an event, so the car can pop back
       // up with a boing and the animal can be seen jumping off.
@@ -384,6 +394,7 @@ export class RaceSimulation {
       if (Math.abs(racer.lane) > this._maxLane - 0.05 && Math.sign(steer) === Math.sign(racer.lane)) targetSpeed *= 0.88;
       if (racer.drifting) targetSpeed *= DRIFT_SPEED;
       if (racer.slowed > 0) targetSpeed *= SLOW_SPEED;
+      if (racer.storm > 0) targetSpeed *= STORM_SPEED;
       if (racer.spinning > 0) targetSpeed *= 0.55;
       if (racer.creamed > 0) targetSpeed *= CREAM_SPEED;
       if (racer.chute === 'fly' && racer.parachute > 0) targetSpeed *= PARACHUTE_SPEED;
@@ -610,6 +621,7 @@ export class RaceSimulation {
       if (racer._airborne) { racer._verticalVelocity = Math.max(racer._verticalVelocity, PARACHUTE_LIFT); racer._bounces = 0; }
     }
     else if (item === 'glider') racer.glider = GLIDER_TIME;
+    else if (item === 'storm') this._storm(racer);
     else if (item === 'rainbow') {
       // Whatever was slowing the car down is shaken off at once: a rainbow car stuck in jelly would be a sad joke.
       racer.rainbow = RAINBOW_TIME;
@@ -857,6 +869,24 @@ export class RaceSimulation {
       if (this._knockCritter(critter, { lane: projectile.lane, source: projectile.type, ownerId: projectile.ownerId })) return critter;
     }
     return null;
+  }
+
+  /** The storm cloud: every other car still racing is caught under a downpour (see STORM_TIME). */
+  _storm(owner) {
+    for (const racer of this.racers) {
+      if (racer === owner || racer.finished || racer.wrecked > 0) continue;
+      if (racer.rainbow > 0) { this._event('rainbow-block', { racerId: racer.id, source: 'storm', ownerId: owner.id }); continue; }
+      if (racer.shield > 0) {
+        racer.shield = 0;
+        racer.immunity = Math.max(racer.immunity, 1);
+        this._event('shield-hit', { racerId: racer.id, source: 'storm', ownerId: owner.id });
+        continue;
+      }
+      racer.storm = STORM_TIME;
+      racer.speed *= STORM_BRAKE;
+      racer.boost = 0;
+      this._event('stormed', { racerId: racer.id, ownerId: owner.id });
+    }
   }
 
   /** Sparks under the wheels: the car keeps going but slides along slowly for a moment. A shield ignores them. */
