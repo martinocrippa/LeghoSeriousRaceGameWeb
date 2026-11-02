@@ -425,6 +425,22 @@ kbd { font-family: var(--font-ui); display: inline-block; background: var(--bg-2
 .keyboard-actions .button { flex: 1; font-size: var(--fs-micro); }
 
 /* ---------- Responsive ---------- */
+/* The prize-giving at the end of a cup: the winning car in the showroom, confetti over everything. */
+.champion-body { position: relative; z-index: 1; }
+.champion-panel { display: flex; flex-direction: column; gap: var(--s3); min-height: 0; overflow: auto; padding-right: 4px; }
+.champion-title { display: flex; align-items: center; gap: var(--s3); font-family: var(--font-title); font-size: clamp(34px, 4vw, 58px); letter-spacing: 2px; color: var(--gold); text-shadow: var(--title-shadow); animation: champion-pop .7s cubic-bezier(.2, 1.6, .4, 1) both; }
+.champion-line { font-size: var(--fs-body); color: var(--strong); line-height: 1.5; }
+.champion-races { display: grid; gap: 6px; }
+.champion-race { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto auto; gap: var(--s2); align-items: center; background: var(--surface-2); border: var(--bw) solid var(--edge); padding: 6px 12px; }
+.champion-race span { font-family: var(--font-title); color: var(--muted); }
+.champion-race b { font-family: var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.champion-race em { font-style: normal; font-family: var(--font-title); color: var(--strong); min-width: 36px; text-align: right; }
+.champion-race em.gold { color: var(--gold); }
+.confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }
+.confetti i { position: absolute; top: -24px; width: 9px; height: 15px; animation: confetti-fall linear infinite; }
+.confetti i:nth-child(3n) { width: 12px; height: 8px; }
+@keyframes confetti-fall { from { transform: translateY(0) rotate(0); } to { transform: translateY(110dvh) rotate(720deg); } }
+@keyframes champion-pop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 1150px) {
   .screen-bar { gap: var(--s4); padding: 10px 20px; }
   .steps { display: none; }

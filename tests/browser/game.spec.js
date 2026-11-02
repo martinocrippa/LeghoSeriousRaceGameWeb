@@ -159,10 +159,17 @@ test('a cup runs five races on circuits drawn at random with cumulative standing
   expect(new Set(labels).size).toBe(5);
   await expect(page.locator('#cup-podium')).toBeVisible();
   await page.locator('#cup-podium').click();
+  // The prize-giving is a screen of its own: podium, the five circuits with Pilot 1's place on each, the standings.
+  await expect(page.locator('#screen-champion')).toBeVisible();
   await expect(page.locator('#new-cup')).toBeVisible();
-  await expect(page.locator('.podium-step')).toHaveCount(3);
+  await expect(page.locator('#screen-champion .podium-step')).toHaveCount(3);
+  await expect(page.locator('.champion-race')).toHaveCount(5);
+  await expect(page.locator('.champion-race em').first()).toHaveText(/^[1-6]°$/);
+  await expect(page.locator('#champion-title')).toHaveText(/CAMPIONI!|CHE CAMPIONATO!/);
+  await expect(page.locator('#champion-confetti i').first()).toBeAttached();
+  await page.waitForTimeout(900); // past the screen's fade-in, for a picture that shows it
   await page.screenshot({path:'artifacts/cup-podium.png'});
-  await page.locator('#results-garage').click();
+  await page.locator('#champion-garage').click();
   await expect(page.locator('#screen-cars')).toBeVisible();
   expect(await page.evaluate(()=>window.__BRICK_RACERS__.cup)).toBeNull();
   expect(errors).toEqual([]);

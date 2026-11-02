@@ -168,6 +168,19 @@ $('#app').innerHTML = `
       </div>
       <div class="screen-foot"><button class="button back-button" data-back>${icon('back',18)} INDIETRO</button><span class="foot-hint">ESC indietro · INVIO parte · FRECCE per muoverti</span><button id="start-race" class="start-button">VIA! ${icon('arrow',24)}</button></div>
     </section>
+    <section id="screen-champion" class="screen screen-champion" data-screen-id="champion" hidden aria-label="Premiazione del campionato">
+      ${screenBar(4,'PREMIAZIONE')}
+      <div id="champion-confetti" class="confetti" aria-hidden="true"></div>
+      <div class="screen-body cars-body champion-body">
+        <div class="showroom">
+          <div class="stage-top"><span class="stage-label"><i></i> <span id="champion-stage-label">IL CAMPIONE</span></span></div>
+          <div id="stage-champion" class="viewport-slot"></div>
+          <div class="stage-caption"><span id="champion-pilot"></span><h2 id="champion-car"></h2></div>
+        </div>
+        <div id="champion-panel" class="champion-panel"></div>
+      </div>
+      <div class="screen-foot"><button id="champion-garage" class="button back-button">${icon('back',18)} TORNA AL GARAGE</button><span class="foot-hint">ESC garage · INVIO un altro campionato</span><button id="new-cup" class="start-button primary-focus">UN ALTRO CAMPIONATO! ${icon('flag',24)}</button></div>
+    </section>
   </main>
   <section id="race-screen" class="race-screen" hidden aria-label="Gara">
     <div id="race-viewport" class="race-viewport"></div>
@@ -329,18 +342,19 @@ document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click'
 
 /* ---------- Arcade flow: START → modalità → bolide → pista → gara ---------- */
 function showScreen(name) {
-  if (!SCREEN_ORDER.includes(name)) return;
+  if (!SCREEN_ORDER.includes(name) && name !== 'champion') return;
   const previous = menuScreen;
   if (previous === 'track' && name !== 'track' && exploring) { exploring = false; renderer?.stopFlyover?.(); }
   menuScreen = name;
   document.querySelectorAll('#menu .screen').forEach(section => { section.hidden = section.dataset.screenId !== name; });
   $('#menu').dataset.screen = name;
-  const slot = { attract:'#stage-attract', cars:'#stage-cars', track:'#stage-track' }[name];
+  const slot = { attract:'#stage-attract', cars:'#stage-cars', track:'#stage-track', champion:'#stage-champion' }[name];
   if (slot && name !== 'attract') ensureRenderer();
   if (slot && $('#viewport').parentElement !== $(slot)) { $(slot).append($('#viewport')); renderer?.resize(); }
   if (name === 'mode') renderModeScreen();
   if (name === 'cars') renderGarage();
   if (name === 'track') { renderTrackPicker(); previewSelectedTrack(); }
+  if (name === 'champion') renderChampion();
   const section = $(`#screen-${name}`);
   section.classList.remove('enter'); void section.offsetWidth; section.classList.add('enter');
   if (previous !== name) playTone(name === 'attract' ? 300 : 520, .07, 'square', .03);
@@ -355,6 +369,7 @@ function menuMusic() {
 function pressStart() { if (screen !== 'menu' || menuScreen !== 'attract') return; stopTour(); audio.unlock(); playTone(660,.12,'square',.05); setTimeout(()=>playTone(990,.16,'square',.05),90); audio.startMusic('menu'); showScreen('mode'); }
 function goBack() {
   if (screen !== 'menu') return;
+  if (menuScreen === 'champion') { showScreen('cars'); updateSelection(); return; }
   const index = SCREEN_ORDER.indexOf(menuScreen);
   if (index > 0) showScreen(SCREEN_ORDER[index-1]);
 }
@@ -367,6 +382,7 @@ function advance() {
     else if (mode === 'cup') startRace();
     else showScreen('track');
   } else if (menuScreen === 'track') startRace();
+  else if (menuScreen === 'champion') { cup = newCup(); startRace(); }
 }
 $('#press-start').addEventListener('click',pressStart);
 // A click anywhere on the start screen begins the game — except on the tour button, which is its own thing.
@@ -374,6 +390,8 @@ $('#screen-attract').addEventListener('click',e => { if (e.target.closest('#attr
 $('#attract-tour').addEventListener('click',e => { e.stopPropagation(); toggleTour(); });
 $('#to-cars').addEventListener('click',advance);
 $('#to-track').addEventListener('click',advance);
+$('#new-cup').addEventListener('click',()=>{cup=newCup();startRace();});
+$('#champion-garage').addEventListener('click',goBack);
 function moveFocus(code, container = $(`#screen-${menuScreen}`)) {
   const section = container;
   if (!section) return;
@@ -742,11 +760,15 @@ function showPauseMenu(){
 function resumeRace(){paused=false;keys.clear();keyEdges.clear();$('#modal-overlay').hidden=true;previousTime=performance.now();audio.setPaused(false);}
 function exitRace(){
   if(cup&&!isCupFinished(cup))toast('Campionato interrotto. Torna in pista quando vuoi!');
+  leaveRace();
+  showScreen(mode==='cup'?'cars':'track');updateSelection();
+}
+/** Out of the race and back to the menus (the screen to show is the caller's). */
+function leaveRace(){
   cup=null;screen='menu';paused=false;race=null;
   audio.setPaused(false);audio.setIntensity({});audio.startMusic(menuMusic());
   $('#modal-overlay').hidden=true;$('#race-screen').hidden=true;$('#menu').hidden=false;
   $('#viewport').classList.remove('in-race');renderer.setMode(1);
-  showScreen(mode==='cup'?'cars':'track');updateSelection();
 }
 /** A new cup: five circuits drawn at random, and the field of opponents, from the same seed. */
 const backLabel=()=>mode==='cup'?'Torna al garage':'Torna alla scelta della pista';
@@ -791,11 +813,38 @@ function standingsHTML(standings){
   const reference=standings.find(s=>s.playerIndex===0)?.total;
   return `<div class="result-list standings">${standings.map((s,i)=>`<div class="result-row ${s.isPlayer?'is-human':''}"><strong>${i+1}°</strong><span>${escape(s.name)}</span>${gapCell(s.total,reference,reference?formatRaceTime(reference):'')}<b>${s.points} pt</b></div>`).join('')}</div>`;
 }
+/**
+ * The prize-giving at the end of a cup, a screen of its own ("una schermata di vittoria per il campionato"): the
+ * winning car turning in the showroom, confetti, the podium, where each pilot finished on every circuit and the
+ * final standings. `champion` keeps the cup's results once the cup itself is closed.
+ */
+let champion=null;
 function showCupPodium(){
-  const standings=sortStandings(cup.standings),top=standings.slice(0,3),order=[1,0,2];
+  champion={standings:sortStandings(cup.standings),trackIds:[...cup.trackIds]};
+  leaveRace();
+  showScreen('champion');
   audio.sfx('podium');
-  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">FINE DEL CAMPIONATO</span><h2 id="modal-title">${top[0]?.isPlayer?'Campioni!':'Che campionato!'}</h2><div class="podium">${order.map(i=>top[i]?`<div class="podium-step step-${i+1} ${top[i].isPlayer?'is-human':''}"><span class="podium-rank">${i+1}°</span><b>${escape(top[i].name)}</b><small>${top[i].points} pt</small></div>`:'').join('')}</div>${standingsHTML(standings)}<button id="new-cup" class="start-button">Un altro campionato! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} ${backLabel()}</button>`,'results-modal');
-  $('#new-cup').addEventListener('click',()=>{cup=newCup();startRace();});$('#results-garage').addEventListener('click',exitRace);
+  if(champion.standings[0]?.isPlayer)[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>playTone(f,i===4?.5:.14,'square',.05),700+i*140));
+}
+function renderChampion(){
+  if(!champion)return;
+  const {standings,trackIds}=champion,top=standings.slice(0,3),order=[1,0,2],winner=standings[0];
+  const humans=standings.filter(s=>s.isPlayer).sort((a,b)=>a.playerIndex-b.playerIndex);
+  const place=(s)=>standings.indexOf(s)+1,won=!!winner?.isPlayer;
+  const line=humans.length===1
+    ?(won?`Hai vinto il campionato con ${winner.points} punti!`:`${place(humans[0])}° posto nel campionato, con ${humans[0].points} punti.`)
+    :humans.map(h=>`Pilota ${h.playerIndex+1}: ${place(h)}° con ${h.points} punti`).join(' · ');
+  $('#champion-stage-label').textContent=won?'IL BOLIDE CAMPIONE':'IL CAMPIONE';
+  $('#champion-pilot').textContent=won?(humans.length>1?`PILOTA ${winner.playerIndex+1} · CAMPIONE!`:'SEI TU IL CAMPIONE!'):`CAMPIONE CON ${winner?.points??0} PUNTI`;
+  $('#champion-car').textContent=winner?.name||'';
+  $('#champion-panel').innerHTML=`<span class="eyebrow">FINE DEL CAMPIONATO · ${trackIds.length} PISTE</span>
+    <h2 id="champion-title" class="champion-title">${icon('trophy',44)} ${won?'CAMPIONI!':'CHE CAMPIONATO!'}</h2><p class="champion-line">${escape(line)}</p>
+    <div class="podium">${order.map(i=>top[i]?`<div class="podium-step step-${i+1} ${top[i].isPlayer?'is-human':''}"><span class="podium-rank">${i+1}°</span><b>${escape(top[i].name)}</b><small>${top[i].points} pt</small></div>`:'').join('')}</div>
+    <div class="champion-races">${trackIds.map((id,i)=>`<div class="champion-race"><span>${i+1}</span><b>${escape(getTrack(id).name)}</b>${humans.map(h=>`<em class="${h.placements[i]===1?'gold':''}">${h.placements[i]??'-'}°</em>`).join('')}</div>`).join('')}</div>
+    ${standingsHTML(standings)}`;
+  // More confetti for a win; a few anyway, it is a prize-giving.
+  const colours=['var(--gold)','var(--accent)','var(--p2)','#e5203a','#2fd36f','#f4f0e2'];
+  $('#champion-confetti').innerHTML=Array.from({length:won?70:24},(_,i)=>`<i style="left:${(i*37)%100}%;background:${colours[i%colours.length]};animation-delay:${-((i*0.53)%4).toFixed(2)}s;animation-duration:${(3+(i*0.71)%2.5).toFixed(2)}s"></i>`).join('');
 }
 function makeTouchControls(){
   $('#touch-controls').classList.toggle('two-players',players===2);
@@ -988,6 +1037,7 @@ function animate(now){
       if(exploring&&renderer.renderTrackFlyover(menuDt)===null){exploring=false;showFlyoverName(null);updateExploreButton();}
       else if(!exploring)renderer.renderTrackPreview(menuDt);
     }
+    else if(menuScreen==='champion')renderer.renderPreview(champion?.standings[0]?.spec||selected[0],menuDt);
     else renderer.renderPreview(selected[activePilot],menuDt);
     menuDt=0;
   }
