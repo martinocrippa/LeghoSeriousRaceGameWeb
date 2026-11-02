@@ -40,7 +40,7 @@ const CANDY_COLORS = [0xff4fa3, 0xffd23a, 0x4fd1ff, 0x7be04a, 0xff7a1a, 0xb36bff
 const OBSTACLE_DEBRIS = {
   cone: ['#e5203a', '#f4f0e2'], bale: ['#e0c070', '#c9a44e'], bin: ['#2f7d4f', '#3f4149'],
   barrier: ['#e5203a', '#f4f0e2', '#8d9299'], desk: ['#c8a06a', '#8d9299'], planter: ['#9a9484', '#4f8f5a', '#4a3a2c'],
-  rock: ['#9a9484', '#6b6658'],
+  rock: ['#9a9484', '#6b6658'], column: ['#9aa0a8', '#d8d4c8'],
 };
 /** Road and shoulder colours of the switchable surfaces (see SURFACE_KINDS in track.js); the theme road is the default. */
 const SURFACE_COLORS = { asphalt: { road: 0x40444d, shoulder: 0xb7b1a5 }, cobbles: { road: 0x8d8983, shoulder: 0xd9cfbd }, dirt: { road: 0x8a6a48, shoulder: 0xb59a74 }, sand: { road: 0xdcc89a, shoulder: 0xe8dcbc }, grass: { road: 0x55813f, shoulder: 0x6a9a4c } };

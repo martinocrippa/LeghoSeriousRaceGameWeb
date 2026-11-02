@@ -165,22 +165,37 @@ test('a rocket blows up a breakable prop and is spent', () => {
   assert.ok(sim.events.some((e) => e.type === 'obstacle-break' && e.obstacleId === 'birillo' && e.source === 'rocket'));
 });
 
-test('against a bridge column or a roundabout every shot bursts, and the column stays up', () => {
+test('against a roundabout every shot bursts, and the island stays where it is', () => {
   for (const item of ['rocket', 'bales']) {
     const sim = ready({ players: 1 });
     const [car] = sim.racers;
     car.progress = 200;
-    // The column stands in the way of every bale (they spread across the road), the cone hides behind it.
-    sim.obstacles = [solid('column', 215, 0, 'colonna'), solid('cone', 235, 0, 'birillo')];
-    if (item === 'bales') sim.obstacles.push(solid('island', 215, 3.6, 'isola'), solid('island', 215, -3.6, 'isola-2'));
+    // The islands stand in the way of every bale (they spread across the road), the cone hides behind them.
+    sim.obstacles = [solid('island', 215, 0, 'isola'), solid('cone', 235, 0, 'birillo')];
+    if (item === 'bales') sim.obstacles.push(solid('island', 215, 3.6, 'isola-2'), solid('island', 215, -3.6, 'isola-3'));
     car.item = item;
     sim.update(1 / 60, [{ steer: 0, useItem: true }]);
     run(sim, 1);
-    assert.ok(sim.obstacles.every((o) => o.down === 0), `${item}: la colonna non si rompe e il birillo dietro resta`);
+    assert.ok(sim.obstacles.every((o) => o.down === 0), `${item}: la rotonda non si rompe e il birillo dietro resta`);
     assert.equal(sim.projectiles.length, 0, `${item}: il colpo scoppia contro`);
     assert.ok(sim.events.some((e) => e.type === 'pop'), `${item}: e lo si vede scoppiare`);
   }
   assert.equal(OBSTACLE_KINDS.island.breakable, false, 'la rotonda resta dov’è');
+});
+
+test('the columns break too: a rocket blows one up, and it grows back later', () => {
+  const sim = ready({ players: 1 });
+  const [car] = sim.racers;
+  car.progress = 200;
+  sim.obstacles = [solid('column', 225, 0, 'colonna')];
+  car.item = 'rocket';
+  sim.update(1 / 60, [{ steer: 0, useItem: true }]);
+  run(sim, 0.6);
+  assert.ok(sim.obstacles[0].down > 0, 'la colonna salta per aria');
+  assert.ok(sim.events.some((e) => e.type === 'obstacle-break' && e.obstacleId === 'colonna' && e.source === 'rocket'));
+  car.progress = 100;
+  run(sim, OBSTACLE_REGROW + 1);
+  assert.equal(sim.obstacles[0].down, 0, 'e poi torna in piedi');
 });
 
 test('a bale flattens the props it rolls over and keeps going', () => {

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RaceSimulation, ITEM_KINDS } from '../src/race.js';
+import { getTrack } from '../src/track.js';
 
 /**
  * "Can you test that the bonuses work?" — yes, and this is the test that would have caught the bomb.
@@ -213,4 +214,26 @@ test('a shield swallows the bomb blast, and the bomb goes off all the same', () 
   assert.equal(chaser.damage, 0, 'lo scudo para');
   assert.equal(chaser.shield, 0, 'ma si consuma');
   assert.ok(sim.events.some((event) => event.type === 'pop' && event.source === 'bomb'));
+});
+
+test('the parachute does not fly through the bridges of Rome: under a deck the car dips and climbs back after', () => {
+  const track = getTrack('roma');
+  const race = new RaceSimulation({ players: 1, opponents: 0, seed: 11, difficulty: 'normal', track });
+  race.state = 'racing'; race.countdown = 0;
+  race.boxes = []; race.boosts = []; race.ramps = [];
+  const [car] = race.racers;
+  // Already up under the parachute, 30 m before the first gallery (the lower road at 402 m, the deck 8.5 m above).
+  car.progress = 365; car.lane = 0; car.speed = 24;
+  car._airborne = true; car.y = 5; car._verticalVelocity = 0; car.chute = 'fly'; car.parachute = 5;
+  let under = 0, after = 0;
+  for (let i = 0; i < 60 * 3; i += 1) {
+    race.update(1 / 60, [{ steer: 0 }]);
+    const room = track.headroom(car.progress);
+    if (room < Infinity) {
+      under += 1;
+      assert.ok(car.y + 4.6 + 1 <= room + 1e-9, `a ${car.progress.toFixed(0)} m la vela tocca il ponte: auto a ${car.y.toFixed(2)} m, ponte a ${room.toFixed(2)} m`);
+    } else if (under) after = Math.max(after, car.y);
+  }
+  assert.ok(under > 10, 'passa davvero sotto il ponte');
+  assert.ok(after > 4, `dopo il ponte risale: ${after.toFixed(1)} m`);
 });

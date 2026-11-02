@@ -114,6 +114,14 @@ const PARACHUTE_DRAG = 0.5;
 const GLIDER_TIME = 7;
 const GLIDER_LAUNCH = 1.3;
 const GLIDER_FALL = 1.15;
+/**
+ * Under a bridge deck a flying car keeps this far below it (track.headroom): its top (the canopy's dome under the
+ * parachute, the propeller or the wing otherwise) plus the thickness of the deck. Children saw the parachute go
+ * straight through the bridges of Rome.
+ */
+const PARACHUTE_TOP = 4.6;
+const FLYING_TOP = 2.2;
+const DECK = 1;
 /** How much harder a launch is with a flying present running; the strongest one counts. */
 const launchBoost = (racer) => Math.max(1, racer.propeller > 0 ? PROPELLER_LAUNCH : 1, racer.glider > 0 ? GLIDER_LAUNCH : 1);
 /** The fountain rains sparks over a stretch of road; whoever drives through it loses grip for a moment. */
@@ -504,6 +512,14 @@ export class RaceSimulation {
         racer._verticalVelocity -= (racer.propeller > 0 ? PROPELLER_GRAVITY : GRAVITY) * dt;
         // The hang-glider glides: the car may only sink so fast.
         if (racer.glider > 0) racer._verticalVelocity = Math.max(racer._verticalVelocity, -GLIDER_FALL);
+      }
+      // A deck overhead: no higher than fits beneath it (the parachute dips under the bridge and climbs back after).
+      if (!racer.section && this.track.headroom) {
+        const ceiling = this.track.headroom(racer.progress) - DECK - (racer.chute === 'fly' ? PARACHUTE_TOP : FLYING_TOP);
+        if (racer.y > ceiling) {
+          racer.y = Math.max(0, ceiling);
+          racer._verticalVelocity = Math.min(0, racer._verticalVelocity);
+        }
       }
       if (racer.y <= 0) {
         const impact = -racer._verticalVelocity;
@@ -1132,9 +1148,9 @@ export class RaceSimulation {
 
   /**
    * Did this shot reach a prop? Same reach rules as for a car: on its lane, below its top, and either sitting on it
-   * or swept past it this frame. A breakable prop goes up ('broken'); a bridge column or a roundabout stays where it
-   * is and the shot bursts against it ('blocked') — a rocket flying straight through a concrete column was the one
-   * thing the children found wrong with the new rules.
+   * or swept past it this frame. A breakable prop goes up ('broken'); a roundabout's island stays where it is and the
+   * shot bursts against it ('blocked') — a rocket flying straight through something solid was the one thing the
+   * children found wrong with the new rules.
    */
   _smashObstacles(projectile, previous) {
     for (const obstacle of this.obstacles) {

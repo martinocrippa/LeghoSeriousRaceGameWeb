@@ -28,8 +28,8 @@ export const RAMP_CLEARANCE = 30;
  * What an obstacle is made of. `radius` is its half-width on the road, `height` how high you have to fly to clear
  * it, `soft` whether it scatters (a cone, a bale) or stops you dead (a column, a planter). `breakable` is what the
  * children asked for next: a rocket, a burst of the machine gun or a rainbow car blows it to bits, and a rolling
- * hay bale flattens it. The column under a bridge and the island of a roundabout stay where they are — one holds
- * the road up, the other is the road.
+ * hay bale flattens it. Columns too, since the children asked again ("the columns don't break"): a toy column goes
+ * up and grows back like the rest. Only the island of a roundabout stays where it is — it is the road.
  */
 export const OBSTACLE_KINDS = Object.freeze({
   cone: { radius: 0.5, height: 0.9, soft: true, breakable: true },
@@ -37,7 +37,7 @@ export const OBSTACLE_KINDS = Object.freeze({
   bin: { radius: 0.7, height: 1.5, soft: true, breakable: true },
   barrier: { radius: 1.5, height: 1.1, soft: true, breakable: true },
   desk: { radius: 1.4, height: 1.5, soft: true, breakable: true },
-  column: { radius: 0.8, height: 9, soft: false, breakable: false },
+  column: { radius: 0.8, height: 9, soft: false, breakable: true },
   island: { radius: 1.9, height: 1.2, soft: false, breakable: false },
   planter: { radius: 1.2, height: 1.4, soft: false, breakable: true },
   rock: { radius: 1.1, height: 1.6, soft: false, breakable: true },

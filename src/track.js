@@ -162,6 +162,24 @@ export function createTrack(definition) {
     return y;
   };
   const slopeAt = (distance) => bumps.length ? (elevationAt(distance + 1) - elevationAt(distance - 1)) / 2 : 0;
+  // Where the lap passes under itself, the raised deck is a ceiling: something flying (a car under its parachute)
+  // must stay below it. The decks are sampled every 2 m along the `bridge` bumps; `headroom` is how far the lowest
+  // deck over the road at `distance` is above it (Infinity with nothing overhead).
+  let decks = null;
+  const headroomAt = (distance) => {
+    if (!bumps.some((bump) => bump.bridge)) return Infinity;
+    decks ||= bumps.filter((bump) => bump.bridge).flatMap((bump) => Array.from({ length: Math.floor(bump.length / 2) + 1 }, (_, i) => {
+      const d = bump.distance - bump.length / 2 + i * 2;
+      return { ...frame(d), y: elevationAt(d) };
+    }));
+    const here = frame(distance), floor = elevationAt(distance), reach = (roadWidth / 2 + 2) ** 2;
+    let room = Infinity;
+    for (const deck of decks) {
+      const above = deck.y - floor;
+      if (above > 3 && above < room && (deck.x - here.x) ** 2 + (deck.z - here.z) ** 2 < reach) room = above;
+    }
+    return room;
+  };
   // Terrain follows the road's hills but not its bridges (a bridge stands on pillars over flat ground).
   const terrainBumps = bumps.filter((bump) => !bump.bridge);
   const terrainAt = (d) => terrainBumps.reduce((sum, bump) => sum + bumpHeight(bump, wrap(d)), 0);
@@ -249,7 +267,7 @@ export function createTrack(definition) {
     critters: critterList.map((item) => Object.freeze(item)),
     ramps: copyItems(ramps, 'ramp'), boosts: copyItems(boosts, 'boost pad'), boxes: copyItems(boxes, 'box'),
     landmarks: landmarks.map(item => ({ ...item })), gates: copyItems(gates, 'gate'),
-    elevationBumps: bumps, hasElevation: bumps.length > 0, elevation: elevationAt, slope: slopeAt, groundHeight,
+    elevationBumps: bumps, hasElevation: bumps.length > 0, elevation: elevationAt, slope: slopeAt, headroom: headroomAt, groundHeight,
     sections, surfaces: surfaceList, surfaceAt, bankings: bankList, hasBanking: bankList.length > 0, bank: bankAt,
     bounds, wrap, frame, points: trackPoints,
   });
