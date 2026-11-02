@@ -107,17 +107,21 @@ export function build(kit, scene, track, layout) {
       p.add(instanced);
       return { instanced, list };
     });
-    const dummy = new T.Object3D();
+    for (const s of seats) { s.cos = Math.cos(s.rotation); s.sin = Math.sin(s.rotation); }
+    // Each fan is a turn about the vertical, a vertical stretch and a position: the matrix is written straight into
+    // the instance buffer (thousands of fans every frame; going through an Object3D is what slow devices feel).
     const paint = (intensity, clock) => {
       for (const { instanced, list } of meshes) {
-        list.forEach((s, i) => {
+        const m = instanced.instanceMatrix.array;
+        for (let i = 0; i < list.length; i++) {
+          const s = list[i], o = i * 16;
           const bounce = (0.05 + 0.62 * intensity) * Math.abs(Math.sin(clock * (4 + intensity * 3.5) + s.phase));
-          dummy.position.set(s.x, s.y + bounce, s.z);
-          dummy.rotation.set(0, s.rotation, 0);
-          dummy.scale.set(1, 1 + intensity * 0.25 * Math.abs(Math.sin(clock * 6 + s.phase)), 1);
-          dummy.updateMatrix();
-          instanced.setMatrixAt(i, dummy.matrix);
-        });
+          const stretch = 1 + intensity * 0.25 * Math.abs(Math.sin(clock * 6 + s.phase));
+          m[o] = s.cos; m[o + 1] = 0; m[o + 2] = -s.sin; m[o + 3] = 0;
+          m[o + 4] = 0; m[o + 5] = stretch; m[o + 6] = 0; m[o + 7] = 0;
+          m[o + 8] = s.sin; m[o + 9] = 0; m[o + 10] = s.cos; m[o + 11] = 0;
+          m[o + 12] = s.x; m[o + 13] = s.y + bounce; m[o + 14] = s.z; m[o + 15] = 1;
+        }
         instanced.instanceMatrix.needsUpdate = true;
       }
     };
