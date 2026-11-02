@@ -53,55 +53,55 @@
     "seed": 42,
     "players": 2,
     "car": "moto",
-    "time": 85.633333,
+    "time": 86.8,
     "racers": [
       {
         "id": "p1",
         "rank": 5,
         "finished": true,
-        "finishTime": 79.536681,
+        "finishTime": 81.890411,
         "progress": 1680,
-        "lane": 2.898779
+        "lane": -5.862574
       },
       {
         "id": "p2",
         "rank": 6,
         "finished": true,
-        "finishTime": 85.627457,
+        "finishTime": 86.792429,
         "progress": 1680,
-        "lane": 4.609172
+        "lane": 4.741132
       },
       {
         "id": "ai1",
         "rank": 4,
         "finished": true,
-        "finishTime": 72.619286,
+        "finishTime": 74.535432,
         "progress": 1680,
-        "lane": -0.27125
+        "lane": -2.268468
       },
       {
         "id": "ai2",
         "rank": 1,
         "finished": true,
-        "finishTime": 61.801962,
+        "finishTime": 62.630893,
         "progress": 1680,
-        "lane": 3.549026
+        "lane": 2.058795
       },
       {
         "id": "ai3",
         "rank": 3,
         "finished": true,
-        "finishTime": 67.788329,
+        "finishTime": 69.32197,
         "progress": 1680,
-        "lane": 3.239
+        "lane": 0.925669
       },
       {
         "id": "ai4",
         "rank": 2,
         "finished": true,
-        "finishTime": 67.17154,
+        "finishTime": 66.093075,
         "progress": 1680,
-        "lane": -2.974204
+        "lane": -2.323095
       }
     ]
   },

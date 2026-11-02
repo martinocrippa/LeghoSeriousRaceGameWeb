@@ -840,14 +840,16 @@ export class RaceSimulation {
 
   /**
    * Did this shot reach an animal? The same reach rules as for a prop (`_smashObstacles`): on its lane, below the top
-   * of it, and sitting on it or swept past it this frame. Returns the animal knocked over, or null.
+   * of it, and sitting on it or swept past it this frame. Returns the animal knocked over, or null. Sideways a shot
+   * reaches as far as the car that fired it (`_hitCritters`): with a narrower reach an animal at the side of the car
+   * let the candies by and then jumped on it anyway ("gli spari le caramelle e ti saltano addosso").
    */
   _shootCritters(projectile, previous) {
     for (const critter of this.critters) {
       if (critter.attack || critter.knocked > 0) continue;
       if (projectile.y - PROJECTILE_HEIGHT > critter.height) continue;
       const { lane } = critterPose(critter, this.time);
-      if (Math.abs(projectile.lane - lane) > critter.radius + (projectile.type === 'bale' ? 1 : 0.5)) continue;
+      if (Math.abs(projectile.lane - lane) > critter.radius + 1.1) continue;
       const swept = projectile.back
         ? this._crossed(projectile.distance, previous, critter.distance)
         : this._crossed(previous, projectile.distance, critter.distance);

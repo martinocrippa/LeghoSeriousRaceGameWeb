@@ -132,3 +132,15 @@ test('an animal already down is not knocked again: the rest of a salvo flies on 
   assert.ok(sim.events.filter((e) => e.type === 'use-item').length === 1 && sim.racers[0]._salvo.left === 0, 'la raffica è partita tutta');
   assert.ok(turtle.knocked > 0);
 });
+
+test('candies catch an animal beside the car before it can jump on it', () => {
+  // A rat a little to the side of the car: inside the car's reach, so without the candies it would jump on board.
+  const sim = ready();
+  sim.critters = [standing('rat', 240, 1.5)];
+  const rat = sim.critters[0];
+  fire(sim, 'machinegun');
+  run(sim, 3);
+  assert.ok(sim.events.some((e) => e.type === 'critter-hit' && e.source === 'bullet'), 'le caramelle lo prendono');
+  assert.ok(!sim.events.some((e) => e.type === 'attacked'), 'e non salta sull’auto');
+  assert.ok(sim.racers[0].progress > 260 && rat.knock, 'l’auto passa mentre il topo rotola via');
+});
