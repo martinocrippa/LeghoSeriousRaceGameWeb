@@ -239,3 +239,15 @@ test('a bomb blows up the props around it', () => {
   run(sim, 4);
   assert.ok(sim.obstacles[0].down > 0);
 });
+
+test('a sweet that reaches a car still shaken from the last hit bursts on it where it can be seen', () => {
+  const sim = ready({ players: 2 });
+  const [shooter, target] = sim.racers;
+  shooter.progress = 200; target.progress = 212; shooter.lane = target.lane = 0; target.speed = shooter.speed = 22;
+  target.immunity = 5;
+  shooter.item = 'machinegun';
+  sim.update(1 / 60, [{ steer: 0, useItem: true }, { steer: 0 }]);
+  run(sim, 1, [{ steer: 0 }, { steer: 0 }]);
+  assert.equal(target.damage, 0, 'nessun danno mentre è immune');
+  assert.ok(sim.events.some((e) => e.type === 'pop' && e.source === 'bullet' && e.racerId === target.id), 'ma la caramella scoppia sulla moto');
+});

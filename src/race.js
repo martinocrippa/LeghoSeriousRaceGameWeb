@@ -1060,7 +1060,11 @@ export class RaceSimulation {
         // touched, so the shot carries on instead of vanishing against nothing.
         let landed = true;
         if (projectile.type === 'gelato') landed = this._cream(racer, projectile.ownerId);
-        else this._hit(racer, projectile.type, projectile.ownerId);
+        else if (!this._hit(racer, projectile.type, projectile.ownerId)) {
+          // A car still shaken from the last hit takes no new damage, but the shot bursts on it where it can be seen.
+          // Before, the sweets just vanished on it and the children thought they had missed ("la moto non viene presa").
+          this._event('pop', { distance: this.track.wrap(racer.progress), lane: racer.lane, source: projectile.type, racerId: racer.id });
+        }
         if (!landed) continue;
         projectile.ttl = 0;
         break;
