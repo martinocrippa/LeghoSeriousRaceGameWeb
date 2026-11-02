@@ -2385,23 +2385,24 @@ export class GameRenderer {
     }
     cream.visible = false;
     root.add(cream);
-    // The storm cloud: a dark little cloud over the roof, rain under it and now and then a lightning bolt.
+    // The storm cloud: a dark little cloud just over the roof, rain under it and now and then a lightning bolt. Kept
+    // small and low: a car right behind the player sits between the chase camera and the road.
     const storm = new THREE.Group();
     const cloudMat = material(0x4a5160, { roughness: 1 });
-    for (const [x, y, z, r] of [[0, 4.3, 0, 1], [-0.95, 4.05, 0.1, 0.72], [0.95, 4.05, -0.1, 0.75], [0.35, 4.6, 0.35, 0.7], [-0.4, 4.5, -0.35, 0.65]]) {
+    for (const [x, y, z, r] of [[0, 3, 0, 0.62], [-0.6, 2.85, 0.05, 0.45], [0.6, 2.85, -0.05, 0.47], [0.22, 3.2, 0.22, 0.44], [-0.25, 3.15, -0.22, 0.4]]) {
       mesh(new THREE.SphereGeometry(r, 9, 7), cloudMat, storm, x, y, z).castShadow = false;
     }
     const rainMat = material(0x9fd3ff, { transparent: true, opacity: 0.7, roughness: 0.3 });
     const drops = [];
     for (let i = 0; i < 10; i += 1) {
-      const drop = mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), rainMat, storm, ((i * 7) % 10) / 10 * 2.2 - 1.1, 3.4, ((i * 3) % 10) / 10 * 1.6 - 0.8);
+      const drop = mesh(new THREE.BoxGeometry(0.05, 0.36, 0.05), rainMat, storm, ((i * 7) % 10) / 10 * 1.6 - 0.8, 2.5, ((i * 3) % 10) / 10 * 1.2 - 0.6);
       drop.castShadow = false;
       drop.userData.phase = i / 10;
       drops.push(drop);
     }
     const bolt = new THREE.Group();
     const boltMat = new THREE.MeshStandardMaterial({ color: 0xffe94a, emissive: 0xffe94a, emissiveIntensity: 1.2 });
-    for (const [x, y, tilt] of [[0.1, 3.45, 0.5], [-0.1, 2.75, -0.5], [0.12, 2.05, 0.5]]) mesh(new THREE.BoxGeometry(0.16, 0.8, 0.1), boltMat, bolt, x, y, 0).rotation.z = tilt;
+    for (const [x, y, tilt] of [[0.08, 2.4, 0.5], [-0.08, 1.95, -0.5]]) mesh(new THREE.BoxGeometry(0.14, 0.55, 0.1), boltMat, bolt, x, y, 0).rotation.z = tilt;
     bolt.children.forEach((part) => { part.castShadow = false; });
     storm.add(bolt);
     storm.userData = { drops, bolt };
@@ -2842,7 +2843,7 @@ export class GameRenderer {
         const grow = Math.min(1, (STORM_TIME - racer.storm) * 4, racer.storm * 2);
         model.storm.scale.setScalar(Math.max(0.05, grow));
         model.storm.position.y = Math.sin(this.clock * 2.2) * 0.12;
-        for (const drop of drops) drop.position.y = 3.6 - ((this.clock * 2.6 + drop.userData.phase) % 1) * 3.2;
+        for (const drop of drops) drop.position.y = 2.6 - ((this.clock * 2.6 + drop.userData.phase) % 1) * 1.1;
         const flash = (this.clock * 1.1 + racer.storm * 0.37) % 1;
         bolt.visible = flash < 0.09;
       }

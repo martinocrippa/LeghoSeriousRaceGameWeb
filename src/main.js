@@ -988,7 +988,8 @@ function updateHUD(dt){
       if(ev.type==='finish'){const r=race.racers[index];noticeEl.textContent=mode==='time'?`Traguardo in ${formatLap(r.finishTime)}!`:players===2?`PILOTA ${index+1}: ${r.rank}° POSTO!`:r.rank===1?'1° POSTO: HAI VINTO!':`${r.rank}° POSTO SU ${race.racers.length}!`;noticeTimer=3;}
     }
   }
-  noticeTimer=Math.max(0,noticeTimer-dt);
+  // Notices run down half as fast again as the clock: they are there to be glanced at, not to cover the road.
+  noticeTimer=Math.max(0,noticeTimer-dt*1.5);
   const showNotice=noticeTimer>0;if(showNotice!==noticeShown){noticeShown=showNotice;noticeEl.style.opacity=showNotice?'1':'0';}
   drawMap();
 }
