@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RaceSimulation } from '../src/race.js';
+import { RaceSimulation, OFFROAD } from '../src/race.js';
 import { getTrackFrame, getTrackPoints, getTrack, TRACK_LENGTH, ROAD_WIDTH, TOTAL_LAPS } from '../src/track.js';
 
 function advance(sim, seconds, inputs = []) {
@@ -39,7 +39,7 @@ test('countdown holds cars, starts once, and ignores invalid/huge frame duration
   assert.deepEqual(sim.drainEvents(), []);
 });
 
-test('two humans steer independently, brake independently, and stay on the road', () => {
+test('two humans steer independently, brake independently, and stay on the road or its verge', () => {
   const sim = new RaceSimulation({ players: 2 });
   advance(sim, 4);
   const initialOne = sim.racers[0].lane;
@@ -49,7 +49,7 @@ test('two humans steer independently, brake independently, and stay on the road'
   assert.ok(sim.racers[1].lane > initialTwo);
   advance(sim, 4, [{ steer: -1, brake: true }, { steer: 1 }]);
   assert.ok(sim.racers[0].speed < sim.racers[1].speed);
-  for (const racer of sim.racers) assert.ok(Math.abs(racer.lane) < ROAD_WIDTH / 2);
+  for (const racer of sim.racers) assert.ok(Math.abs(racer.lane) <= ROAD_WIDTH / 2 - 1.1 + OFFROAD + 1e-9);
 });
 
 test('auto throttle completes three laps and restart starts a fresh race', () => {
@@ -240,13 +240,53 @@ test('other circuits drive the simulation: pitch laps and jumps, snow lanes insi
   assert.equal(pitch.racers[0].progress, 560 * 4);
   assert.equal(pitch.racers[0].lap, 4);
   assert.equal(jumps, 12, 'three ramps on each of four laps');
-  // Both cars are held hard against the two edges of the road for the whole race, so they collect every piste
-  // marker Aprica has: the lap takes longer than the clean one, and that is the obstacles doing their job.
+  // Both cars are held hard against the two sides for the whole race: out on the verge where there is one, against
+  // the edge of the road where there is not (the bridge, the arch). They must still get round.
   const snow = new RaceSimulation({ track: getTrack('aprica'), players: 2, seed: 3 });
   for (let tick = 0; tick < 200 * 60 && snow.state !== 'finished'; tick++) {
     snow.update(1 / 60, [{ steer: 1 }, { steer: -1 }]);
-    if (tick % 30 === 0) for (const racer of snow.racers) assert.ok(Math.abs(racer.lane) <= 4.9 + 1e-9, `lane ${racer.lane} inside a 12 m road`);
+    if (tick % 30 === 0) for (const racer of snow.racers) assert.ok(Math.abs(racer.lane) <= 4.9 + OFFROAD + 1e-9, `lane ${racer.lane} inside a 12 m road and its verge`);
   }
   assert.equal(snow.state, 'finished');
   assert.equal(snow.racers[0].progress, 700 * 3);
+});
+
+test('off the road: a car steered out goes onto the verge and slows down, and comes back', () => {
+  const sim = new RaceSimulation({ players: 1, opponents: 0, seed: 4 });
+  sim.state = 'racing'; sim.countdown = 0; sim.boxes = []; sim.ramps = []; sim.boosts = []; sim.obstacles = []; sim.critters = [];
+  const [car] = sim.racers;
+  car.progress = 100; car.speed = 20;
+  advance(sim, 3, [{ steer: -1 }]);
+  assert.ok(car.offroad, 'fuori strada');
+  assert.ok(Math.abs(car.lane) > ROAD_WIDTH / 2 - 0.5 && Math.abs(car.lane) <= ROAD_WIDTH / 2 - 1.1 + OFFROAD + 1e-9, `sul bordo erboso: corsia ${car.lane}`);
+  const grass = car.speed;
+  advance(sim, 1, [{ steer: 1 }]);
+  assert.ok(!car.offroad && car.speed > grass * 1.3, `tornata in strada riprende velocità: ${grass.toFixed(1)} → ${car.speed.toFixed(1)}`);
+});
+
+test('no verge where there is none: under the bridge of Rome the gallery walls keep the car on the road', () => {
+  const sim = new RaceSimulation({ players: 1, opponents: 0, seed: 4, track: getTrack('roma') });
+  sim.state = 'racing'; sim.countdown = 0; sim.boxes = []; sim.ramps = []; sim.boosts = []; sim.obstacles = []; sim.critters = [];
+  const [car] = sim.racers;
+  car.progress = 395; car.speed = 10;
+  for (let i = 0; i < 60; i++) {
+    sim.update(1 / 60, [{ steer: 1 }]);
+    if (car.progress > 397 && car.progress < 408) assert.ok(Math.abs(car.lane) <= 14 / 2 - 1.1 + 1e-6, `nella galleria resta in strada: ${car.lane}`);
+  }
+});
+
+test('two cars that touch knock into each other: thrown apart, the one behind slower, one knock per contact', () => {
+  const sim = new RaceSimulation({ players: 2, opponents: 0, seed: 4 });
+  sim.state = 'racing'; sim.countdown = 0; sim.boxes = []; sim.ramps = []; sim.boosts = []; sim.obstacles = []; sim.critters = [];
+  const [front, back] = sim.racers;
+  front.progress = 101; front.lane = 0.3; front.speed = 18;
+  back.progress = 100; back.lane = -0.3; back.speed = 24;
+  sim.update(1 / 60, [{ steer: 0 }, { steer: 0 }]);
+  const bumps = sim.drainEvents().filter((e) => e.type === 'car-bump');
+  assert.equal(bumps.length, 1, 'uno scontro');
+  assert.ok(front.drift > 0 && back.drift < 0, 'si allontanano di lato');
+  assert.ok(back.speed < 22, `chi tampona rallenta: ${back.speed.toFixed(1)}`);
+  advance(sim, 0.4, [{ steer: 0 }, { steer: 0 }]);
+  assert.ok(front.lane - back.lane > 1.8, `separate: ${(front.lane - back.lane).toFixed(2)} m`);
+  assert.equal(sim.drainEvents().filter((e) => e.type === 'car-bump').length, 0, 'un colpo solo, non una raffica');
 });

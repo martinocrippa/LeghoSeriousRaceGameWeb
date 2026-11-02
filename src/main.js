@@ -938,7 +938,7 @@ function updateHUD(dt){
     setText(h,'speed',h.speed,String(Math.round(r.speed*3.6)));
     const dash=(150.8*fraction).toFixed(1);if(h.last.dash!==dash){h.last.dash=dash;h.gauge.style.strokeDasharray=`${dash} 400`;}
     const angle=(-90+180*fraction).toFixed(1);if(h.last.angle!==angle){h.last.angle=angle;h.needle.setAttribute('transform',`rotate(${angle} 60 62)`);}
-    let status=r.finished?'★ GARA COMPLETATA':r.wrecked>0?'🔥 AUTO NUOVA IN ARRIVO!':r.squashed>0?'🌾 SCHIACCIATO!':r.attacked>0?'🐾 TI HA PRESO!':r.stuck>0?'🟢 INCOLLATO!':r.spinning>0?'🌀 TESTACODA!':r.slipping>0?'🛢️ SLITTA!':r.rainbow>0?'🌈 ARCOBALENO!':r.storm>0?'⛈️ TEMPORALE!':r.chute==='fly'?'🪂 SI VOLA!':r.chute==='brake'?'🪂 FRENATO!':r.glider>0&&r.y>0.5?'🪁 SI PLANA!':r.boost>0?'⚡ TURBO!':r.drifting?'💨 DERAPATA!':r.shield>0?'◌ SCUDO ATTIVO':r.stun>0?'OPS! SI RIPARTE…':'';
+    let status=r.finished?'★ GARA COMPLETATA':r.wrecked>0?'🔥 AUTO NUOVA IN ARRIVO!':r.squashed>0?'🌾 SCHIACCIATO!':r.attacked>0?'🐾 TI HA PRESO!':r.stuck>0?'🟢 INCOLLATO!':r.spinning>0?'🌀 TESTACODA!':r.slipping>0?'🛢️ SLITTA!':r.rainbow>0?'🌈 ARCOBALENO!':r.storm>0?'⛈️ TEMPORALE!':r.offroad?'🌿 FUORI STRADA!':r.chute==='fly'?'🪂 SI VOLA!':r.chute==='brake'?'🪂 FRENATO!':r.glider>0&&r.y>0.5?'🪁 SI PLANA!':r.boost>0?'⚡ TURBO!':r.drifting?'💨 DERAPATA!':r.shield>0?'◌ SCUDO ATTIVO':r.stun>0?'OPS! SI RIPARTE…':'';
     if(r.machinegun>0&&!r.finished)status+=`${status?' · ':''}CARAMELLE ${Math.ceil(r.machinegun)} s`;
     setText(h,'status',h.status,status);
   }
@@ -960,6 +960,8 @@ function updateHUD(dt){
     else if(ev.type==='pop')playTone(ev.source==='jelly'?320:ev.source==='gelato'?520:ev.source==='bale'?200:55,ev.source==='jelly'||ev.source==='gelato'?.2:ev.source==='bale'?.25:.5,'square',.07);
     // Running into something solid: a dull thud, louder when it is a column and not a bale.
     if(ev.type==='bump')playTone(ev.soft?150:90,ev.soft?.18:.3,'square',human?.08:.03);
+    // A pilot's car knocking into another: a clack (the opponents' own knocks stay quiet, there are dozens a race).
+    if(ev.type==='car-bump'&&race.racers.some((r,k)=>k<players&&ev.racerIds.includes(r.id))){playTone(140,.12,'square',.08);setTimeout(()=>playTone(95,.16,'square',.05),50);}
     if(ev.type==='creamed'&&human){playTone(700,.18,'sine',.07);playTone(430,.24,'triangle',.05);}
     if(ev.type==='stuck'&&human)playTone(240,.35,'sine',.07);
     if(ev.type==='unstuck'&&human)playTone(600,.1,'square',.04);

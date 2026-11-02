@@ -138,6 +138,20 @@ const SLOW_SPEED = 0.72;
  * soaks it up like any hit; a rainbow car shrugs it off.
  */
 export const STORM_TIME = 5;
+/**
+ * Off the road ("uscire di strada"): past the kerb there are OFFROAD metres of verge, and a car out there goes at
+ * OFFROAD_SPEED and bumps along on the grass. Not where the verge is a wall or thin air: on a raised deck, under one
+ * (a gallery) or on a section; there the road edge stays a wall, as before.
+ */
+export const OFFROAD = 3;
+const OFFROAD_SPEED = 0.6;
+/**
+ * Two cars that touch now knock into each other ("scontro con le altre auto"): both are thrown apart sideways, the
+ * one behind loses some speed, and the knock is not repeated until CAR_BUMP_GAP has passed. It used to be a slow
+ * sideways slide nobody could see.
+ */
+const CAR_BUMP_GAP = 0.5;
+const CAR_BUMP_LOSS = 0.82;
 const STORM_SPEED = 0.55;
 const STORM_BRAKE = 0.6;
 /**
@@ -177,6 +191,11 @@ export class RaceSimulation {
     this.totalLaps = track.laps;
     this.trackLength = track.length;
     this._maxLane = track.roadWidth / 2 - 1.1;
+    // Where there is a verge to drive on, metre by metre (see OFFROAD).
+    this._verge = Array.from({ length: Math.ceil(track.length) }, (_, metre) => {
+      if ((track.headroom?.(metre) ?? Infinity) < Infinity) return false;
+      return !(track.elevationBumps || []).some((bump) => bump.bridge && Math.abs(track.wrap(metre - bump.distance + track.length / 2) - track.length / 2) < bump.length / 2);
+    });
     this._finishDistance = track.length * track.laps;
     this.events = [];
     this.projectiles = [];
@@ -219,7 +238,7 @@ export class RaceSimulation {
         speed: 0, y: 0, item: null, boost: 0, shield: 0, stun: 0, stuck: 0, machinegun: 0, _gunCooldown: 0,
         finished: false, finishTime: null, rank: i + 1, lap: 1,
         immunity: 0, steering: 0, drift: 0, slipping: 0, drifting: false, _jumpCooldown: 0,
-        damage: 0, wrecked: 0, _repairTimer: 0, slowed: 0, _salvo: null, creamed: 0, _scoops: null, _bumped: 0, propeller: 0,
+        damage: 0, wrecked: 0, _repairTimer: 0, slowed: 0, _salvo: null, creamed: 0, _scoops: null, _bumped: 0, _carBump: 0, offroad: false, propeller: 0,
         _launched: 1, _bounces: 0, squashed: 0, attacked: 0, rainbow: 0, spinning: 0, parachute: 0, chute: null, glider: 0, storm: 0,
         section: null, _sectionExit: 0, _shortcutChoice: { key: '', take: false },
         _verticalVelocity: 0, _airborne: false, _targetLane: i % 2 ? 2.3 : -2.3,
@@ -309,7 +328,7 @@ export class RaceSimulation {
     }
     for (const racer of this.racers) {
       if (racer.finished) continue;
-      for (const timer of ['boost', 'shield', 'stun', 'immunity', 'slipping', 'slowed', 'creamed', '_bumped', 'propeller', 'rainbow', 'spinning', 'parachute', 'glider', 'storm']) racer[timer] = Math.max(0, racer[timer] - dt);
+      for (const timer of ['boost', 'shield', 'stun', 'immunity', 'slipping', 'slowed', 'creamed', '_bumped', '_carBump', 'propeller', 'rainbow', 'spinning', 'parachute', 'glider', 'storm']) racer[timer] = Math.max(0, racer[timer] - dt);
       if (racer.chute === 'brake' && racer.parachute === 0) racer.chute = null;
       // Flattened by a bale, or with an angry animal on the roof: both end with an event, so the car can pop back
       // up with a boing and the animal can be seen jumping off.
@@ -373,8 +392,9 @@ export class RaceSimulation {
       racer.steering = approach(racer.steering, steer, dt * 7);
       const steeringSpeed = (racer.stun > 0 ? 5.5 : 9.3) * Math.max(1, this.baseSpeed / 24) * (racer.drifting ? DRIFT_STEER : 1);
       if (pinned) racer.drift = 0;
-      racer.lane = clamp(racer.lane + racer.steering * steeringSpeed * dt + racer.drift * dt, -this._maxLane, this._maxLane);
+      racer.lane = this._keepOnGround(racer, racer.lane + racer.steering * steeringSpeed * dt + racer.drift * dt, dt);
       racer.drift = approach(racer.drift, 0, dt * 10);
+      racer.offroad = !racer.section && Math.abs(racer.lane) > this._maxLane + 0.6;
       const base = this.baseSpeed;
       let targetSpeed = base;
       if (!racer.isPlayer) {
@@ -391,7 +411,8 @@ export class RaceSimulation {
       if (racer.rainbow > 0) targetSpeed *= RAINBOW_SPEED;
       if (input.brake) targetSpeed *= 0.38;
       if (racer.stun > 0) targetSpeed *= 0.52;
-      if (Math.abs(racer.lane) > this._maxLane - 0.05 && Math.sign(steer) === Math.sign(racer.lane)) targetSpeed *= 0.88;
+      if (Math.abs(racer.lane) > this._laneLimit(racer) - 0.05 && Math.sign(steer) === Math.sign(racer.lane)) targetSpeed *= 0.88;
+      if (racer.offroad && !racer._airborne) targetSpeed *= OFFROAD_SPEED;
       if (racer.drifting) targetSpeed *= DRIFT_SPEED;
       if (racer.slowed > 0) targetSpeed *= SLOW_SPEED;
       if (racer.storm > 0) targetSpeed *= STORM_SPEED;
@@ -1218,6 +1239,19 @@ export class RaceSimulation {
     this._wreck(victim, ownerId);
   }
 
+  /** How far from the centre line a car may go here: to the road edge, or onto the verge where there is one. */
+  _laneLimit(racer) {
+    if (racer.section) return this._maxLane;
+    return this._verge[Math.floor(this.track.wrap(racer.progress))] ? this._maxLane + OFFROAD : this._maxLane;
+  }
+
+  /** The lane a car asks for, kept on the ground: where the verge ends (a bridge ahead) it is steered back quickly. */
+  _keepOnGround(racer, lane, dt) {
+    const limit = this._laneLimit(racer);
+    if (Math.abs(lane) <= limit) return lane;
+    return Math.abs(racer.lane) > limit ? approach(lane, Math.sign(lane) * limit, dt * 12) : Math.sign(lane) * limit;
+  }
+
   _carCollisions(dt) {
     for (let i = 0; i < this.racers.length; i++) {
       const a = this.racers[i];
@@ -1232,9 +1266,20 @@ export class RaceSimulation {
           this._blast(victim, star.id);
           continue;
         }
-        const push = (Math.sign(separation) || (i % 2 ? 1 : -1)) * dt * 2.6;
-        a.lane = clamp(a.lane + push, -this._maxLane, this._maxLane);
-        b.lane = clamp(b.lane - push, -this._maxLane, this._maxLane);
+        const side = Math.sign(separation) || (i % 2 ? 1 : -1);
+        if (a._carBump <= 0 && b._carBump <= 0 && a.wrecked <= 0 && b.wrecked <= 0) {
+          // A knock: thrown apart, harder the faster they close in, and the car behind loses speed.
+          const behind = this._forward(a.progress, b.progress) < this.trackLength / 2 ? a : b;
+          const strength = Math.min(6, 2.5 + Math.abs(a.speed - b.speed) * 0.3);
+          a.drift = side * strength;
+          b.drift = -side * strength;
+          behind.speed *= CAR_BUMP_LOSS;
+          a._carBump = b._carBump = CAR_BUMP_GAP;
+          this._event('car-bump', { racerIds: [a.id, b.id], distance: this.track.wrap((a.progress + b.progress) / 2), lane: (a.lane + b.lane) / 2, strength });
+        }
+        const push = side * dt * 2.6;
+        a.lane = this._keepOnGround(a, a.lane + push, dt);
+        b.lane = this._keepOnGround(b, b.lane - push, dt);
       }
     }
   }

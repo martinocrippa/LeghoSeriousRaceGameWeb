@@ -1595,6 +1595,17 @@ export class GameRenderer {
         const position = model.root.position.clone();
         this.spawnExplosion(position, ['#e8e4d8', '#b7b1a5'], Math.min(1, event.impact / 14) * (event.bounce ? 0.5 : 0.3));
         if (racer?.isPlayer) this.shake[racer.playerIndex] = Math.max(this.shake[racer.playerIndex], Math.min(0.5, event.impact / 30));
+      } else if (event.type === 'car-bump') {
+        // Two cars knocking together: a white flash and a few bits of the two cars where they touched, and a shake for
+        // a pilot in it.
+        const position = worldPoint(this.track, event.distance, event.lane, ROAD_Y + 0.8);
+        this.spawnFlash(position, 0xffffff, 2, 0.18);
+        const colours = event.racerIds.map((id) => race?.racers?.find((r) => r.id === id)?.spec?.color).filter(Boolean);
+        this.spawnExplosion(position, colours.length ? colours : ['#d8d4c8'], 0.4);
+        for (const id of event.racerIds) {
+          const racer = race?.racers?.find((r) => r.id === id);
+          if (racer?.isPlayer) this.shake[racer.playerIndex] = Math.max(this.shake[racer.playerIndex], 0.35);
+        }
       } else if (event.type === 'bump' || event.type === 'creamed') {
         // Running into something solid, or taking a scoop on the windscreen: a puff where it happened, and a
         // shake for the child it happened to. No fireball — nothing has broken.
@@ -2741,6 +2752,8 @@ export class GameRenderer {
         model.car.rotation.x = THREE.MathUtils.lerp(model.car.rotation.x, 0, 0.2);
       } else {
         worldPoint(this.track, racer.progress, racer.lane, ROAD_Y + (racer.y || 0) + 0.015, model.root.position);
+        // On the verge the car bumps along on the grass.
+        if (racer.offroad && !(racer.y > 0.05)) model.root.position.y += Math.abs(Math.sin(this.clock * 29 + racer.progress * 0.7)) * 0.08;
         if (bank) {
           // Banked bend: the car rolls with the road surface, whose normal leans away from the raised edge.
           const tilt = Math.tan(Math.abs(bank)) * (bank > 0 ? 1 : -1);
