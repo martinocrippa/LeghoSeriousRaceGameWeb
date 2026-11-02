@@ -12,11 +12,19 @@ test('points follow the table and vanish beyond sixth place', () => {
   assert.equal(pointsForRank(0), 0);
 });
 
-test('the chosen circuit opens the cup and the list wraps around', () => {
-  assert.deepEqual(cupTrackIds(['a', 'b', 'c', 'd'], 'c'), ['c', 'd', 'a']);
-  assert.deepEqual(cupTrackIds(['a', 'b', 'c', 'd'], 'zzz'), ['a', 'b', 'c']);
-  assert.deepEqual(cupTrackIds(['a', 'b'], 'b'), ['b', 'a']);
-  assert.equal(CUP_RACES, 3);
+test('a cup draws five different circuits at random, the same ones for the same seed', () => {
+  const all = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l'];
+  assert.equal(CUP_RACES, 5);
+  const drawn = cupTrackIds(all, 42);
+  assert.equal(drawn.length, 5);
+  assert.equal(new Set(drawn).size, 5, 'nessuna pista ripetuta');
+  assert.ok(drawn.every((id) => all.includes(id)));
+  assert.deepEqual(cupTrackIds(all, 42), drawn, 'stesso seme, stesse piste');
+  const draws = new Set(Array.from({ length: 20 }, (_, seed) => cupTrackIds(all, seed + 1).join()));
+  assert.ok(draws.size > 15, 'semi diversi, campionati diversi');
+  const firsts = new Set(Array.from({ length: 60 }, (_, seed) => cupTrackIds(all, seed + 1)[0]));
+  assert.ok(firsts.size >= 8, 'la prima pista cambia anche lei');
+  assert.deepEqual(cupTrackIds(['a', 'b'], 7).sort(), ['a', 'b'], 'con meno piste, tutte quelle che ci sono');
 });
 
 test('three stages accumulate points, advance the index and finish the cup', () => {

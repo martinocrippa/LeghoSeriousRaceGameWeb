@@ -22,7 +22,9 @@ test('the game starts, a race runs and the keyboard alone gets you there', async
   // Arrows and Enter alone, from the start screen all the way to the grid.
   await page.keyboard.press('Enter');
   await expect(page.locator('#screen-mode')).toBeVisible();
+  // Right moves to the cup and left comes back to the single race: the cup has no circuit screen to go through.
   await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('Enter');
   await expect(page.locator('#screen-cars')).toBeVisible();
   await page.keyboard.press('Enter');

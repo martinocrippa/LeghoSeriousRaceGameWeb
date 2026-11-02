@@ -1,16 +1,22 @@
 /** Pure helpers for the "Coppa": a short series of races with cumulative points. No DOM, no three.js. */
 import { addTimes } from './gaps.js';
+import { seeded } from './random.js';
 
 export const CUP_POINTS = [10, 7, 5, 3, 2, 1];
-export const CUP_RACES = 3;
+export const CUP_RACES = 5;
 
 export const pointsForRank = (rank) => CUP_POINTS[rank - 1] ?? 0;
 
-/** Rotates the circuit list so the chosen one opens the cup, then takes `count` circuits. */
-export function cupTrackIds(allIds, firstId, count = CUP_RACES) {
-  const start = Math.max(0, allIds.indexOf(firstId));
-  const total = Math.min(count, allIds.length);
-  return Array.from({ length: total }, (_, i) => allIds[(start + i) % allIds.length]);
+/**
+ * Draws `count` different circuits at random, in the order they will be raced. The children asked for it: a cup is
+ * five circuits as a surprise, nobody picks them. The same seed always draws the same ones.
+ */
+export function cupTrackIds(allIds, seed, count = CUP_RACES) {
+  const random = seeded(seed), pool = [...allIds], drawn = [];
+  // The first numbers of the generator barely move between neighbouring seeds (two clicks a second apart): skipped.
+  random(); random();
+  while (drawn.length < count && pool.length) drawn.push(pool.splice(Math.floor(random() * pool.length), 1)[0]);
+  return drawn;
 }
 
 export function createCup({ trackIds, seed = 1 } = {}) {

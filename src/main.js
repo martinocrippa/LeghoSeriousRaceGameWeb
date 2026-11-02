@@ -137,7 +137,7 @@ $('#app').innerHTML = `
         <div class="option-row"><span class="option-label">PILOTI</span><div class="segmented" role="group" aria-label="Numero di piloti"><button class="mode active" data-players="1" aria-pressed="true">${icon('person',20)} 1 PILOTA</button><button class="mode" data-players="2" aria-pressed="false">${icon('people',22)} 2 PILOTI</button></div></div>
         <div class="mode-grid" role="group" aria-label="Modalità di gioco">
           <button class="mode-card active primary-focus" data-mode="single" aria-pressed="true"><span class="mode-emoji">🏁</span><b>GARA SINGOLA</b><small>Una pista, fino a sei bolidi e casse piene di bonus. Si vince o si perde.</small></button>
-          <button class="mode-card" data-mode="cup" aria-pressed="false"><span class="mode-emoji">🏆</span><b>CAMPIONATO</b><small>Tre piste di fila, punti 10/7/5/3/2/1, classifica e podio finale.</small></button>
+          <button class="mode-card" data-mode="cup" aria-pressed="false"><span class="mode-emoji">🏆</span><b>CAMPIONATO</b><small>Cinque piste a sorpresa, punti 10/7/5/3/2/1, classifica e podio finale.</small></button>
           <button class="mode-card" data-mode="time" aria-pressed="false"><span class="mode-emoji">⏱️</span><b>PROVA A TEMPO</b><small>Pista libera: solo tu e il cronometro. Batti il record della pista!</small></button>
         </div>
         <div class="option-row"><span class="option-label">LIVELLO</span><div class="segmented" role="group" aria-label="Difficoltà e velocità"><button class="active" data-difficulty="easy" aria-pressed="true">PRIME CORSE</button><button data-difficulty="normal" aria-pressed="false">PICCOLI CAMPIONI</button><button data-difficulty="fast" aria-pressed="false">TURBO</button><button data-difficulty="crazy" aria-pressed="false">FOLLE</button></div><p class="control-hint">${icon('gamepad',18)} <span id="menu-controls"></span></p></div>
@@ -302,7 +302,8 @@ function updateSelection() {
   $('#selected-source').textContent = `${players===2?`PILOTA ${activePilot+1} · `:''}${SAMPLE_CARS.includes(car) ? 'ISPIRATA ALLA TUA COSTRUZIONE' : customCars.includes(car) ? 'CREATA DALLA TUA FOTO' : 'BOLIDE DI FANTASIA'}`;
   $('#pilot1-car').textContent = selected[0].name;
   $('#pilot2-car').textContent = selected[1].name;
-  $('#to-track').innerHTML = players===2 && activePilot===0 ? `PILOTA 2, TOCCA A TE ${icon('arrow',24)}` : `SCEGLI LA PISTA ${icon('arrow',24)}`;
+  // The cup draws its own circuits: from the garage it goes straight to the first race.
+  $('#to-track').innerHTML = players===2 && activePilot===0 ? `PILOTA 2, TOCCA A TE ${icon('arrow',24)}` : mode==='cup' ? `VIA ALLA COPPA! ${icon('trophy',24)}` : `SCEGLI LA PISTA ${icon('arrow',24)}`;
 }
 function toast(message) { clearTimeout(toastTimeout); $('#toast').textContent = message; $('#toast').hidden = false; toastTimeout = setTimeout(() => $('#toast').hidden = true,4000); }
 function playTone(frequency=440,duration=.12,type='sine',volume=.06) { audio.tone(frequency,duration,type,volume); }
@@ -363,6 +364,7 @@ function advance() {
   else if (menuScreen === 'mode') showScreen('cars');
   else if (menuScreen === 'cars') {
     if (players === 2 && activePilot === 0) { setActivePilot(1); toast('Pilota 2, scegli il tuo bolide!'); }
+    else if (mode === 'cup') startRace();
     else showScreen('track');
   } else if (menuScreen === 'track') startRace();
 }
@@ -541,13 +543,11 @@ function showFlyoverName(name){
 }
 function renderTrackPicker(){
   const focused = document.activeElement?.dataset || {};
-  const current=getTrack(trackId),ids=TRACKS.map(t=>t.id);
-  $('#track-eyebrow').textContent=mode==='cup'?'IL CAMPIONATO PARTE DA QUI':mode==='time'?'PROVA A TEMPO · BATTI IL RECORD':`GARA SINGOLA · ${players===2?'DUE PILOTI':'UN PILOTA'}`;
+  const current=getTrack(trackId);
+  $('#track-eyebrow').textContent=mode==='time'?'PROVA A TEMPO · BATTI IL RECORD':`GARA SINGOLA · ${players===2?'DUE PILOTI':'UN PILOTA'}`;
   $('#track-title').textContent=current.name;$('#track-description').textContent=current.description;
   const record=records[recordKey()];
-  $('#track-features').innerHTML=mode==='cup'
-    ?cupTrackIds(ids,trackId).map((id,i)=>`<span><b>${i+1}</b>${escape(getTrack(id).name)}</span>`).join('')
-    :`<span><b>${effectiveLaps()}</b>giri</span><span><b>${current.ramps.length}</b>rampe</span><span><b>${current.boxes.length}</b>casse</span><span><b>${current.length}</b>metri</span>${mode==='time'?`<span class="record"><b>${record?formatLap(record.time):'--:--'}</b>${record&&cleanPilotName(record.pilot)?`record di ${escape(cleanPilotName(record.pilot))}`:'record'}</span>`:''}`;
+  $('#track-features').innerHTML=`<span><b>${effectiveLaps()}</b>giri</span><span><b>${current.ramps.length}</b>rampe</span><span><b>${current.boxes.length}</b>casse</span><span><b>${current.length}</b>metri</span>${mode==='time'?`<span class="record"><b>${record?formatLap(record.time):'--:--'}</b>${record&&cleanPilotName(record.pilot)?`record di ${escape(cleanPilotName(record.pilot))}`:'record'}</span>`:''}`;
   $('#track-picker').innerHTML=TRACKS.map(t=>`<button class="track-card ${t.id===trackId?'primary-focus':''}" role="radio" data-track="${t.id}" aria-checked="${t.id===trackId}" style="--sky:${hex6(t.theme.sky)};--ground:${hex6(t.theme.ground)};--road:${hex6(t.theme.road)}"><span class="track-swatch">${trackOutline(t)}</span><span class="track-card-text"><b>${escape(t.name)}</b><span class="track-card-sub"><small>${escape(t.tagline)}</small>${t.theme.stars?'<span class="track-badge">NOTTE</span>':t.theme.dust?'<span class="track-badge dust">STERRATO</span>':t.sections?.some(s=>s.kind==='loop')?'<span class="track-badge loop">GIRO DELLA MORTE</span>':t.sections?.some(s=>s.kind==='bridge')?'<span class="track-badge bridge">SCORCIATOIE</span>':''}</span></span></button>`).join('');
   $('#track-picker').querySelectorAll('[data-track]').forEach(b=>b.addEventListener('click',()=>{
     if(trackId!==b.dataset.track){trackId=b.dataset.track;lapsOverride=null;}
@@ -567,7 +567,7 @@ function renderTrackPicker(){
     renderTrackPicker();playTone(600,.04);
   }));
   if(focused.step)$(`[data-step="${focused.step}"][data-delta="${focused.delta}"]:not([disabled])`)?.focus({preventScroll:true});
-  $('#start-race').innerHTML=mode==='cup'?`VIA ALLA COPPA! ${icon('trophy',24)}`:timeMode?`VIA COL CRONOMETRO! ${icon('timer',24)}`:`VIA! ${icon('arrow',24)}`;
+  $('#start-race').innerHTML=timeMode?`VIA COL CRONOMETRO! ${icon('timer',24)}`:`VIA! ${icon('arrow',24)}`;
   $('#explore-track').onclick=toggleExplore;
   updateExploreButton();
 }
@@ -632,7 +632,7 @@ function helpKeyboardHTML() {
 }
 
 function openHelp() {
-  openModal(`${modalClose}<span class="modal-symbol">${icon('gamepad',34)}</span><span class="eyebrow">POCHI TASTI, TANTA ADRENALINA</span><h2 id="modal-title">Pronti, piloti?</h2><p>L’auto accelera e segue le curve da sola. Tu sterzi per scegliere la traiettoria, prendere i bonus e superare gli avversari!</p>${helpKeyboardHTML()}<div class="bonus-guide"><span>⚡ <b>Turbo</b><small>Vai velocissimo</small></span><span>🚀 <b>Razzo</b><small>Raggiunge chi è davanti</small></span><span>💣 <b>Bomba</b><small>Una sorpresa dietro di te</small></span><span>🫧 <b>Scudo</b><small>Ti protegge dai colpi</small></span><span>🍬 <b>Spara caramelle</b><small>Una pioggia di caramelle per 5 secondi</small></span><span>🟢 <b>Gelatina</b><small>Incolla chi ci passa per mezzo secondo</small></span><span>🛢️ <b>Olio</b><small>Si slitta senza sterzo, e a volte è testacoda</small></span><span>🚀 <b>Tre razzi</b><small>Una raffica di tre, uno dietro l’altro</small></span><span>🎆 <b>Fontana</b><small>Scintille sulla strada: chi ci passa rallenta</small></span><span>🎇 <b>Girandola</b><small>Zigzaga da un bordo all’altro</small></span><span>🍦 <b>Spara gelato</b><small>Tre palline in faccia: si va piano e si sterza male</small></span><span>🌾 <b>Tre balle di fieno</b><small>Rotolano avanti e schiacciano chi trovano</small></span><span>🚁 <b>Elica</b><small>Per 7 secondi resti in aria: dalle rampe voli lontanissimo</small></span><span>🌈 <b>Arcobaleno</b><small>Per 6 secondi più veloce: chi tocchi esplode</small></span><span>🪂 <b>Paracadute</b><small>Aprilo durante un salto: voli avanti 5 secondi. A terra ti frena!</small></span><span>🪁 <b>Deltaplano</b><small>Dalle rampe plani lontanissimo</small></span></div><p class="help-footnote">Da 1 a 5 giri · fino a 6 bolidi · ${TRACKS.length} piste · Campionato su 3 piste · Prova a tempo con record · <kbd>Esc</kbd> Pausa<br>Nei menu: frecce per muoverti, Invio per confermare, Esc per tornare indietro. Gamepad: levetta o croce, A conferma, B indietro; in gara levetta sinistra, A per il bonus e B per rallentare. Su schermo touch compaiono i pulsanti.</p><button class="start-button" id="help-done">Ho capito! ${icon('check',21)}</button>`,'help-modal');
+  openModal(`${modalClose}<span class="modal-symbol">${icon('gamepad',34)}</span><span class="eyebrow">POCHI TASTI, TANTA ADRENALINA</span><h2 id="modal-title">Pronti, piloti?</h2><p>L’auto accelera e segue le curve da sola. Tu sterzi per scegliere la traiettoria, prendere i bonus e superare gli avversari!</p>${helpKeyboardHTML()}<div class="bonus-guide"><span>⚡ <b>Turbo</b><small>Vai velocissimo</small></span><span>🚀 <b>Razzo</b><small>Raggiunge chi è davanti</small></span><span>💣 <b>Bomba</b><small>Una sorpresa dietro di te</small></span><span>🫧 <b>Scudo</b><small>Ti protegge dai colpi</small></span><span>🍬 <b>Spara caramelle</b><small>Una pioggia di caramelle per 5 secondi</small></span><span>🟢 <b>Gelatina</b><small>Incolla chi ci passa per mezzo secondo</small></span><span>🛢️ <b>Olio</b><small>Si slitta senza sterzo, e a volte è testacoda</small></span><span>🚀 <b>Tre razzi</b><small>Una raffica di tre, uno dietro l’altro</small></span><span>🎆 <b>Fontana</b><small>Scintille sulla strada: chi ci passa rallenta</small></span><span>🎇 <b>Girandola</b><small>Zigzaga da un bordo all’altro</small></span><span>🍦 <b>Spara gelato</b><small>Tre palline in faccia: si va piano e si sterza male</small></span><span>🌾 <b>Tre balle di fieno</b><small>Rotolano avanti e schiacciano chi trovano</small></span><span>🚁 <b>Elica</b><small>Per 7 secondi resti in aria: dalle rampe voli lontanissimo</small></span><span>🌈 <b>Arcobaleno</b><small>Per 6 secondi più veloce: chi tocchi esplode</small></span><span>🪂 <b>Paracadute</b><small>Aprilo durante un salto: voli avanti 5 secondi. A terra ti frena!</small></span><span>🪁 <b>Deltaplano</b><small>Dalle rampe plani lontanissimo</small></span></div><p class="help-footnote">Da 1 a 5 giri · fino a 6 bolidi · ${TRACKS.length} piste · Campionato su 5 piste a sorpresa · Prova a tempo con record · <kbd>Esc</kbd> Pausa<br>Nei menu: frecce per muoverti, Invio per confermare, Esc per tornare indietro. Gamepad: levetta o croce, A conferma, B indietro; in gara levetta sinistra, A per il bonus e B per rallentare. Su schermo touch compaiono i pulsanti.</p><button class="start-button" id="help-done">Ho capito! ${icon('check',21)}</button>`,'help-modal');
   $('#help-done').addEventListener('click',closeModal);
   $('#help-keyboard').addEventListener('click',()=>openControls('help'));
 }
@@ -706,7 +706,7 @@ function startRace() {
   if(!ensureRenderer())return;
   modalEpoch++; noticeTimer=0;
   keys.clear();keyEdges.clear();touchPointers.clear();touchInputs.forEach(x=>{x.steer=0;x.useItem=false;x.brake=false;});
-  if(mode==='cup'&&!cup)cup=createCup({trackIds:cupTrackIds(TRACKS.map(t=>t.id),trackId),seed:Date.now()});
+  if(mode==='cup'&&!cup)cup=newCup();
   const track=raceTrack(cup?cup.trackIds[cup.index]:trackId);
   renderer.setTrack(track);
   race=new RaceSimulation({players,difficulty,cars:selected.slice(0,players),aiCars:[...CAR_PRESETS,...SAMPLE_CARS],seed:cup?raceSeed(cup,cup.index):Date.now(),fieldSeed:cup?cup.seed:null,track,opponents:effectiveOpponents()});
@@ -735,7 +735,7 @@ function pauseRace() {
   showPauseMenu();
 }
 function showPauseMenu(){
-  openModal(`<span class="modal-symbol">${icon('pause',32)}</span><span class="eyebrow">AI BOX</span><h2 id="modal-title">Pausa!</h2><p>La pista ti aspetta. Ripartiamo quando vuoi.</p><button id="resume-race" class="start-button">Continua la gara ${icon('arrow',21)}</button><button id="restart-race" class="button wide">${cup?'Ricomincia questa gara':'Ricomincia'}</button><button id="pause-keyboard" class="button wide">${icon('keyboard',19)} Imposta i tasti</button><button id="exit-race" class="text-button">Torna alla scelta della pista</button>`,'pause-modal');
+  openModal(`<span class="modal-symbol">${icon('pause',32)}</span><span class="eyebrow">AI BOX</span><h2 id="modal-title">Pausa!</h2><p>La pista ti aspetta. Ripartiamo quando vuoi.</p><button id="resume-race" class="start-button">Continua la gara ${icon('arrow',21)}</button><button id="restart-race" class="button wide">${cup?'Ricomincia questa gara':'Ricomincia'}</button><button id="pause-keyboard" class="button wide">${icon('keyboard',19)} Imposta i tasti</button><button id="exit-race" class="text-button">${backLabel()}</button>`,'pause-modal');
   $('#pause-keyboard').addEventListener('click',()=>openControls('pause'));
   $('#resume-race').addEventListener('click',resumeRace);$('#restart-race').addEventListener('click',startRace);$('#exit-race').addEventListener('click',exitRace);
 }
@@ -746,8 +746,11 @@ function exitRace(){
   audio.setPaused(false);audio.setIntensity({});audio.startMusic(menuMusic());
   $('#modal-overlay').hidden=true;$('#race-screen').hidden=true;$('#menu').hidden=false;
   $('#viewport').classList.remove('in-race');renderer.setMode(1);
-  showScreen('track');updateSelection();
+  showScreen(mode==='cup'?'cars':'track');updateSelection();
 }
+/** A new cup: five circuits drawn at random, and the field of opponents, from the same seed. */
+const backLabel=()=>mode==='cup'?'Torna al garage':'Torna alla scelta della pista';
+function newCup(){const seed=Date.now()>>>0;return createCup({trackIds:cupTrackIds(TRACKS.map(t=>t.id),seed),seed});}
 /** Where the pilots finished, in words: the line under the results' title. */
 function placeSummary(humans,total){
   if(humans.length===1)return humans[0].rank===1?'1° posto: hai vinto!':`Al traguardo: ${humans[0].rank}° posto su ${total}.`;
@@ -776,7 +779,7 @@ function showResults(){
   if(cup){
     cup=recordRaceResult(cup,race.racers,times);
     const finished=isCupFinished(cup),standings=sortStandings(cup.standings);
-    openModal(`<span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">COPPA · GARA ${cup.index}/${cup.trackIds.length} · ${escape(race.track.name.toUpperCase())}</span><h2 id="modal-title">${title}</h2><p>${placeSummary(humans,race.racers.length)} ${finished?'Tutte le piste sono state corse!':'I punti si sommano: il campionato continua.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference,formatRaceTime(reference))}<b>+${pointsForRank(r.rank)}</b></div>`).join('')}</div><span class="eyebrow">CLASSIFICA · DISTACCHI SUL TEMPO TOTALE</span>${standingsHTML(standings)}${finished?`<button id="cup-podium" class="start-button">Vai al podio! ${icon('trophy',21)}</button>`:`<button id="next-race" class="start-button">Prossima pista: ${escape(getTrack(cup.trackIds[cup.index]).name)} ${icon('arrow',21)}</button>`}<button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
+    openModal(`<span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">COPPA · GARA ${cup.index}/${cup.trackIds.length} · ${escape(race.track.name.toUpperCase())}</span><h2 id="modal-title">${title}</h2><p>${placeSummary(humans,race.racers.length)} ${finished?'Tutte le piste sono state corse!':'I punti si sommano: il campionato continua.'}</p><div class="result-list">${ranked.map(r=>`<div class="result-row ${humans.includes(r)?'is-human':''}"><strong>${r.rank}°</strong><span>${escape(r.name)}${humans.includes(r)?humanTag(r):''}</span>${gapCell(times.get(r.id),reference,formatRaceTime(reference))}<b>+${pointsForRank(r.rank)}</b></div>`).join('')}</div><span class="eyebrow">CLASSIFICA · DISTACCHI SUL TEMPO TOTALE</span>${standingsHTML(standings)}${finished?`<button id="cup-podium" class="start-button">Vai al podio! ${icon('trophy',21)}</button>`:`<button id="next-race" class="start-button">Prossima pista: ${escape(getTrack(cup.trackIds[cup.index]).name)} ${icon('arrow',21)}</button>`}<button id="results-garage" class="text-button">${icon('back',17)} ${backLabel()}</button>`,'results-modal');
     $('#next-race')?.addEventListener('click',startRace);$('#cup-podium')?.addEventListener('click',showCupPodium);$('#results-garage').addEventListener('click',exitRace);
     return;
   }
@@ -791,8 +794,8 @@ function standingsHTML(standings){
 function showCupPodium(){
   const standings=sortStandings(cup.standings),top=standings.slice(0,3),order=[1,0,2];
   audio.sfx('podium');
-  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">FINE DEL CAMPIONATO</span><h2 id="modal-title">${top[0]?.isPlayer?'Campioni!':'Che campionato!'}</h2><div class="podium">${order.map(i=>top[i]?`<div class="podium-step step-${i+1} ${top[i].isPlayer?'is-human':''}"><span class="podium-rank">${i+1}°</span><b>${escape(top[i].name)}</b><small>${top[i].points} pt</small></div>`:'').join('')}</div>${standingsHTML(standings)}<button id="new-cup" class="start-button">Un altro campionato! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} Torna alla scelta della pista</button>`,'results-modal');
-  $('#new-cup').addEventListener('click',()=>{cup=createCup({trackIds:cup.trackIds,seed:Date.now()});startRace();});$('#results-garage').addEventListener('click',exitRace);
+  openModal(`<div class="confetti-decoration">✦ <span>✧</span> ✦</div><span class="modal-symbol gold">${icon('trophy',40)}</span><span class="eyebrow">FINE DEL CAMPIONATO</span><h2 id="modal-title">${top[0]?.isPlayer?'Campioni!':'Che campionato!'}</h2><div class="podium">${order.map(i=>top[i]?`<div class="podium-step step-${i+1} ${top[i].isPlayer?'is-human':''}"><span class="podium-rank">${i+1}°</span><b>${escape(top[i].name)}</b><small>${top[i].points} pt</small></div>`:'').join('')}</div>${standingsHTML(standings)}<button id="new-cup" class="start-button">Un altro campionato! ${icon('flag',21)}</button><button id="results-garage" class="text-button">${icon('back',17)} ${backLabel()}</button>`,'results-modal');
+  $('#new-cup').addEventListener('click',()=>{cup=newCup();startRace();});$('#results-garage').addEventListener('click',exitRace);
 }
 function makeTouchControls(){
   $('#touch-controls').classList.toggle('two-players',players===2);

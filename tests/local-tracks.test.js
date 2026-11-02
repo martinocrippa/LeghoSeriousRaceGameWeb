@@ -4,7 +4,6 @@ import * as THREE from 'three';
 import {getTrack,TRACKS} from '../src/track.js';
 import {RaceSimulation} from '../src/race.js';
 import {createLocalScenery,localLayout,isLocalSceneryReserved} from '../src/local-scenery.js';
-import {cupTrackIds} from '../src/cup.js';
 
 for(const id of ['brugherio','milano','como','increa','villasanta','crete','bergamo','aprica','stadio','notte','adda','bernina','arca','regnano','magra','alba','intervallo','varese','roma']) {
  test(`${id}: landmarks remain off the road and two players finish the circuit`,()=>{
@@ -34,8 +33,7 @@ for(const id of ['brugherio','milano','como','increa','villasanta','crete','berg
   const geometries=new Set(),materials=new Set();scene.traverse(m=>{if(m.geometry)geometries.add(m.geometry);if(m.material)materials.add(m.material);});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
  });
 }
-test('the Lombardy cup follows Brugherio, Milano, Como and the lake stays inside its protected shore',()=>{
- assert.deepEqual(cupTrackIds(TRACKS.map(t=>t.id),'brugherio'),['brugherio','milano','como']);
+test('the lake of Como stays inside its protected shore',()=>{
  const track=getTrack('como'),{shoreline}=localLayout(track),points=track.points(500);
  for(const p of shoreline)assert.ok(Math.min(...points.map(q=>Math.hypot(q.x-p.x,q.z-p.z)))>track.roadWidth/2+3);
 });

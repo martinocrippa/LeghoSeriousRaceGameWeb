@@ -133,20 +133,18 @@ test('mobile screens and touch race stay inside the viewport', async ({ page }) 
   await page.screenshot({path:'artifacts/race-mobile.png'});
 });
 
-test('a cup runs three races on different circuits with cumulative standings and a podium', async ({ page }) => {
+test('a cup runs five races on circuits drawn at random with cumulative standings and a podium', async ({ page }) => {
   const errors=[];
   page.on('pageerror', e=>errors.push(e.message));
-  await openScreen(page,'track',{mode:'cup'});
-  await expect(page.locator('#start-race')).toContainText('COPPA');
-  await page.locator('[data-track="aprica"]').click();
-  await expect(page.locator('#track-features span')).toHaveCount(3);
-  await page.locator('#start-race').click();
-  await expect(page.locator('#cup-badge')).toHaveText('COPPA · GARA 1/3');
-  await expect(page.locator('#map-label')).toHaveText('APRICA: CORSO ROMA');
+  // No circuit to choose: from the garage the cup goes straight to its first race.
+  await openScreen(page,'cars',{mode:'cup'});
+  await expect(page.locator('#to-track')).toContainText('COPPA');
+  await page.locator('#to-track').click();
+  await expect(page.locator('#cup-badge')).toHaveText('COPPA · GARA 1/5');
   const raceUntilFinished=()=>page.evaluate(()=>{const race=window.__BRICK_RACERS__.race;for(let i=0;i<900&&race.state!=='finished';i++)race.update(.25,[{useItem:i%2===0}]);});
   const labels=[];
-  for(let stage=1;stage<=3;stage++){
-    await expect(page.locator('#cup-badge')).toHaveText(`COPPA · GARA ${stage}/3`);
+  for(let stage=1;stage<=5;stage++){
+    await expect(page.locator('#cup-badge')).toHaveText(`COPPA · GARA ${stage}/5`);
     labels.push(await page.locator('#map-label').textContent());
     await expect.poll(()=>page.evaluate(()=>window.__BRICK_RACERS__.race.state)).toBe('racing');
     await raceUntilFinished();
@@ -155,17 +153,17 @@ test('a cup runs three races on different circuits with cumulative standings and
     // The standings gap is on the total time: Pilot 1's row shows that total, the others their distance from it.
     await expect(page.locator('.standings .gap-own')).toHaveText(/^~?\d+:\d\d,\d$/);
     await expect(page.locator('.standings .gap:not(.gap-own)')).toHaveCount(5);
-    if(stage===3)await page.screenshot({path:'artifacts/cup-results.png'});
-    if(stage<3){await expect(page.locator('#next-race')).toBeVisible();await page.locator('#next-race').click();}
+    if(stage===5)await page.screenshot({path:'artifacts/cup-results.png'});
+    if(stage<5){await expect(page.locator('#next-race')).toBeVisible();await page.locator('#next-race').click();}
   }
-  expect(new Set(labels).size).toBe(3);
+  expect(new Set(labels).size).toBe(5);
   await expect(page.locator('#cup-podium')).toBeVisible();
   await page.locator('#cup-podium').click();
   await expect(page.locator('#new-cup')).toBeVisible();
   await expect(page.locator('.podium-step')).toHaveCount(3);
   await page.screenshot({path:'artifacts/cup-podium.png'});
   await page.locator('#results-garage').click();
-  await expect(page.locator('#screen-track')).toBeVisible();
+  await expect(page.locator('#screen-cars')).toBeVisible();
   expect(await page.evaluate(()=>window.__BRICK_RACERS__.cup)).toBeNull();
   expect(errors).toEqual([]);
 });
