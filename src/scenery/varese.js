@@ -46,7 +46,7 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, green } = kit;
+  const { box, cyl, cone, mesh, cream, glass, green } = kit;
   const random = seeded(4521);
   const paddlers = [], shrimps = [], flags = [];
 
@@ -84,7 +84,7 @@ export function build(kit, scene, track, layout) {
     box(p, 52, 0.25, 26, 0x9a9484, 0, 0.1, 2, false);
     const colours = [0xf2d9a8, 0xe8bfa0, 0xd8e0c0, 0xf0cfc0];
     for (const [i, x] of [-21, -12, 10, 19].entries()) {
-      const home = new T.Group();
+      const home = new THREE.Group();
       home.position.set(x, 0, -2 + (i % 2) * 3);
       p.add(home);
       const h = 5.5 + (i % 3) * 1.1;
@@ -96,7 +96,7 @@ export function build(kit, scene, track, layout) {
       kit.tree(home, -4.5, 5.5, false);
     }
     // The unfinished house: a grey concrete block, slit windows, a stair tower, scaffolding and a crane.
-    const fort = new T.Group();
+    const fort = new THREE.Group();
     fort.position.set(-1, 0, -4);
     p.add(fort);
     box(fort, 13, 9, 11, CONCRETE, 0, 4.5, 0);
@@ -132,7 +132,7 @@ export function build(kit, scene, track, layout) {
     const apse = cyl(p, 4, 7, STONE, 0, 3.5, -8, 12);
     apse.castShadow = true;
     box(p, 2.4, 4, 0.3, WOOD_DARK, 0, 2, 5.6);
-    const rose = mesh(p, new T.CylinderGeometry(1.2, 1.2, 0.2, 14), 0xbfd8e0, 0, 6.2, 5.6);
+    const rose = mesh(p, new THREE.CylinderGeometry(1.2, 1.2, 0.2, 14), 0xbfd8e0, 0, 6.2, 5.6);
     rose.rotation.x = Math.PI / 2;
     box(p, 4.4, 12, 4.4, STONE, 7.6, 6, 1);
     box(p, 5.2, 0.6, 5.2, cream, 7.6, 12.3, 1);
@@ -140,7 +140,7 @@ export function build(kit, scene, track, layout) {
     const spire = cone(p, 3.4, 5, TILE, 7.6, 15, 1, 4);
     spire.rotation.y = Math.PI / 4;
     cyl(p, 0.08, 1.6, 0xf0c040, 7.6, 18.3, 1, 5);
-    const clock = mesh(p, new T.CircleGeometry(0.9, 16), cream, 7.6, 7.4, 3.23);
+    const clock = mesh(p, new THREE.CircleGeometry(0.9, 16), cream, 7.6, 7.4, 3.23);
     clock.castShadow = false;
     for (const [x, z] of [[-9, 6], [11, 8], [-10, -6]]) kit.cypress(p, x, z, 8);
     for (let i = 0; i < 5; i += 1) box(p, 2.6, 0.18, 1.2, 0xbdb5a2, 0, 0.22, 7 + i * 1.3, false);
@@ -151,7 +151,7 @@ export function build(kit, scene, track, layout) {
     // that turn up in half the gardens here.
     box(p, 50, 0.3, 26, 0x8fae66, 0, 0.12, 0, false);
     for (const [x, tint] of [[-13, 0xf2e2c0], [14, 0xe8d0b0]]) {
-      const villa = new T.Group();
+      const villa = new THREE.Group();
       villa.position.set(x, 0, -3);
       p.add(villa);
       box(villa, 15, 9, 11, tint, 0, 4.5, 0);
@@ -167,7 +167,7 @@ export function build(kit, scene, track, layout) {
     }
     // The palms: a rough trunk of stacked rings and a crown of long fronds.
     for (const [x, z] of [[-24, 7], [-2, 9], [25, 6]]) {
-      const palm = new T.Group();
+      const palm = new THREE.Group();
       palm.position.set(x, 0, z);
       p.add(palm);
       for (let i = 0; i < 9; i += 1) cyl(palm, 0.42 - i * 0.02, 0.9, 0xa08a5e, 0, 0.45 + i * 0.85, 0, 8);
@@ -177,7 +177,7 @@ export function build(kit, scene, track, layout) {
         frond.rotation.set(0.3, -a, 0);
         frond.castShadow = false;
       }
-      mesh(palm, new T.SphereGeometry(0.5, 8, 6), 0x6b8a3a, 0, 8.1, 0);
+      mesh(palm, new THREE.SphereGeometry(0.5, 8, 6), 0x6b8a3a, 0, 8.1, 0);
     }
     // The iron gate and the wall along the road.
     box(p, 50, 1.6, 0.6, STONE, 0, 0.8, 11.4, false);
@@ -215,7 +215,7 @@ export function build(kit, scene, track, layout) {
     box(p, 7, 3.4, 5, 0xe0d2b4, -12, 1.7, 3);
     kit.roofTop(p, 7.6, 5.6, 3.4, TILE);
     p.children[p.children.length - 1].position.set(-12, 3.4, 3);
-    const mouth = mesh(p, new T.CylinderGeometry(2.2, 2.2, 0.6, 12, 1, false, 0, Math.PI), 0x2b3a3f, -12, 1.4, 5.5);
+    const mouth = mesh(p, new THREE.CylinderGeometry(2.2, 2.2, 0.6, 12, 1, false, 0, Math.PI), 0x2b3a3f, -12, 1.4, 5.5);
     mouth.rotation.x = Math.PI / 2;
     mouth.rotation.z = Math.PI;
     for (let i = 0; i < 4; i += 1) box(p, 6, 0.3, 1, STONE, 8, 1.2 - i * 0.3, 2 + i, false);
@@ -237,7 +237,7 @@ export function build(kit, scene, track, layout) {
       }
     }
     for (const [x, turn] of [[-11, 0.2], [6, -0.3]]) {
-      const hut = new T.Group();
+      const hut = new THREE.Group();
       hut.position.set(x, 0, 6);
       hut.rotation.y = turn;
       p.add(hut);
@@ -249,7 +249,7 @@ export function build(kit, scene, track, layout) {
       box(hut, 1.2, 2, 0.16, WOOD_DARK, 0, 3.9, 2.55);
       // The nets hung out to dry and the boat pulled up under the hut.
       for (const dx of [-2, 2]) box(hut, 0.1, 2.2, 3.4, 0xcfc0a0, dx, 1.6, 3.4, false);
-      const boat = mesh(hut, new T.SphereGeometry(1, 10, 6), 0x2f6b8a, 0, 0.4, 5.6);
+      const boat = mesh(hut, new THREE.SphereGeometry(1, 10, 6), 0x2f6b8a, 0, 0.4, 5.6);
       boat.scale.set(0.9, 0.4, 2.6);
       box(hut, 1.6, 0.14, 0.4, WOOD, 0, 0.7, 5.6, false);
     }
@@ -262,7 +262,7 @@ export function build(kit, scene, track, layout) {
     for (let x = -22; x <= 22; x += 4) box(p, 2.4, 0.06, 0.2, 0xf4f0e2, x, 0.26, 2, false);
     for (const [x, tint] of [[-15, 0xf2e2c0], [13, 0xe8d8bc]]) {
       // A mini church: one room, a bell-cote and a cross. They are small on purpose — they are wayside chapels.
-      const chapel = new T.Group();
+      const chapel = new THREE.Group();
       chapel.position.set(x, 0, -6);
       p.add(chapel);
       box(chapel, 4.6, 4, 5.4, tint, 0, 2, 0);
@@ -280,23 +280,23 @@ export function build(kit, scene, track, layout) {
       for (const dx of [-1, 1]) box(p, 0.16, 0.8, 0.7, IRON, x + dx, 0.4, 5.4, false);
     }
     for (let i = 0; i < 4; i += 1) {
-      const hoop = mesh(p, new T.TorusGeometry(0.4, 0.06, 5, 12, Math.PI), IRON, 20 + i * 1.2, 0.35, 4);
+      const hoop = mesh(p, new THREE.TorusGeometry(0.4, 0.06, 5, 12, Math.PI), IRON, 20 + i * 1.2, 0.35, 4);
       hoop.castShadow = false;
     }
     // Two cyclists, stopped where the path meets the road.
     for (const [x, colour] of [[-2, 0xd94141], [2.6, 0xf4c95a]]) {
-      const rider = new T.Group();
+      const rider = new THREE.Group();
       rider.position.set(x, 0, 2);
       rider.rotation.y = 0.3;
       p.add(rider);
       for (const dz of [-0.8, 0.8]) {
-        const wheel = mesh(rider, new T.TorusGeometry(0.5, 0.07, 5, 14), 0x23262c, 0, 0.5, dz);
+        const wheel = mesh(rider, new THREE.TorusGeometry(0.5, 0.07, 5, 14), 0x23262c, 0, 0.5, dz);
         wheel.rotation.y = Math.PI / 2;
       }
       box(rider, 0.1, 0.5, 1.8, IRON, 0, 0.8, 0, false);
       box(rider, 0.5, 0.9, 0.4, colour, 0, 1.4, -0.1);
-      mesh(rider, new T.SphereGeometry(0.22, 8, 6), 0xf0c9a0, 0, 2, -0.05);
-      const helmet = mesh(rider, new T.SphereGeometry(0.26, 8, 6), 0xf4f0e2, 0, 2.08, -0.05);
+      mesh(rider, new THREE.SphereGeometry(0.22, 8, 6), 0xf0c9a0, 0, 2, -0.05);
+      const helmet = mesh(rider, new THREE.SphereGeometry(0.26, 8, 6), 0xf4f0e2, 0, 2.08, -0.05);
       helmet.scale.y = 0.7;
     }
   }
@@ -307,14 +307,14 @@ export function build(kit, scene, track, layout) {
 
   // --- The lake itself -------------------------------------------------------------------------------------
   const shore = lakeShape(track);
-  const shape = new T.Shape(shore.map((p) => new T.Vector2(p.x, -p.z)));
-  const water = mesh(scene, new T.ShapeGeometry(shape), WATER, 0, 0.06, 0);
+  const shape = new THREE.Shape(shore.map((p) => new THREE.Vector2(p.x, -p.z)));
+  const water = mesh(scene, new THREE.ShapeGeometry(shape), WATER, 0, 0.06, 0);
   water.rotation.x = -Math.PI / 2;
   water.castShadow = false;
   water.name = 'lake-water';
   // A band of pale gravel all round the waterline, so the lake has a beach and not a cut edge.
-  const rim = new T.CatmullRomCurve3(shore.map((p) => new T.Vector3(p.x, 0.1, p.z)), true);
-  mesh(scene, new T.TubeGeometry(rim, 320, 0.45, 5, true), 0xcdb894).castShadow = false;
+  const rim = new THREE.CatmullRomCurve3(shore.map((p) => new THREE.Vector3(p.x, 0.1, p.z)), true);
+  mesh(scene, new THREE.TubeGeometry(rim, 320, 0.45, 5, true), 0xcdb894).castShadow = false;
 
   const centreAt = (distance, lane) => {
     const f = track.frame(distance);
@@ -324,7 +324,7 @@ export function build(kit, scene, track, layout) {
   // Jetties: wooden walkways running out from the shore into the water, as they do all along this bank.
   for (const [distance, length] of [[760, 16], [900, 22], [1010, 14]]) {
     const head = centreAt(distance, LAKE_SHORE - 2), tip = centreAt(distance, LAKE_SHORE + length);
-    const jetty = new T.Group();
+    const jetty = new THREE.Group();
     jetty.position.set(head.x, 0, head.z);
     jetty.rotation.y = Math.atan2(tip.x - head.x, tip.z - head.z);
     scene.add(jetty);
@@ -338,15 +338,15 @@ export function build(kit, scene, track, layout) {
 
   // Canoes: three of them out on the water, each with a paddler swinging the blade from side to side.
   for (let i = 0; i < 3; i += 1) {
-    const canoe = new T.Group();
+    const canoe = new THREE.Group();
     scene.add(canoe);
     kit.dynamic(canoe);
-    const hull = mesh(canoe, new T.SphereGeometry(1, 10, 6), [0xf0a81e, 0xd94141, 0x2f9a8a][i], 0, 0.3, 0);
+    const hull = mesh(canoe, new THREE.SphereGeometry(1, 10, 6), [0xf0a81e, 0xd94141, 0x2f9a8a][i], 0, 0.3, 0);
     hull.scale.set(0.55, 0.32, 3);
     hull.castShadow = false;
     box(canoe, 1, 0.12, 4.4, 0x3b2f24, 0, 0.5, 0, false);
     box(canoe, 0.7, 0.9, 0.7, [0x2f3338, 0xf4f0e2, 0x2f6b8a][i], 0, 0.9, -0.2);
-    mesh(canoe, new T.SphereGeometry(0.26, 8, 6), 0xf0c9a0, 0, 1.5, -0.2);
+    mesh(canoe, new THREE.SphereGeometry(0.26, 8, 6), 0xf0c9a0, 0, 1.5, -0.2);
     const paddle = box(canoe, 2.8, 0.1, 0.24, 0xe8d8bc, 0, 1.2, 0.1, false);
     paddlers.push({ object: canoe, paddle, along: 0.2 + i * 0.28, out: 26 + i * 14, phase: random() * 6.3, speed: 0.012 + random() * 0.008 });
   }
@@ -355,13 +355,13 @@ export function build(kit, scene, track, layout) {
   // find them. They are tiny, so there are a lot of them and they move in short bursts.
   for (let i = 0; i < 26; i += 1) {
     const at = centreAt(LAKE_FROM + random() * (LAKE_TO - LAKE_FROM), LAKE_SHORE + 3 + random() * 16);
-    const shrimp = new T.Group();
+    const shrimp = new THREE.Group();
     shrimp.position.set(at.x, 0.12, at.z);
     scene.add(shrimp);
-    const body = mesh(shrimp, new T.SphereGeometry(0.3, 7, 5), 0xf08a72, 0, 0, 0);
+    const body = mesh(shrimp, new THREE.SphereGeometry(0.3, 7, 5), 0xf08a72, 0, 0, 0);
     body.scale.set(0.5, 0.42, 1.5);
     body.castShadow = false;
-    const tail = mesh(shrimp, new T.ConeGeometry(0.17, 0.4, 4), 0xe0705a, 0, 0, -0.55);
+    const tail = mesh(shrimp, new THREE.ConeGeometry(0.17, 0.4, 4), 0xe0705a, 0, 0, -0.55);
     tail.rotation.x = -Math.PI / 2;
     tail.castShadow = false;
     for (const side of [-1, 1]) {
@@ -379,22 +379,22 @@ export function build(kit, scene, track, layout) {
   if (island) {
     const at = centreAt(island.distance, island.lane);
     const base = (track.elevation ? track.elevation(island.distance) : 0) + 0.2;
-    const jet = new T.Group();
+    const jet = new THREE.Group();
     jet.position.set(at.x, base, at.z);
     jet.rotation.y = 0.7;
     scene.add(jet);
     cyl(jet, 0.55, 5.4, GREY, 0, 2.7, 0, 10);
     box(jet, 2.6, 0.5, 2.6, 0x8d8578, 0, 0.25, 0);
-    const plane = new T.Group();
+    const plane = new THREE.Group();
     plane.position.set(0, 5.6, 0);
     plane.rotation.set(-0.18, 0, 0.12);
     jet.add(plane);
     const ORANGE = 0xf26a1b, TRIM = 0xf4f0e2;
-    const body = mesh(plane, new T.SphereGeometry(1, 12, 9), ORANGE, 0, 0, 0);
+    const body = mesh(plane, new THREE.SphereGeometry(1, 12, 9), ORANGE, 0, 0, 0);
     body.scale.set(0.8, 0.8, 5.2);
-    const nose = mesh(plane, new T.ConeGeometry(0.78, 2.6, 12), ORANGE, 0, 0, 6.2);
+    const nose = mesh(plane, new THREE.ConeGeometry(0.78, 2.6, 12), ORANGE, 0, 0, 6.2);
     nose.rotation.x = Math.PI / 2;
-    mesh(plane, new T.SphereGeometry(0.28, 8, 6), 0x2f3338, 0, 0, 7.6);
+    mesh(plane, new THREE.SphereGeometry(0.28, 8, 6), 0x2f3338, 0, 0, 7.6);
     // Swept wings, tailplane and fin.
     for (const side of [-1, 1]) {
       const wing = box(plane, 5, 0.22, 2.4, ORANGE, side * 2.8, -0.1, -0.6);
@@ -410,7 +410,7 @@ export function build(kit, scene, track, layout) {
     const fin = box(plane, 0.22, 2.6, 2.6, ORANGE, 0, 1.5, -4.2);
     box(plane, 0.24, 0.8, 1.6, TRIM, 0, 2.6, -4.4);
     // Canopy, roundel stripes and the jet pipe.
-    const canopy = mesh(plane, new T.SphereGeometry(0.62, 10, 8), 0x8fd0e0, 0, 0.62, 3);
+    const canopy = mesh(plane, new THREE.SphereGeometry(0.62, 10, 8), 0x8fd0e0, 0, 0.62, 3);
     canopy.scale.set(0.9, 0.8, 2.1);
     for (const z of [1.2, -1.6]) box(plane, 1.7, 0.1, 0.5, TRIM, 0, 0.8, z, false);
     const pipe = cyl(plane, 0.62, 0.7, 0x3b3f44, 0, 0, -5.2, 12);

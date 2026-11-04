@@ -43,7 +43,7 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, wood, darkWood, stone, snow } = kit;
+  const { box, cyl, cone, mesh, cream, glass, wood, darkWood, stone, snow } = kit;
   const iron = 0x4a4f57, rock = 0x8a8f96, granite = 0xa9a396, rosso = 0xd0301f, pine = 0x2f5a3a, ice = 0xdff0f7;
 
   // --- Landmarks ---------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ export function build(kit, scene, track, layout) {
       const log = cyl(p, 0.42, 6, 0xa9784c, -3 + i * 0.95 + row * 0.48, 0.45 + row * 0.85, 6, 8);
       log.rotation.z = Math.PI / 2;
     }
-    for (const [x, z, r] of [[-10, 4, 2.6], [9, 2, 2]]) mesh(p, new T.IcosahedronGeometry(r, 0), rock, x, r * 0.6, z);
+    for (const [x, z, r] of [[-10, 4, 2.6], [9, 2, 2]]) mesh(p, new THREE.IcosahedronGeometry(r, 0), rock, x, r * 0.6, z);
   }
   function santuario(p) {
     // The basilica of the Madonna di Tirano: broad baroque front, dome and a tall bell tower with an onion top.
@@ -82,12 +82,12 @@ export function build(kit, scene, track, layout) {
     p.children[p.children.length - 1].position.set(0, 15.2, 8.5);
     for (const x of [-5.2, 5.2]) { box(p, 1.5, 12, 1.5, 0xe8dcc0, x, 6, 9.3); box(p, 2, 0.6, 2, cream, x, 12.3, 9.3); }
     box(p, 3.4, 6, 0.4, 0x7a5236, 0, 3, 9.5);
-    const rose = mesh(p, new T.CylinderGeometry(1.9, 1.9, 0.3, 18), 0x8fb3d9, 0, 9.4, 9.5); rose.rotation.x = Math.PI / 2;
+    const rose = mesh(p, new THREE.CylinderGeometry(1.9, 1.9, 0.3, 18), 0x8fb3d9, 0, 9.4, 9.5); rose.rotation.x = Math.PI / 2;
     cyl(p, 5.2, 3.4, 0xf2e6cd, 0, 12.9, -7, 16);
-    const dome = mesh(p, new T.SphereGeometry(5.3, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f8f6f, 0, 14.2, -7); dome.castShadow = false;
-    cyl(p, 0.5, 2.4, cream, 0, 20.3, -7, 8); mesh(p, new T.SphereGeometry(0.6, 8, 6), 0xe8bf4a, 0, 21.8, -7);
+    const dome = mesh(p, new THREE.SphereGeometry(5.3, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f8f6f, 0, 14.2, -7); dome.castShadow = false;
+    cyl(p, 0.5, 2.4, cream, 0, 20.3, -7, 8); mesh(p, new THREE.SphereGeometry(0.6, 8, 6), 0xe8bf4a, 0, 21.8, -7);
     box(p, 4, 26, 4, 0xe8dcc0, 11, 13, 2); box(p, 5, 0.7, 5, cream, 11, 26.3, 2);
-    const onion = mesh(p, new T.SphereGeometry(2.6, 12, 9), 0x5f8f6f, 11, 28.3, 2); onion.scale.y = 1.35;
+    const onion = mesh(p, new THREE.SphereGeometry(2.6, 12, 9), 0x5f8f6f, 11, 28.3, 2); onion.scale.y = 1.35;
     cyl(p, 0.3, 2, 0xe8bf4a, 11, 31.4, 2, 6);
     for (const y of [15, 20]) for (const z of [0.05, 3.95]) box(p, 1.2, 2.2, 0.2, 0x4a3a30, 11, y, z);
     for (const [x, z] of [[-15, 10], [16, 11]]) kit.cypress(p, x, z, 10);
@@ -100,7 +100,7 @@ export function build(kit, scene, track, layout) {
     box(p, 3, 4.2, 0.3, 0x7a5236, -4, 2.1, 1.1);
     box(p, 10, 0.4, 7, 0x8f5f3f, 9, 5.4, 2); for (const [x, z] of [[5, -0.6], [13, -0.6], [5, 4.6], [13, 4.6]]) cyl(p, 0.18, 5.2, iron, x, 2.6, z, 6);
     cyl(p, 0.2, 6, 0xf1ece0, 13, 3, 7.4, 8); box(p, 1, 2.4, 0.3, rosso, 13, 6.6, 7.4);
-    for (const x of [-12, 12]) { cyl(p, 0.14, 4, iron, x, 2, 7.2, 6); mesh(p, new T.SphereGeometry(0.34, 8, 6), 0xfff1b0, x, 4.2, 7.2).castShadow = false; }
+    for (const x of [-12, 12]) { cyl(p, 0.14, 4, iron, x, 2, 7.2, 6); mesh(p, new THREE.SphereGeometry(0.34, 8, 6), 0xfff1b0, x, 4.2, 7.2).castShadow = false; }
     box(p, 8, 1.4, 0.2, cream, 2, 6.4, -1);
   }
   function viadotto(p) {
@@ -110,7 +110,7 @@ export function build(kit, scene, track, layout) {
       const a = i / arches * Math.PI * 2, y = 2 + (i / arches) * 9;
       const x = Math.cos(a) * radius, z = Math.sin(a) * radius;
       const pier = box(p, 3.4, y, 3.4, granite, x, y / 2, z); pier.rotation.y = -a;
-      const arch = mesh(p, new T.TorusGeometry(2.8, 0.8, 5, 10, Math.PI), granite, x, y, z);
+      const arch = mesh(p, new THREE.TorusGeometry(2.8, 0.8, 5, 10, Math.PI), granite, x, y, z);
       arch.rotation.set(0, -a + Math.PI / 2, 0); arch.castShadow = false;
     }
     for (let i = 0; i < arches * 2; i++) {
@@ -120,7 +120,7 @@ export function build(kit, scene, track, layout) {
       const rail = box(p, 0.3, 1, 6.6, cream, x + Math.cos(a) * 2.4, y + 1, z + Math.sin(a) * 2.4); rail.rotation.y = -a;
     }
     const carriage = (a, y, colour) => {
-      const g = new T.Group(); g.position.set(Math.cos(a) * radius, y + 1.2, Math.sin(a) * radius); g.rotation.y = -a + Math.PI / 2; p.add(g);
+      const g = new THREE.Group(); g.position.set(Math.cos(a) * radius, y + 1.2, Math.sin(a) * radius); g.rotation.y = -a + Math.PI / 2; p.add(g);
       box(g, 3, 2.6, 8, colour, 0, 1.5, 0); box(g, 3.1, 0.4, 8.2, 0xf1ece0, 0, 3, 0);
       for (let i = 0; i < 3; i++) for (const x of [-1.55, 1.55]) box(g, 0.12, 1.1, 1.8, glass, x, 1.9, -2.4 + i * 2.4);
     };
@@ -138,13 +138,13 @@ export function build(kit, scene, track, layout) {
       const slab = box(p, 22 - i * 1.6, 3, 11, i % 2 ? ice : 0xc7e4f0, 0, 44 - i * 6.2, 4 + i * 8);
       slab.castShadow = false;
     }
-    for (const [x, z] of [[-13, 62], [11, 66], [0, 70], [-6, 56]]) mesh(p, new T.IcosahedronGeometry(2.6, 0), 0x8a8073, x, 1.4, z);
+    for (const [x, z] of [[-13, 62], [11, 66], [0, 70], [-6, 56]]) mesh(p, new THREE.IcosahedronGeometry(2.6, 0), 0x8a8073, x, 1.4, z);
     box(p, 34, 1.4, 12, 0x9aa0a4, 0, 0.7, 64);
   }
   function trampolino(p) {
     // The ski jump beside the road: the inrun tower on one side, the take-off in the middle and the landing
     // slope running away along the hillside, so nothing ever leans over the racing lanes.
-    const tower = new T.Group(); tower.position.set(-19, 0, -6); p.add(tower);
+    const tower = new THREE.Group(); tower.position.set(-19, 0, -6); p.add(tower);
     for (const [x, z] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) cyl(tower, 0.5, 30, iron, x, 15, z, 6);
     for (let y = 6; y < 30; y += 6) { box(tower, 7, 0.4, 7, iron, 0, y, 0); for (const x of [-3, 3]) box(tower, 0.3, 6.4, 0.3, iron, x, y + 3, 0); }
     box(tower, 6, 3, 5, 0xd8d3c6, 0, 31.5, 0); kit.roofTop(tower, 6.4, 5.4, 33); tower.children[tower.children.length - 1].position.set(0, 34.2, 0);
@@ -170,15 +170,15 @@ export function build(kit, scene, track, layout) {
   }
   function ospizio(p) {
     // The hospice at the top of the pass, the milky Lago Bianco behind it and the pass marker.
-    const lake = mesh(p, new T.CircleGeometry(26, 26), 0xbfe0e4, 4, 0.1, -34); lake.rotation.x = -Math.PI / 2; lake.castShadow = false;
-    const shore = mesh(p, new T.CircleGeometry(30, 26), 0xa9a396, 4, 0.04, -34); shore.rotation.x = -Math.PI / 2; shore.castShadow = false;
+    const lake = mesh(p, new THREE.CircleGeometry(26, 26), 0xbfe0e4, 4, 0.1, -34); lake.rotation.x = -Math.PI / 2; lake.castShadow = false;
+    const shore = mesh(p, new THREE.CircleGeometry(30, 26), 0xa9a396, 4, 0.04, -34); shore.rotation.x = -Math.PI / 2; shore.castShadow = false;
     box(p, 18, 9, 11, 0xe9dcc0, -4, 4.5, 2); box(p, 19, 0.6, 12, 0x7a5236, -4, 9.3, 2);
     kit.roofTop(p, 19, 12, 9.6, 0x8a5a3a); p.children[p.children.length - 1].position.set(-4, 10.8, 2);
     kit.windows(p, 17, 2.4, 7.6, 2); for (const w of p.children.slice(-16)) w.position.x += -4;
     box(p, 3, 4.4, 0.3, 0x7a5236, -4, 2.2, 7.7);
     box(p, 7, 5, 6, 0xd8cdb6, 10, 2.5, 4); kit.roofTop(p, 7.4, 6.4, 5); p.children[p.children.length - 1].position.set(10, 6.2, 4);
     cyl(p, 0.24, 8, cream, 13, 4, 9, 8); box(p, 3.4, 2, 0.2, rosso, 14.6, 7.4, 9);
-    for (const [x, z, r] of [[-20, -10, 3.2], [18, -16, 2.6], [-14, -24, 2.2]]) mesh(p, new T.IcosahedronGeometry(r, 0), rock, x, r * 0.6, z);
+    for (const [x, z, r] of [[-20, -10, 3.2], [18, -16, 2.6], [-14, -24, 2.2]]) mesh(p, new THREE.IcosahedronGeometry(r, 0), rock, x, r * 0.6, z);
     for (let i = 0; i < 5; i++) cyl(p, 0.11, 3, 0xf1ece0, -16 + i * 3.4, 1.5, 9.5, 5);
   }
   const builders = { passo, bosco, santuario, stazione, viadotto, ghiacciaio, trampolino, ospizio };
@@ -191,7 +191,7 @@ export function build(kit, scene, track, layout) {
   const line = railLine(track);
   const roadLine = track.points(600);
   const roadGap = (x, z) => { let best = Infinity; for (const q of roadLine) { const gap = Math.hypot(q.x - x, q.z - z); if (gap < best) best = gap; } return best; };
-  const rails = new T.Group(); rails.name = 'bernina-ferrovia'; scene.add(rails);
+  const rails = new THREE.Group(); rails.name = 'bernina-ferrovia'; scene.add(rails);
   // Deck: stone slabs following the line, a low parapet each side and the two narrow-gauge rails on top.
   // `p.y` is the rail level, so the slab hangs just below it. The line is sampled every ~3 m but the deck is
   // built in spans of DECK_STEP samples, tilted to join their ends: a twelfth of the meshes, same silhouette.
@@ -201,15 +201,15 @@ export function build(kit, scene, track, layout) {
     const flat = Math.hypot(b.x - a.x, b.z - a.z);
     if (flat < 0.2) continue;
     const len = Math.hypot(flat, b.y - a.y) + 0.3;
-    const piece = new T.Group();
+    const piece = new THREE.Group();
     piece.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
     piece.rotation.order = 'YXZ';
     piece.rotation.set(-Math.atan2(b.y - a.y, flat), Math.atan2(b.x - a.x, b.z - a.z), 0);
     rails.add(piece);
-    mesh(piece, new T.BoxGeometry(5.6, 1.2, len), granite, 0, -0.6, 0).castShadow = false;
+    mesh(piece, new THREE.BoxGeometry(5.6, 1.2, len), granite, 0, -0.6, 0).castShadow = false;
     for (const side of [-1, 1]) {
-      mesh(piece, new T.BoxGeometry(0.45, 1, len), cream, side * 2.6, 0.5, 0).castShadow = false;
-      mesh(piece, new T.BoxGeometry(0.16, 0.24, len), 0x6d6257, side * 0.75, 0.12, 0).castShadow = false;
+      mesh(piece, new THREE.BoxGeometry(0.45, 1, len), cream, side * 2.6, 0.5, 0).castShadow = false;
+      mesh(piece, new THREE.BoxGeometry(0.16, 0.24, len), 0x6d6257, side * 0.75, 0.12, 0).castShadow = false;
     }
   }
   // Piers every 16 m with a shallow stone arch between each pair. Both road crossings are spanned free,
@@ -226,7 +226,7 @@ export function build(kit, scene, track, layout) {
     if (!clearOfRoad(p)) continue;
     const ground = kit.groundAt(p.x, p.z), h = p.y - 1.2 - PIER_TOP - ground;
     if (h < 0.6) continue;
-    const pier = mesh(rails, new T.BoxGeometry(4.4, h, 3.4), granite, p.x, ground + h / 2, p.z);
+    const pier = mesh(rails, new THREE.BoxGeometry(4.4, h, 3.4), granite, p.x, ground + h / 2, p.z);
     pier.rotation.y = p.heading;
   }
   for (let i = 0; i < piers.length - 1; i++) {
@@ -235,15 +235,15 @@ export function build(kit, scene, track, layout) {
     const springY = Math.min(a.y, b.y) - 1.2 - PIER_TOP;
     const arc = Array.from({ length: 11 }, (_, k) => {
       const t = k / 10;
-      return new T.Vector3(a.x + (b.x - a.x) * t, springY + Math.sin(t * Math.PI) * PIER_TOP, a.z + (b.z - a.z) * t);
+      return new THREE.Vector3(a.x + (b.x - a.x) * t, springY + Math.sin(t * Math.PI) * PIER_TOP, a.z + (b.z - a.z) * t);
     });
-    const arch = mesh(rails, new T.TubeGeometry(new T.CatmullRomCurve3(arc), 14, 0.75, 5, false), granite);
+    const arch = mesh(rails, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arc), 14, 0.75, 5, false), granite);
     arch.castShadow = false;
   }
-  const train = new T.Group(); train.name = 'bernina-trenino'; scene.add(train);
+  const train = new THREE.Group(); train.name = 'bernina-trenino'; scene.add(train);
   const cars = [];
   for (let c = 0; c < 5; c++) {
-    const car = new T.Group(); train.add(car); cars.push(car);
+    const car = new THREE.Group(); train.add(car); cars.push(car);
     const engine = c === 0;
     box(car, 3, engine ? 3 : 2.7, engine ? 9 : 8.6, rosso, 0, engine ? 1.9 : 1.75, 0);
     box(car, 3.1, 0.4, engine ? 9.2 : 8.8, 0xf1ece0, 0, engine ? 3.6 : 3.3, 0);

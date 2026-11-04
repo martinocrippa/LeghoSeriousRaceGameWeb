@@ -10,12 +10,14 @@
       `connect-src 'self'` is the important one — the photos must never leave the browser. It cannot be 'none':
       Vite's modulepreload polyfill fetches the game's own chunks.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; form-action 'none'; object-src 'none'; base-uri 'self'" />
     <meta name="theme-color" content="#15181a" />
     <meta name="color-scheme" content="dark light" />
     <meta name="description" content="Legho, a serious game race: corse a mattoncini per uno o due piloti, con le macchine costruite da voi. Premi START, scegli il bolide e brucia l’asfalto." />
     <title>Legho — a serious game race</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   </head>
   <body>
     <div id="app"></div>

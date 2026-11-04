@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {getTrack,TRACKS} from '../src/track.js';
 import {RaceSimulation} from '../src/race.js';
+import '../src/scenery/all.js'; // every scenery registered at once, as the RetroPie export does
 import {createLocalScenery,localLayout,isLocalSceneryReserved} from '../src/local-scenery.js';
 
 for(const id of ['brugherio','milano','como','increa','villasanta','crete','bergamo','aprica','stadio','notte','adda','bernina','arca','regnano','magra','alba','intervallo','varese','roma']) {

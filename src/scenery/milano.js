@@ -17,7 +17,7 @@ const BRICK = 0xa8492f, BRICK_DARK = 0x8c3a26, BRICK_LIGHT = 0xc06044;
 const STONE = 0xe4d8c0, SLATE = 0x4a5560, WATER = 0x4f8fa8, COPPER = 0x5aa89a;
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, glass } = kit;
+  const { box, cyl, cone, mesh, glass } = kit;
   const random = seeded(1452);
   const flocks = [];
 
@@ -52,7 +52,7 @@ export function build(kit, scene, track, layout) {
     // The square is kept short so the castle itself can stand close to the road: at fifty metres it was a shape
     // at the edge of the picture, and the point of a landmark is that you see it from the car.
     box(p, 36, 0.25, 12, 0xd9d0bf, 0, 0.1, 17, false);
-    const moat = mesh(p, new T.BoxGeometry(40, 0.3, 4.4), WATER, 0, 0.3, FRONT + 4.4);
+    const moat = mesh(p, new THREE.BoxGeometry(40, 0.3, 4.4), WATER, 0, 0.3, FRONT + 4.4);
     moat.castShadow = false;
     box(p, 42, 0.6, 1, 0x8d8578, 0, 0.3, FRONT + 6.8, false);
     // Curtain wall: front, two sides, back. Brick, with the merlons on top.
@@ -69,7 +69,7 @@ export function build(kit, scene, track, layout) {
     // The courtyard floor, so the inside is not a hole in the ground.
     box(p, HALF * 2 - 2, 0.2, FRONT - BACK - 3, 0xc9bda6, 0, 0.1, (FRONT + BACK) / 2 + 0.5, false);
     // The Torre del Filarete: the gate tower in the middle of the front, with the clock and the spire.
-    const tower = new T.Group();
+    const tower = new THREE.Group();
     tower.position.set(0, 0, FRONT);
     p.add(tower);
     box(tower, 9, 22, 9, BRICK_LIGHT, 0, 11, 0);
@@ -81,15 +81,15 @@ export function build(kit, scene, track, layout) {
     box(tower, 7, 5, 7, STONE, 0, 26.5, 0);
     const spire = cone(tower, 5.6, 9, COPPER, 0, 33.5, 0, 8);
     spire.rotation.y = Math.PI / 8;
-    mesh(tower, new T.SphereGeometry(0.7, 8, 6), 0xffd053, 0, 38.4, 0);
+    mesh(tower, new THREE.SphereGeometry(0.7, 8, 6), 0xffd053, 0, 38.4, 0);
     // The gateway, the portcullis arch and the drawbridge chains.
     box(tower, 5, 8, 1.4, 0x3b2f24, 0, 4, 4.6);
-    const arch = mesh(tower, new T.CylinderGeometry(2.5, 2.5, 1.5, 14, 1, false, 0, Math.PI), STONE, 0, 8, 4.6);
+    const arch = mesh(tower, new THREE.CylinderGeometry(2.5, 2.5, 1.5, 14, 1, false, 0, Math.PI), STONE, 0, 8, 4.6);
     arch.rotation.x = Math.PI / 2;
     arch.rotation.z = Math.PI;
     for (const side of [-1.9, 1.9]) box(tower, 0.16, 6.5, 0.16, 0x5a5f66, side, 9.5, 5.4);
     // The clock face, and the merlons of the Sforza coat of arms panel below it.
-    const clock = mesh(tower, new T.CircleGeometry(1.5, 18), 0xf2ead6, 0, 15.5, 4.62);
+    const clock = mesh(tower, new THREE.CircleGeometry(1.5, 18), 0xf2ead6, 0, 15.5, 4.62);
     clock.castShadow = false;
     box(tower, 0.16, 1, 0.1, SLATE, 0, 15.9, 4.75);
     box(tower, 0.8, 0.16, 0.1, SLATE, 0.3, 15.5, 4.75);
@@ -112,32 +112,32 @@ export function build(kit, scene, track, layout) {
     kit.windows(p, 14, 2.4, BACK + 11.1, 1);
     for (const w of p.children.slice(-5)) w.position.x += 7;
     // The Filarete fountain out on the square: the wedding cake.
-    const fountain = new T.Group();
+    const fountain = new THREE.Group();
     fountain.position.set(0, 0, 17);
     p.add(fountain);
     cyl(fountain, 5.2, 0.7, 0xe8e0cc, 0, 0.35, 0, 24);
-    const pool = mesh(fountain, new T.CircleGeometry(4.6, 24), WATER, 0, 0.74, 0);
+    const pool = mesh(fountain, new THREE.CircleGeometry(4.6, 24), WATER, 0, 0.74, 0);
     pool.rotation.x = -Math.PI / 2;
     pool.castShadow = false;
     cyl(fountain, 2.6, 1.1, 0xe8e0cc, 0, 1.3, 0, 20);
     cyl(fountain, 1.3, 1.2, 0xf2ead6, 0, 2.4, 0, 16);
     cyl(fountain, 2.2, 0.35, 0xbfe3ea, 0, 3.1, 0, 20);
     cyl(fountain, 0.5, 1.6, 0xf2ead6, 0, 4, 0, 12);
-    mesh(fountain, new T.SphereGeometry(0.55, 10, 8), 0xbfe3ea, 0, 5, 0);
+    mesh(fountain, new THREE.SphereGeometry(0.55, 10, 8), 0xbfe3ea, 0, 5, 0);
     // The chestnut trees along the square and the lamps by the moat.
     for (const [x, z] of [[-20, 15], [20, 15], [-12, 20], [12, 20]]) kit.tree(p, x, z, false);
     for (const x of [-13, 13]) kit.lamp(p, x, FRONT + 8.4, 4.6);
     // Pigeons on the square: they sit there, and they scatter when a car comes past the castle.
-    const flock = new T.Group();
+    const flock = new THREE.Group();
     p.add(flock);
     for (let i = 0; i < 22; i += 1) {
-      const bird = new T.Group();
+      const bird = new THREE.Group();
       bird.position.set(-16 + random() * 32, 0, 13 + random() * 8);
       bird.rotation.y = random() * Math.PI * 2;
       flock.add(bird);
-      const body = mesh(bird, new T.SphereGeometry(0.34, 7, 5), i % 4 ? 0x8d93a0 : 0xd8d4c8, 0, 0.5, 0);
+      const body = mesh(bird, new THREE.SphereGeometry(0.34, 7, 5), i % 4 ? 0x8d93a0 : 0xd8d4c8, 0, 0.5, 0);
       body.scale.set(0.8, 0.8, 1.3);
-      mesh(bird, new T.SphereGeometry(0.16, 6, 5), i % 4 ? 0x6b7280 : 0xbdb9ad, 0, 0.82, 0.32);
+      mesh(bird, new THREE.SphereGeometry(0.16, 6, 5), i % 4 ? 0x6b7280 : 0xbdb9ad, 0, 0.82, 0.32);
       for (const side of [-1, 1]) {
         const wing = box(bird, 0.1, 0.32, 0.6, i % 4 ? 0x6b7280 : 0xbdb9ad, side * 0.3, 0.55, 0);
         wing.userData.side = side;

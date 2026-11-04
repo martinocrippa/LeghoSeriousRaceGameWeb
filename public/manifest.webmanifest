@@ -1,0 +1,17 @@
+{
+  "name": "Legho — a serious game race",
+  "short_name": "Legho",
+  "description": "Corse a mattoncini per uno o due piloti, con le macchine costruite da voi.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "background_color": "#15181a",
+  "theme_color": "#15181a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

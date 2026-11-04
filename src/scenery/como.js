@@ -44,14 +44,14 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, roof, glass, green } = kit;
+  const { box, cyl, cone, mesh, cream, roof, glass, green } = kit;
   const terracotta = 0xc9643f, ochre = 0xe0a94a, rose = 0xd9788a, mustard = 0xd8b04b, stone = 0xd9cfbf, steel = 0x8fa3ad;
 
   // --- Landmarks -------------------------------------------------------------------------------------
   function bellagio(p) {
     // The village climbs a hill on the point between the two arms: stepped houses, the stairway, San Giacomo's tower.
     // Sits inside the hairpin, so it stays compact: the two shores are only ~40 m apart at its front.
-    const hill = mesh(p, new T.SphereGeometry(16, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x4f8a52, 0, 0, -8);
+    const hill = mesh(p, new THREE.SphereGeometry(16, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x4f8a52, 0, 0, -8);
     hill.scale.y = 0.6; hill.castShadow = false;
     const colors = [ochre, terracotta, rose, mustard, cream, 0xe98a5a];
     const slots = [[-10, 1, 0.5], [-5, 3, 2.8], [0, 3.5, 4.4], [5, 3, 2.8], [10, 1, 0.5], [-7, -4, 5.6], [-2.5, -6, 7.8], [3.5, -6, 7.6], [8, -4, 5.6], [-3.5, -13, 8.6], [4, -13, 8.4]];
@@ -83,14 +83,14 @@ export function build(kit, scene, track, layout) {
     }
     box(p, 4, 26, 4, 0xe7d5b2, 0, 13, -12); box(p, 4.8, 0.6, 4.8, cream, 0, 26.3, -12); cone(p, 3.2, 6, roof, 0, 29.3, -12);
     for (const y of [16, 20, 24]) box(p, 1, 1.8, 0.2, glass, 0, y, -9.9);
-    const clock = mesh(p, new T.CircleGeometry(1.2, 18), cream, 0, 12, -9.85); clock.rotation.y = 0;
+    const clock = mesh(p, new THREE.CircleGeometry(1.2, 18), cream, 0, 12, -9.85); clock.rotation.y = 0;
     // Resegone: a row of nine sharp teeth.
     for (let i = 0; i < 9; i++) {
       const x = -32 + i * 8, h = 26 + (i % 3) * 9 + (i === 4 ? 10 : 0);
       const tooth = cone(p, 6.5, h, i % 2 ? 0x7a8494 : 0x8a95a5, x, h / 2, -42 - (i % 2) * 6, 5);
       tooth.castShadow = false;
     }
-    const base = mesh(p, new T.CylinderGeometry(44, 52, 12, 12), 0x5f7a63, 0, 6, -46); base.castShadow = false;
+    const base = mesh(p, new THREE.CylinderGeometry(44, 52, 12, 12), 0x5f7a63, 0, 6, -46); base.castShadow = false;
     box(p, 30, 0.25, 6, 0xe8dcc4, 0, 0.12, 9);
     for (const x of [-16, 16]) kit.tree(p, x, 6, true);
   }
@@ -99,15 +99,15 @@ export function build(kit, scene, track, layout) {
     box(p, 62, 0.25, 40, 0xe6dccb, 0, 0.1, -6);
     // Duomo
     box(p, 16, 14, 24, 0xf1e9d8, -12, 7, -14); box(p, 18, 1.2, 26, stone, -12, 14.4, -14);
-    cyl(p, 5.5, 4, 0xf1e9d8, -12, 16.5, -18, 16); const dome = mesh(p, new T.SphereGeometry(5.6, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f8f6f, -12, 18.5, -18); dome.castShadow = false;
-    cyl(p, 0.5, 3, cream, -12, 25.6, -18, 8); mesh(p, new T.SphereGeometry(0.6, 8, 6), 0xffd053, -12, 27.4, -18);
-    box(p, 17, 17, 1.4, 0xf6efe3, -12, 8.5, -1.5); const rose2 = mesh(p, new T.CylinderGeometry(2.2, 2.2, 0.3, 20), 0x8fb3d9, -12, 11.5, -0.7); rose2.rotation.x = Math.PI / 2;
+    cyl(p, 5.5, 4, 0xf1e9d8, -12, 16.5, -18, 16); const dome = mesh(p, new THREE.SphereGeometry(5.6, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f8f6f, -12, 18.5, -18); dome.castShadow = false;
+    cyl(p, 0.5, 3, cream, -12, 25.6, -18, 8); mesh(p, new THREE.SphereGeometry(0.6, 8, 6), 0xffd053, -12, 27.4, -18);
+    box(p, 17, 17, 1.4, 0xf6efe3, -12, 8.5, -1.5); const rose2 = mesh(p, new THREE.CylinderGeometry(2.2, 2.2, 0.3, 20), 0x8fb3d9, -12, 11.5, -0.7); rose2.rotation.x = Math.PI / 2;
     box(p, 2.6, 5, 0.4, 0x6b4a3a, -12, 2.5, -0.7); for (const x of [-18.5, -5.5]) { box(p, 1.4, 20, 1.4, 0xf6efe3, x, 10, -1.5); cone(p, 1.1, 3, cream, x, 21.5, -1.5, 6); }
     // Tempio Voltiano
     cyl(p, 6, 6, 0xf4eee0, 16, 3, -16, 20); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; cyl(p, 0.35, 5.6, cream, 16 + Math.cos(a) * 6.4, 2.8, -16 + Math.sin(a) * 6.4, 8); }
-    cyl(p, 7.2, 0.8, stone, 16, 6.4, -16, 20); const vdome = mesh(p, new T.SphereGeometry(5, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x4f7f87, 16, 6.8, -16); vdome.castShadow = false;
+    cyl(p, 7.2, 0.8, stone, 16, 6.4, -16, 20); const vdome = mesh(p, new THREE.SphereGeometry(5, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x4f7f87, 16, 6.8, -16); vdome.castShadow = false;
     // Life Electric: a slender steel arc by the water.
-    const arc = mesh(p, new T.TorusGeometry(5.5, 0.32, 8, 26, Math.PI * 0.92), steel, 26, 1.2, 8); arc.rotation.z = 0.15; arc.castShadow = false;
+    const arc = mesh(p, new THREE.TorusGeometry(5.5, 0.32, 8, 26, Math.PI * 0.92), steel, 26, 1.2, 8); arc.rotation.z = 0.15; arc.castShadow = false;
     cyl(p, 1.6, 1.2, stone, 26, 0.6, 8, 12);
     // Lakefront palazzi
     const colors = [0xf1c27d, 0xe9a48b, 0xf7e2b2, 0xc9d3a8];
@@ -121,22 +121,22 @@ export function build(kit, scene, track, layout) {
 
   // --- Lake, shore, railings ---------------------------------------------------------------------------
   const { shoreline } = layout;
-  const shape = new T.Shape(shoreline.map((p) => new T.Vector2(p.x, -p.z)));
-  const water = new T.Mesh(new T.ShapeGeometry(shape), new T.MeshStandardMaterial({ color: 0x3aa9cc, roughness: 0.35, metalness: 0.05 }));
+  const shape = new THREE.Shape(shoreline.map((p) => new THREE.Vector2(p.x, -p.z)));
+  const water = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshStandardMaterial({ color: 0x3aa9cc, roughness: 0.35, metalness: 0.05 }));
   water.rotation.x = -Math.PI / 2; water.position.y = 0.015; water.receiveShadow = true; water.name = 'lake-water'; scene.add(water);
-  const shorePath = new T.CatmullRomCurve3(shoreline.map((p) => new T.Vector3(p.x, 0.08, p.z)), true);
-  mesh(scene, new T.TubeGeometry(shorePath, 320, 0.7, 5, true), 0xe7d5af).castShadow = false;
+  const shorePath = new THREE.CatmullRomCurve3(shoreline.map((p) => new THREE.Vector3(p.x, 0.08, p.z)), true);
+  mesh(scene, new THREE.TubeGeometry(shorePath, 320, 0.7, 5, true), 0xe7d5af).castShadow = false;
   const gaps = (track.sections || []).flatMap((s) => [s.from, s.to]);
   const nearGap = (d) => gaps.some((g) => Math.abs(track.wrap(d - g + track.length / 2) - track.length / 2) < 6.5);
   const railLane = -track.roadWidth / 2 - 0.9;
-  const shorePoint = (d, lane, y) => { const f = track.frame(d); return new T.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
+  const shorePoint = (d, lane, y) => { const f = track.frame(d); return new THREE.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
   for (let d = 0; d < track.length; d += 11.5) {
     if (nearGap(d)) continue;
     const p = shorePoint(d, railLane, 0.65); cyl(scene, 0.13, 1.3, cream, p.x, 0.65, p.z, 6);
   }
   // Rail in pieces so the bridges can leave the road through the openings.
   let piece = [];
-  const flush = () => { if (piece.length > 2) mesh(scene, new T.TubeGeometry(new T.CatmullRomCurve3(piece), piece.length * 2, 0.09, 5, false), cream).castShadow = false; piece = []; };
+  const flush = () => { if (piece.length > 2) mesh(scene, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(piece), piece.length * 2, 0.09, 5, false), cream).castShadow = false; piece = []; };
   const start = gaps.length ? gaps[0] : 0;
   for (let i = 0; i <= 200; i++) {
     const d = start + i / 200 * track.length;
@@ -166,18 +166,18 @@ export function build(kit, scene, track, layout) {
     if (!inWater(x, z, 19)) continue;
     // Never moor a 5.2 m mast where a bridge deck is lower than that: the mast would spear the roadway.
     if (bridgeClearance(track, [x, z], [x, z], SAIL_AIR, 3) < 1) continue;
-    const boat = new T.Group(); boat.name = 'lake-boat'; boat.position.set(x, 0.2, z); boat.rotation.y = random() * Math.PI * 2; scene.add(boat);
-    const hull = mesh(boat, new T.SphereGeometry(1, 10, 6), placed % 3 === 0 ? 0xffd56e : placed % 3 === 1 ? 0xf4f7ed : 0xe0503c, 0, 0.3, 0); hull.scale.set(1.1, 0.5, 3);
+    const boat = new THREE.Group(); boat.name = 'lake-boat'; boat.position.set(x, 0.2, z); boat.rotation.y = random() * Math.PI * 2; scene.add(boat);
+    const hull = mesh(boat, new THREE.SphereGeometry(1, 10, 6), placed % 3 === 0 ? 0xffd56e : placed % 3 === 1 ? 0xf4f7ed : 0xe0503c, 0, 0.3, 0); hull.scale.set(1.1, 0.5, 3);
     cyl(boat, 0.07, 5, cream, 0, 2.7, 0);
-    const sail = new T.BufferGeometry(); sail.setAttribute('position', new T.Float32BufferAttribute([0, 5, 0, 0, 1.3, 0, 0, 1.3, 2.7], 3)); sail.computeVertexNormals();
-    boat.add(new T.Mesh(sail, new T.MeshStandardMaterial({ color: placed % 2 ? 0xfff8dc : 0xffa589, side: T.DoubleSide })));
+    const sail = new THREE.BufferGeometry(); sail.setAttribute('position', new THREE.Float32BufferAttribute([0, 5, 0, 0, 1.3, 0, 0, 1.3, 2.7], 3)); sail.computeVertexNormals();
+    boat.add(new THREE.Mesh(sail, new THREE.MeshStandardMaterial({ color: placed % 2 ? 0xfff8dc : 0xffa589, side: THREE.DoubleSide })));
     kit.dynamic(boat);
     animated.push({ kind: 'sail', object: boat, phase: random() * 6.3 });
     placed++;
   }
   // Passenger boats ("battelli"): white hull, blue stripe, two decks, a red funnel; they cruise each arm and turn round.
   function battello() {
-    const g = new T.Group();
+    const g = new THREE.Group();
     const hull = box(g, 3.2, 1.4, 13, 0xf4f7ed, 0, 0.7, 0); hull.scale.z = 1;
     cone(g, 1.6, 2.4, 0xf4f7ed, 0, 0.7, 7.6, 4).rotation.y = Math.PI / 4;
     box(g, 3.3, 0.35, 13.2, 0x1e5bd8, 0, 1.2, 0);
@@ -188,7 +188,7 @@ export function build(kit, scene, track, layout) {
   }
   // Car ferries ("traghetti"): flat double-ended deck with a wheelhouse; they never need to turn round.
   function traghetto() {
-    const g = new T.Group();
+    const g = new THREE.Group();
     box(g, 4.4, 1, 12, 0xf4f7ed, 0, 0.5, 0); box(g, 4.6, 0.25, 12.4, 0x1e5bd8, 0, 1.05, 0);
     for (const z of [-6.1, 6.1]) { const ramp = box(g, 4, 0.2, 1.6, 0x8a8f99, 0, 1.25, z); ramp.rotation.x = z > 0 ? -0.35 : 0.35; }
     box(g, 2.2, 1.6, 2.6, 0xf4f7ed, 0, 2, -1); box(g, 2.3, 0.7, 2.7, glass, 0, 2.9, -1); box(g, 2.4, 0.15, 2.9, 0x1e5bd8, 0, 3.3, -1);
@@ -204,7 +204,7 @@ export function build(kit, scene, track, layout) {
     // Small jetties at both ends of the crossing.
     for (const end of [route.from, route.to]) {
       const toward = Math.atan2(route.to[0] - route.from[0], route.to[1] - route.from[1]);
-      const pier = new T.Group(); pier.position.set(end[0], 0, end[1]); pier.rotation.y = toward; scene.add(pier);
+      const pier = new THREE.Group(); pier.position.set(end[0], 0, end[1]); pier.rotation.y = toward; scene.add(pier);
       box(pier, 2.4, 0.25, 6, 0xa97f52, 3.6, 0.55, 0); for (const z of [-2.4, 2.4]) for (const x of [2.6, 4.6]) cyl(pier, 0.14, 1, 0x8b6640, x, 0.4, z, 6);
     }
   }

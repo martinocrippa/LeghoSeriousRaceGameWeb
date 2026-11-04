@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SCENERY } from './scenery/index.js';
+import { sceneryFor } from './scenery/index.js';
 import { insidePolygon as inside } from './geometry.js';
 
 // Toy landmarks inspired by Lombardy; placements are fictional and never use map tiles.
@@ -7,7 +7,7 @@ import { insidePolygon as inside } from './geometry.js';
 // through the shared kit; the others use the legacy builders below.
 const layoutCache = new WeakMap();
 const STREET_HOUSES={brugherio:22,milano:20,villasanta:14,increa:6,bergamo:12,aprica:8};
-const sceneryModule=(track)=>track.theme.local?SCENERY[track.theme.local]:null;
+const sceneryModule=(track)=>sceneryFor(track.theme.local);
 export function localLayout(track) {
   if (layoutCache.has(track)) return layoutCache.get(track);
   const module=sceneryModule(track);
@@ -313,7 +313,7 @@ export function createLocalScenery(track) {
   // Animated scenery: modules register callbacks; the renderer calls scene.userData.animate every frame.
   const animators=[];
   scene.userData.animate=(clock,dt,racers,currentTrack)=>{for(const fn of animators)fn(clock,dt,racers||[],currentTrack||track);};
-  const kit={THREE,mat,mesh,box,cyl,cone,roofTop,windows,sign,tree,lamp,cypress,legs,cream,roof,glass,green,stone,lampGlow,wood,darkWood,snow,
+  const kit={mat,mesh,box,cyl,cone,roofTop,windows,sign,tree,lamp,cypress,legs,cream,roof,glass,green,stone,lampGlow,wood,darkWood,snow,
     builders,placeLandmark,inside,track,layout,groundAt:(x,z)=>track.groundHeight?.(x,z)||0,
     dynamic:(object)=>{object.traverse(m=>{if(m.isMesh)m.userData.dynamic=true;});return object;},
     animate:(fn)=>{animators.push(fn);}};

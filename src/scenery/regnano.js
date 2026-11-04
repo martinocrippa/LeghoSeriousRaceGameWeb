@@ -16,7 +16,7 @@ const PASSAGES = [168, 236];
 const STONE = 0x9a8f7d, STONE_DARK = 0x7b7160, ROOF = 0xa8503c, PLASTER = 0xe0d3b8, MARBLE = 0xeef0f2;
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, wood, darkWood, stone } = kit;
+  const { box, cyl, cone, mesh, cream, glass, wood, darkWood, stone } = kit;
 
   /** Rubble stone wall with a ragged top: what is left of a ruin. */
   function ruinWall(p, x, y, z, w, h, d, tone = STONE) {
@@ -32,7 +32,7 @@ export function build(kit, scene, track, layout) {
   function castello(p) {
     // The castle: the round keep still standing to half its height, broken curtain walls, a gateway arch, all
     // on its rocky knoll. It is a ruin and stays a ruin.
-    const knoll = mesh(p, new T.SphereGeometry(30, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f7a3a, 0, -1, -8);
+    const knoll = mesh(p, new THREE.SphereGeometry(30, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f7a3a, 0, -1, -8);
     knoll.scale.y = 0.42; knoll.castShadow = false;
     const base = 10;
     cyl(p, 7, base + 9, STONE, -3, (base + 9) / 2, -10, 12);                 // the round keep
@@ -48,13 +48,13 @@ export function build(kit, scene, track, layout) {
     ruinWall(p, 2, 0, -20, 20, 4.2, 1.6);
     // The gateway: two jambs and a broken arch.
     for (const x of [-2, 4]) box(p, 1.6, 5.4, 1.8, STONE_DARK, x, 2.7, 6, false);
-    const arch = mesh(p, new T.TorusGeometry(3, 0.8, 5, 10, Math.PI * 0.8), STONE_DARK, 1, 5.4, 6);
+    const arch = mesh(p, new THREE.TorusGeometry(3, 0.8, 5, 10, Math.PI * 0.8), STONE_DARK, 1, 5.4, 6);
     arch.rotation.set(0, Math.PI / 2, 0.3); arch.castShadow = false;
     // Fallen blocks and the brambles that have taken over.
     const random = seeded(7321);
     for (let i = 0; i < 14; i++) {
       const a = random() * Math.PI * 2, r = 9 + random() * 13;
-      mesh(p, new T.IcosahedronGeometry(0.5 + random() * 0.9, 0), STONE_DARK, Math.cos(a) * r, 0.5, -6 + Math.sin(a) * r);
+      mesh(p, new THREE.IcosahedronGeometry(0.5 + random() * 0.9, 0), STONE_DARK, Math.cos(a) * r, 0.5, -6 + Math.sin(a) * r);
     }
     for (const [x, z] of [[-18, -14], [16, -16], [-12, 10], [18, 8]]) kit.tree(p, x, z);
   }
@@ -78,8 +78,8 @@ export function build(kit, scene, track, layout) {
     // Wayside shrine ("maestà") on the corner.
     box(p, 2, 3.4, 1.6, PLASTER, 18, 4.1, 6); kit.roofTop(p, 2.2, 1.8, 5.8, ROOF);
     p.children[p.children.length - 1].position.set(18, 6.4, 6);
-    const niche = mesh(p, new T.BoxGeometry(1.1, 1.5, 0.2), 0x3b4148, 18, 4.4, 6.85); niche.castShadow = false;
-    for (let i = 0; i < 5; i++) mesh(p, new T.IcosahedronGeometry(0.5 + random() * 0.4, 0), 0xc2653f, -19 + i * 1.4, 2.7, 9);
+    const niche = mesh(p, new THREE.BoxGeometry(1.1, 1.5, 0.2), 0x3b4148, 18, 4.4, 6.85); niche.castShadow = false;
+    for (let i = 0; i < 5; i++) mesh(p, new THREE.IcosahedronGeometry(0.5 + random() * 0.4, 0), 0xc2653f, -19 + i * 1.4, 2.7, 9);
     for (const [x, z] of [[-22, 6], [22, -8]]) kit.tree(p, x, z);
   }
   function chiesa(p) {
@@ -90,22 +90,22 @@ export function build(kit, scene, track, layout) {
     ruinWall(p, 0, 1.4, -5.4, 17, 4.4, 1.4);
     ruinWall(p, -8.4, 1.4, 0, 1.4, 8, 9.6);
     // The apse: a half cylinder still standing at the east end.
-    const apse = mesh(p, new T.CylinderGeometry(4.6, 4.8, 6, 12, 1, true, -Math.PI / 2, Math.PI), STONE, 8.6, 4.4, 0);
+    const apse = mesh(p, new THREE.CylinderGeometry(4.6, 4.8, 6, 12, 1, true, -Math.PI / 2, Math.PI), STONE, 8.6, 4.4, 0);
     apse.castShadow = false;
     for (let i = 0; i < 5; i++) box(p, 1.2, 1 + i * 0.3, 1.2, STONE, 8.6 + Math.cos(-1.2 + i * 0.6) * 4.7, 7.6, Math.sin(-1.2 + i * 0.6) * 4.7, false);
-    const slit = mesh(p, new T.BoxGeometry(0.5, 2, 0.4), 0x2b2f34, 12.9, 4.4, 0); slit.castShadow = false;
+    const slit = mesh(p, new THREE.BoxGeometry(0.5, 2, 0.4), 0x2b2f34, 12.9, 4.4, 0); slit.castShadow = false;
     // Broken bell gable over the west front.
     box(p, 4, 4, 1.2, STONE, -8.4, 11.4, 0, false);
     box(p, 1.4, 2, 0.5, 0x2b2f34, -8.4, 11.4, 0);
     // Doorway with its round arch, and the altar block inside.
     for (const z of [-1.6, 1.6]) box(p, 1.4, 4.4, 1.2, STONE_DARK, -8.4, 3.6, z, false);
-    const door = mesh(p, new T.TorusGeometry(1.6, 0.6, 5, 10, Math.PI), STONE_DARK, -8.4, 5.8, 0);
+    const door = mesh(p, new THREE.TorusGeometry(1.6, 0.6, 5, 10, Math.PI), STONE_DARK, -8.4, 5.8, 0);
     door.rotation.y = Math.PI / 2; door.castShadow = false;
     box(p, 2.6, 1.2, 1.6, STONE, 5, 2, 0);
     const random = seeded(1001);
     for (let i = 0; i < 12; i++) {
       const a = random() * Math.PI * 2, r = 9 + random() * 8;
-      mesh(p, new T.IcosahedronGeometry(0.4 + random() * 0.7, 0), STONE_DARK, Math.cos(a) * r, 0.4, Math.sin(a) * r);
+      mesh(p, new THREE.IcosahedronGeometry(0.4 + random() * 0.7, 0), STONE_DARK, Math.cos(a) * r, 0.4, Math.sin(a) * r);
     }
     for (const [x, z] of [[-14, 9], [15, 10], [-15, -9]]) kit.tree(p, x, z);
   }
@@ -116,7 +116,7 @@ export function build(kit, scene, track, layout) {
     for (const [x, z] of [[-3.4, -2.4], [3.4, -2.4], [-3.4, 2], [3.4, 2]]) cyl(p, 0.16, 3, wood, x, 1.5, z, 6);
     box(p, 8.4, 0.3, 6, 0x8a5a3a, 0, 3.1, 0);
     // The donkey: grey body, lighter muzzle, long ears.
-    const d = new T.Group(); d.position.set(0.5, 0, 1.5); p.add(d);
+    const d = new THREE.Group(); d.position.set(0.5, 0, 1.5); p.add(d);
     box(d, 1.1, 1.3, 2.6, 0x8d8a85, 0, 1.5, 0);
     kit.legs(d, 0, 0, 1.1, 2.2, 0.9, 0x6f6c68);
     box(d, 0.8, 0.9, 0.9, 0x8d8a85, 0, 2.1, 1.5);
@@ -136,8 +136,8 @@ export function build(kit, scene, track, layout) {
       box(p, 17, 0.3, 1.6, 0x7a6144, 0, 0.3, z, false);
       for (let i = 0; i < 7; i++) {
         const x = -7.2 + i * 2.4;
-        if (row % 2 === 0) { cyl(p, 0.05, 2.2, 0x9a8b5a, x, 1.1, z, 5); mesh(p, new T.IcosahedronGeometry(0.42, 0), 0x3f7a35, x, 1.9, z); }
-        else mesh(p, new T.IcosahedronGeometry(0.5 + random() * 0.25, 0), row === 1 ? 0x4f8f3a : 0xc2453a, x, 0.7, z);
+        if (row % 2 === 0) { cyl(p, 0.05, 2.2, 0x9a8b5a, x, 1.1, z, 5); mesh(p, new THREE.IcosahedronGeometry(0.42, 0), 0x3f7a35, x, 1.9, z); }
+        else mesh(p, new THREE.IcosahedronGeometry(0.5 + random() * 0.25, 0), row === 1 ? 0x4f8f3a : 0xc2453a, x, 0.7, z);
       }
     }
     box(p, 3.4, 3, 3, 0x8a6a4a, -11, 1.5, -3); kit.roofTop(p, 3.8, 3.4, 3, 0x6f6455);
@@ -145,7 +145,7 @@ export function build(kit, scene, track, layout) {
     cyl(p, 1.1, 1.8, 0x4a5a52, 10, 0.9, -3, 10);
     // Scarecrow.
     cyl(p, 0.09, 3, wood, 8, 1.5, 3, 5); box(p, 2.2, 0.12, 0.12, wood, 8, 2.4, 3);
-    box(p, 0.9, 1, 0.5, 0xc2653f, 8, 2.1, 3); mesh(p, new T.SphereGeometry(0.34, 8, 6), 0xd8c273, 8, 2.9, 3);
+    box(p, 0.9, 1, 0.5, 0xc2653f, 8, 2.1, 3); mesh(p, new THREE.SphereGeometry(0.34, 8, 6), 0xd8c273, 8, 2.9, 3);
     cone(p, 0.6, 0.4, 0x6f6455, 8, 3.2, 3, 8);
     for (let x = -9; x <= 9; x += 2.2) cyl(p, 0.07, 1.1, wood, x, 0.55, 7.2, 5);
     for (const [x, z] of [[-13, 6], [13, 6]]) kit.tree(p, x, z);
@@ -176,11 +176,11 @@ export function build(kit, scene, track, layout) {
       // A quarry scar: a pale terrace cut into the flank.
       if (i % 3 === 0) { const cut = box(p, r * 0.7, 3, 6, MARBLE, x + r * 0.3, h * 0.5, -22, false); cut.castShadow = false; }
     }
-    const base = mesh(p, new T.CylinderGeometry(180, 210, 16, 14), 0x4f6b3a, 0, 2, -60); base.castShadow = false;
+    const base = mesh(p, new THREE.CylinderGeometry(180, 210, 16, 14), 0x4f6b3a, 0, 2, -60); base.castShadow = false;
   }
   function trattore(p) {
     // A small orange tractor parked at the edge of the lane, with its trailer of chestnut baskets.
-    const t = new T.Group(); t.position.set(0, 0, 0); p.add(t);
+    const t = new THREE.Group(); t.position.set(0, 0, 0); p.add(t);
     box(t, 2.2, 1.4, 4, 0xd9621f, 0, 1.5, 0);
     box(t, 2, 1.6, 1.6, 0xd9621f, 0, 2.6, -0.6); box(t, 2.1, 0.25, 1.8, 0x2b2f34, 0, 3.5, -0.6);
     for (const x of [-0.85, 0.85]) box(t, 0.14, 1.1, 0.14, 0x2b2f34, x, 3, -1.4);
@@ -189,11 +189,11 @@ export function build(kit, scene, track, layout) {
       const wheel = cyl(t, r, 0.45, 0x2b2f34, x, r, z, 12); wheel.rotation.z = Math.PI / 2;
       const rim = cyl(t, r * 0.5, 0.5, 0xd8d3c6, x, r, z, 10); rim.rotation.z = Math.PI / 2;
     }
-    const trailer = new T.Group(); trailer.position.set(0, 0, -5.6); p.add(trailer);
+    const trailer = new THREE.Group(); trailer.position.set(0, 0, -5.6); p.add(trailer);
     box(trailer, 2.4, 0.4, 4, wood, 0, 1, 0);
     for (const z of [-1.9, 1.9]) box(trailer, 2.4, 0.9, 0.2, wood, 0, 1.6, z);
     for (const x of [-1.15, 1.15]) box(trailer, 0.2, 0.9, 4, wood, x, 1.6, 0);
-    for (const [x, z] of [[-0.6, -1], [0.6, -1], [0, 0.9]]) { cyl(trailer, 0.5, 0.7, 0xa9784c, x, 1.55, z, 9); mesh(trailer, new T.SphereGeometry(0.42, 8, 6), 0x5a3a24, x, 1.95, z); }
+    for (const [x, z] of [[-0.6, -1], [0.6, -1], [0, 0.9]]) { cyl(trailer, 0.5, 0.7, 0xa9784c, x, 1.55, z, 9); mesh(trailer, new THREE.SphereGeometry(0.42, 8, 6), 0x5a3a24, x, 1.95, z); }
     for (const x of [-1.2, 1.2]) { const w = cyl(trailer, 0.5, 0.35, 0x2b2f34, x, 0.5, 0, 10); w.rotation.z = Math.PI / 2; }
     box(p, 6, 0.9, 0.9, STONE, 0, 0.45, 5, false);
   }
@@ -205,7 +205,7 @@ export function build(kit, scene, track, layout) {
       const x = Math.cos(a) * r, z = -4 + Math.sin(a) * r * 0.8, h = 8 + random() * 3.5;
       cyl(p, 0.7, h * 0.5, 0x5c4531, x, h * 0.25, z, 7);
       for (const s of [-1, 1]) { const b = cyl(p, 0.24, h * 0.4, 0x5c4531, x + s, h * 0.45, z, 6); b.rotation.z = -s * 0.4; }
-      const crown = mesh(p, new T.IcosahedronGeometry(h * 0.4, 1), random() < 0.5 ? 0x3f6b32 : 0x4f7d3a, x, h * 0.78, z);
+      const crown = mesh(p, new THREE.IcosahedronGeometry(h * 0.4, 1), random() < 0.5 ? 0x3f6b32 : 0x4f7d3a, x, h * 0.78, z);
       crown.scale.set(1.2, 0.85, 1.2);
     }
     box(p, 4, 3.4, 3.6, STONE, -12, 1.7, 4); kit.roofTop(p, 4.4, 4, 3.4, 0x6f6455);
@@ -213,7 +213,7 @@ export function build(kit, scene, track, layout) {
     box(p, 1.2, 2, 0.3, 0x3b2f24, -12, 1, 5.9);
     for (let i = 0; i < 16; i++) {
       const a = random() * Math.PI * 2, r = 4 + random() * 16;
-      mesh(p, new T.IcosahedronGeometry(0.4, 0), 0x8a9b3f, Math.cos(a) * r, 0.35, -4 + Math.sin(a) * r * 0.8);
+      mesh(p, new THREE.IcosahedronGeometry(0.4, 0), 0x8a9b3f, Math.cos(a) * r, 0.35, -4 + Math.sin(a) * r * 0.8);
     }
   }
   const builders = { castello, borgo, chiesa, asino, orto, belvedere, apuane, trattore, castagneto };
@@ -223,11 +223,11 @@ export function build(kit, scene, track, layout) {
   }
 
   // --- The two vaulted passages the road runs under -------------------------------------------------------
-  const roadPoint = (d, lane, y = 0) => { const f = track.frame(d); return new T.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
-  const vaults = new T.Group(); vaults.name = 'regnano-volte'; scene.add(vaults);
+  const roadPoint = (d, lane, y = 0) => { const f = track.frame(d); return new THREE.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
+  const vaults = new THREE.Group(); vaults.name = 'regnano-volte'; scene.add(vaults);
   for (const d of PASSAGES) {
     const f = track.frame(d), y = track.elevation(d);
-    const arch = new T.Group();
+    const arch = new THREE.Group();
     arch.position.set(f.x, y, f.z); arch.rotation.y = Math.atan2(f.dx, f.dz); vaults.add(arch);
     // Two stone houses either side of the lane, joined overhead by a barrel vault.
     for (const side of [-1, 1]) {
@@ -241,30 +241,30 @@ export function build(kit, scene, track, layout) {
     box(arch, 15, 2.6, 9, STONE, 0, 7.2, 0);
     box(arch, 15.6, 0.5, 9.6, ROOF, 0, 8.7, 0);
     for (const z of [-2.4, 2.4]) box(arch, 0.9, 1.2, 0.2, 0x3b4148, 0, 7.4, z);
-    const vault = mesh(vaults, new T.TorusGeometry(6.9, 1.1, 6, 14, Math.PI), STONE_DARK, f.x, y + 5.9, f.z);
+    const vault = mesh(vaults, new THREE.TorusGeometry(6.9, 1.1, 6, 14, Math.PI), STONE_DARK, f.x, y + 5.9, f.z);
     vault.rotation.set(0, Math.atan2(f.dx, f.dz) + Math.PI / 2, 0); vault.castShadow = false;
     for (const side of [-1, 1]) {
       const jamb = roadPoint(d, side * 6.9, y);
       cyl(vaults, 0.7, 5.9, STONE_DARK, jamb.x, y + 2.95, jamb.z, 8);
     }
-    const lamp = mesh(vaults, new T.SphereGeometry(0.3, 8, 6), 0xfff1b0, f.x, y + 5, f.z); lamp.castShadow = false;
+    const lamp = mesh(vaults, new THREE.SphereGeometry(0.3, 8, 6), 0xfff1b0, f.x, y + 5, f.z); lamp.castShadow = false;
     // Washing strung between the two houses, right over the lane: nothing says "alley" faster.
-    const line = mesh(vaults, new T.CylinderGeometry(0.05, 0.05, 13.4, 5), 0x6a6152, f.x, y + 6.6, f.z);
+    const line = mesh(vaults, new THREE.CylinderGeometry(0.05, 0.05, 13.4, 5), 0x6a6152, f.x, y + 6.6, f.z);
     line.rotation.set(0, Math.atan2(f.dx, f.dz), Math.PI / 2); line.castShadow = false;
     const sheets = seeded(9310 + d);
     for (let i = 0; i < 6; i += 1) {
       const at = roadPoint(d, -5.4 + i * 2.1, y);
-      const sheet = mesh(vaults, new T.PlaneGeometry(1.5, 1.7 + sheets() * 0.8),
+      const sheet = mesh(vaults, new THREE.PlaneGeometry(1.5, 1.7 + sheets() * 0.8),
         [0xf4f0e2, 0xe6d7af, 0x9fc2d8, 0xe0a8a0][i % 4], at.x, y + 5.7, at.z);
       sheet.rotation.y = Math.atan2(f.dx, f.dz) + Math.PI / 2;
-      sheet.material.side = T.DoubleSide; sheet.castShadow = false;
+      sheet.material.side = THREE.DoubleSide; sheet.castShadow = false;
     }
   }
 
   // --- The alley itself: dry-stone walls, torches and a well line the cobbled stretch ---------------------
   // The cobbles run from 140 to 320 m (see src/tracks/regnano.js). Walls just outside the racing lanes are what
   // makes a 12 m road read as a medieval lane; they stay clear of the test's roadWidth/2 + 1 keep-out.
-  const alley = new T.Group(); alley.name = 'regnano-vicolo'; scene.add(alley);
+  const alley = new THREE.Group(); alley.name = 'regnano-vicolo'; scene.add(alley);
   const wallRandom = seeded(7711);
   for (let d = 146; d <= 316; d += 7) {
     if (PASSAGES.some((passage) => Math.abs(d - passage) < 12)) continue; // the vault houses already fill these
@@ -277,9 +277,9 @@ export function build(kit, scene, track, layout) {
       wall.rotation.y = Math.atan2(track.frame(d).dx, track.frame(d).dz);
       if (wallRandom() > 0.72) {
         // A torch on a bracket, the way the hamlet is lit on a summer evening.
-        const torch = mesh(alley, new T.CylinderGeometry(0.09, 0.09, 1.1, 5), 0x4a3a28, at.x, y + height + 0.55, at.z);
+        const torch = mesh(alley, new THREE.CylinderGeometry(0.09, 0.09, 1.1, 5), 0x4a3a28, at.x, y + height + 0.55, at.z);
         torch.castShadow = false;
-        const flame = mesh(alley, new T.IcosahedronGeometry(0.3, 0),
+        const flame = mesh(alley, new THREE.IcosahedronGeometry(0.3, 0),
           0xffb03a, at.x, y + height + 1.25, at.z);
         flame.castShadow = false;
       }
@@ -287,7 +287,7 @@ export function build(kit, scene, track, layout) {
   }
   // The village well, on the wide corner by the church.
   const wellAt = roadPoint(288, -13, track.elevation(288));
-  const well = new T.Group(); well.name = 'regnano-pozzo'; well.position.copy(wellAt); alley.add(well);
+  const well = new THREE.Group(); well.name = 'regnano-pozzo'; well.position.copy(wellAt); alley.add(well);
   cyl(well, 2.1, 1.6, STONE, 0, 0.8, 0, 12);
   cyl(well, 2.2, 0.25, STONE_DARK, 0, 1.7, 0, 12);
   for (const x of [-1.9, 1.9]) cyl(well, 0.16, 3.4, 0x4a3a28, x, 3.1, 0, 6);

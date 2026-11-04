@@ -13,7 +13,9 @@
     "test": "node --test tests/*.test.js",
     "test:browser": "playwright test",
     "fixtures:cars": "node scripts/regen-catalog-fixture.mjs",
-    "test:browsers": "playwright test --config playwright.browsers.config.js"
+    "test:browsers": "playwright test --config playwright.browsers.config.js",
+    "offline": "node scripts/check-offline.mjs",
+    "icons": "node scripts/make-icons.mjs"
   },
   "dependencies": {
     "@fontsource/bungee": "^5.3.0",
@@ -21,7 +23,7 @@
     "three": "^0.183.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.64.1",
     "jpeg-js": "^0.4.4",
     "vite": "^7.3.1"
   }

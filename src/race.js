@@ -2,6 +2,7 @@ import { DEFAULT_TRACK } from './track.js';
 import { nextSeed, shuffled } from './random.js';
 import { OBSTACLE_REGROW } from './obstacles.js';
 import { ATTACK_TIME, CRITTER_CALM, KNOCK_TIME, critterPose, knockSide, knockdown, resumeOffset } from './critters.js';
+import { clamp } from './math.js';
 
 export const MACHINEGUN_DURATION = 5;
 const MACHINEGUN_INTERVAL = 0.2;
@@ -164,7 +165,6 @@ const SLIP_TIME = 2.2;
 export const SPIN_TIME = 1;
 const OIL_SPIN_CHANCE = 0.5;
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 /** Cruise speed (m/s) of every difficulty level; steering keeps up with the extra pace. */
 export const BASE_SPEED = Object.freeze({ easy: 21.5, normal: 24, fast: 30, crazy: 37 });
 const approach = (value, target, amount) => value + clamp(target - value, -amount, amount);

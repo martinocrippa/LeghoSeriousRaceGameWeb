@@ -27,7 +27,7 @@ const TIMBER = 0xc08a4e, TIMBER_DARK = 0x8a5f33, PLASTER = 0xf1ece2, DARK = 0x2e
 const CONCRETE = 0xb9b3a6, LINO = 0xd8cfbc, LAMP = 0xfff3cf;
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh } = kit;
+  const { box, cyl, cone, mesh } = kit;
   const random = seeded(4212);
   /** A point on the road at `lane` metres to the side, at the height the road actually has there. */
   const roadPoint = (distance, lane) => {
@@ -75,7 +75,7 @@ export function build(kit, scene, track, layout) {
       for (let i = 0; i < 6; i += 1) {
         box(g, 1.1, 1.1, 8, TIMBER, -15 + i * 6, 12.4, -1);          // beams reaching out over the lane
         box(g, 0.9, 5.4, 0.9, TIMBER, -15 + i * 6, 3.2, 1.2);       // and the posts under them
-        const up = mesh(g, new T.BoxGeometry(0.7, 0.5, 0.5), LAMP, -15 + i * 6, 7.4, -3.2);
+        const up = mesh(g, new THREE.BoxGeometry(0.7, 0.5, 0.5), LAMP, -15 + i * 6, 7.4, -3.2);
         up.castShadow = false;
       }
       box(g, 36, 0.35, 0.35, DARK, 0, 3.4, 1.6);                     // the dark metal balustrade rail
@@ -87,7 +87,7 @@ export function build(kit, scene, track, layout) {
       box(g, 20, 1, 18, CONCRETE, 0, 0.5, -4);
       for (let i = 0; i < 12; i += 1) box(g, 16, 0.7, 1.5, PLASTER, 0, 1.3 + i * 0.85, 4 - i * 1.4);
       box(g, 20, 1.1, 20, PLASTER, 0, 12.6, -5);
-      const strip = mesh(g, new T.BoxGeometry(18, 0.3, 0.6), LAMP, 0, 11.9, 4.4);
+      const strip = mesh(g, new THREE.BoxGeometry(18, 0.3, 0.6), LAMP, 0, 11.9, 4.4);
       strip.castShadow = false;
       for (const x of [-9.5, 9.5]) box(g, 1.2, 12, 1.2, PLASTER, x, 6, -5);
     },
@@ -107,11 +107,11 @@ export function build(kit, scene, track, layout) {
     anfiteatro: (g) => {
       for (let i = 0; i < 6; i += 1) {
         const radius = 13 + i * 2.6;
-        const tier = mesh(g, new T.CylinderGeometry(radius, radius, 1.2, 26, 1, false, -Math.PI / 2, Math.PI),
+        const tier = mesh(g, new THREE.CylinderGeometry(radius, radius, 1.2, 26, 1, false, -Math.PI / 2, Math.PI),
           i % 2 ? CONCRETE : 0xc9c2b0, 0, 0.6 + i * 1.2, -2);
         tier.receiveShadow = true;
       }
-      const stage = mesh(g, new T.CylinderGeometry(11, 11, 0.6, 24, 1, false, -Math.PI / 2, Math.PI), TIMBER, 0, 0.3, -2);
+      const stage = mesh(g, new THREE.CylinderGeometry(11, 11, 0.6, 24, 1, false, -Math.PI / 2, Math.PI), TIMBER, 0, 0.3, -2);
       stage.castShadow = false;
       for (const x of [-15, 15]) kit.lamp(g, x, 4, 5.5);
       kit.sign(g, 'ANFITEATRO', 12, 15);
@@ -128,7 +128,7 @@ export function build(kit, scene, track, layout) {
         body.castShadow = true;
       }
       for (let i = 0; i < 4; i += 1) {
-        const tube = mesh(g, new T.BoxGeometry(5, 0.3, 0.5), LAMP, -12 + i * 8, 10.4, -14);
+        const tube = mesh(g, new THREE.BoxGeometry(5, 0.3, 0.5), LAMP, -12 + i * 8, 10.4, -14);
         tube.castShadow = false;
       }
       kit.sign(g, 'PARCHEGGIO', 12, 15);
@@ -155,7 +155,7 @@ export function build(kit, scene, track, layout) {
     },
     // The softball field next door: backstop, diamond and a low stand.
     softball: (g) => {
-      const dirt = mesh(g, new T.CircleGeometry(18, 22), 0xb9764a, 0, 0.03, -14);
+      const dirt = mesh(g, new THREE.CircleGeometry(18, 22), 0xb9764a, 0, 0.03, -14);
       dirt.rotation.x = -Math.PI / 2; dirt.castShadow = false;
       for (const [x, z] of [[0, -2], [11, -13], [0, -25], [-11, -13]]) box(g, 2.2, 0.2, 2.2, PLASTER, x, 0.12, z);
       for (let i = 0; i < 7; i += 1) box(g, 0.14, 7, 0.14, DARK, -5.4 + i * 1.8, 3.5, 4);
@@ -170,7 +170,7 @@ export function build(kit, scene, track, layout) {
   // --- The building the road runs through ----------------------------------------------------------------
   // Walls both sides of the first-floor corridor and the hall, just outside the racing lanes (the test keeps a
   // roadWidth/2 + 1 = 6 m corridor clear). This is what makes a 10 m road read as being indoors.
-  const inside = new T.Group(); inside.name = 'alba-interni'; scene.add(inside);
+  const inside = new THREE.Group(); inside.name = 'alba-interni'; scene.add(inside);
   const wallLane = track.roadWidth / 2 + 2.6;
   for (let d = CORRIDOR.from; d <= CORRIDOR.to; d += 6) {
     for (const side of [-1, 1]) {
@@ -195,17 +195,17 @@ export function build(kit, scene, track, layout) {
       const at = roadPoint(d, side * (wallLane + 1.4));
       const column = box(inside, 1.5, 15, 1.5, PLASTER, at.x, at.y + 7.5, at.z);
       column.rotation.y = at.heading;
-      const glow = mesh(inside, new T.SphereGeometry(0.5, 8, 6), LAMP, at.x, at.y + 12.4, at.z);
+      const glow = mesh(inside, new THREE.SphereGeometry(0.5, 8, 6), LAMP, at.x, at.y + 12.4, at.z);
       glow.castShadow = false;
     }
   }
 
   // --- Lights coming on, one row at a time, while the sky warms up ---------------------------------------
-  const windows = new T.Group(); windows.name = 'alba-finestre'; scene.add(windows);
+  const windows = new THREE.Group(); windows.name = 'alba-finestre'; scene.add(windows);
   const lit = [];
   for (let d = 380; d < 940; d += 22) {
     const at = roadPoint(d, 26 + random() * 8);
-    const pane = mesh(windows, new T.BoxGeometry(3.4, 2.6, 0.3), LAMP, at.x, at.y + 4 + Math.floor(random() * 3) * 3.4, at.z);
+    const pane = mesh(windows, new THREE.BoxGeometry(3.4, 2.6, 0.3), LAMP, at.x, at.y + 4 + Math.floor(random() * 3) * 3.4, at.z);
     pane.rotation.y = at.heading;
     pane.castShadow = false;
     pane.visible = false;
@@ -214,7 +214,7 @@ export function build(kit, scene, track, layout) {
   kit.dynamic(windows);
 
   // The caretaker's floor polisher going up and down the corridor before anybody arrives.
-  const polisher = new T.Group(); polisher.name = 'alba-lucidatrice'; scene.add(polisher);
+  const polisher = new THREE.Group(); polisher.name = 'alba-lucidatrice'; scene.add(polisher);
   box(polisher, 1.8, 0.6, 2.6, 0xe0503c, 0, 0.3, 0);
   cyl(polisher, 0.9, 0.25, 0x4a4f57, 0, 0.12, 1, 12);
   box(polisher, 0.12, 1.5, 0.12, DARK, 0, 1.1, -1);

@@ -18,7 +18,7 @@ const WOOD = 0xd9b483, WOOD_DARK = 0x9c7346, STEEL = 0x8e949c, RED = 0xd23a35, P
 const WALL = 0xeee8da, GREEN = 0x5f8f4a, SKY = 0xbcd8ee;
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh } = kit;
+  const { box, cyl, cone, mesh } = kit;
   const roadPoint = (distance, lane) => {
     const f = track.frame(distance);
     return { x: f.x + f.dz * lane, y: track.elevation(distance), z: f.z - f.dx * lane, heading: Math.atan2(f.dx, f.dz) };
@@ -35,7 +35,7 @@ export function build(kit, scene, track, layout) {
 
   /** A chair, tipped the way children leave them. */
   function chair(parent, x, z, turn = 0) {
-    const g = new T.Group(); g.position.set(x, 0, z); g.rotation.y = turn; parent.add(g);
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = turn; parent.add(g);
     box(g, 6, 0.6, 6, WOOD, 0, 6, 0);
     box(g, 6, 5.4, 0.6, WOOD, 0, 9, -2.7);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl(g, 0.3, 6, RED, sx * 2.4, 3, sz * 2.4, 6);
@@ -78,7 +78,7 @@ export function build(kit, scene, track, layout) {
     },
     // A backpack tipped over, spilling its things: a hill with a zip.
     zaino: (g) => {
-      const body = mesh(g, new T.SphereGeometry(9, 14, 10), 0x3b8de0, 0, 6, -4);
+      const body = mesh(g, new THREE.SphereGeometry(9, 14, 10), 0x3b8de0, 0, 6, -4);
       body.scale.set(1, 0.75, 1.3);
       box(g, 12, 1, 0.6, 0xffd74a, 0, 9.4, 1.6);
       for (const sx of [-1, 1]) {
@@ -104,16 +104,16 @@ export function build(kit, scene, track, layout) {
       }
       // A plant on the sill and a curtain pulled to one side.
       cyl(g, 1.6, 2.4, RED, -17, 6.2, -4, 10);
-      mesh(g, new T.IcosahedronGeometry(2.6, 0), GREEN, -17, 9, -4);
+      mesh(g, new THREE.IcosahedronGeometry(2.6, 0), GREEN, -17, 9, -4);
       box(g, 3, 17, 0.4, PAPER, 15, 14, -4.2);
       kit.sign(g, 'LE FINESTRE', 11, 14);
     },
     // Beyond the glass: the garden, and the class out there playing.
     giardino: (g) => {
-      const lawn = mesh(g, new T.CircleGeometry(13, 20), GREEN, 0, 0.05, -28);
+      const lawn = mesh(g, new THREE.CircleGeometry(13, 20), GREEN, 0, 0.05, -28);
       lawn.rotation.x = -Math.PI / 2; lawn.castShadow = false;
       for (const [x, z] of [[-9, -34], [8, -38], [-2, -42]]) kit.tree(g, x, z);
-      const ball = mesh(g, new T.SphereGeometry(2.2, 12, 9), PAPER, 3, 2.2, -26);
+      const ball = mesh(g, new THREE.SphereGeometry(2.2, 12, 9), PAPER, 3, 2.2, -26);
       ball.name = 'intervallo-pallone';
       kit.sign(g, 'I COMPAGNI IN GIARDINO', 9, 13);
     },
@@ -123,7 +123,7 @@ export function build(kit, scene, track, layout) {
       cyl(g, 5.4, 0.8, RED, 0, 7.2, -2, 12);
       box(g, 9, 5, 1.4, 0xd94a7a, 9, 2.5, 2);
       box(g, 9.4, 1.2, 1.8, PAPER, 9, 5.4, 2);
-      const spill = mesh(g, new T.CircleGeometry(9, 18), PAPER, -8, 0.06, 6);
+      const spill = mesh(g, new THREE.CircleGeometry(9, 18), PAPER, -8, 0.06, 6);
       spill.rotation.x = -Math.PI / 2; spill.castShadow = false;
       kit.sign(g, 'LA MERENDA', 11, 14);
     },
@@ -159,7 +159,7 @@ export function build(kit, scene, track, layout) {
 
   // --- The floor the race happens on ---------------------------------------------------------------------
   // A giant sheet of lino with its seams, and the skirting where the walls meet it. Kept well clear of the lanes.
-  const room = new T.Group(); room.name = 'intervallo-aula'; scene.add(room);
+  const room = new THREE.Group(); room.name = 'intervallo-aula'; scene.add(room);
   // Four walls right round the classroom. Without them the floor reads as an open plain between the furniture;
   // with them you are plainly inside a room. No ceiling: the camera flies at ~11 m and would be shut out by one.
   const edge = { x: 210, z: 150, back: -120 };
@@ -175,13 +175,13 @@ export function build(kit, scene, track, layout) {
   const seams = seeded(1414);
   for (let i = 0; i < 12; i += 1) {
     const at = roadPoint((i / 12) * track.length, (track.roadWidth / 2 + 3) * (seams() > 0.5 ? 1 : -1));
-    const crumb = mesh(room, new T.BoxGeometry(1.2, 0.3, 1.2), [0xffd74a, RED, 0x3b8de0][i % 3], at.x, at.y + 0.15, at.z);
+    const crumb = mesh(room, new THREE.BoxGeometry(1.2, 0.3, 1.2), [0xffd74a, RED, 0x3b8de0][i % 3], at.x, at.y + 0.15, at.z);
     crumb.rotation.y = seams() * 3;
     crumb.castShadow = false;
   }
 
   // The string of drawings, strung high above the road: above the camera, so it reads as bunting, not as a lid.
-  const bunting = new T.Group(); bunting.name = 'intervallo-disegni'; scene.add(bunting);
+  const bunting = new THREE.Group(); bunting.name = 'intervallo-disegni'; scene.add(bunting);
   const sheets = [];
   for (let d = 180; d < 300; d += 10) {
     const at = roadPoint(d, 0);
@@ -189,9 +189,9 @@ export function build(kit, scene, track, layout) {
     line.rotation.y = at.heading;
     for (const lane of [-4, 0, 4]) {
       const hang = roadPoint(d, lane);
-      const sheet = mesh(bunting, new T.PlaneGeometry(3.4, 4.2), PAPER, hang.x, at.y + 14.6, hang.z);
+      const sheet = mesh(bunting, new THREE.PlaneGeometry(3.4, 4.2), PAPER, hang.x, at.y + 14.6, hang.z);
       sheet.rotation.y = at.heading + Math.PI / 2;
-      sheet.material.side = T.DoubleSide;
+      sheet.material.side = THREE.DoubleSide;
       sheet.castShadow = false;
       sheets.push({ sheet, phase: sheets.length * 0.7, base: at.y + 14.6 });
     }
@@ -199,15 +199,15 @@ export function build(kit, scene, track, layout) {
   kit.dynamic(bunting);
 
   // The class outside: little figures running about in the garden beyond the windows.
-  const playing = new T.Group(); playing.name = 'intervallo-compagni'; scene.add(playing);
+  const playing = new THREE.Group(); playing.name = 'intervallo-compagni'; scene.add(playing);
   const garden = layout.landmarks.find((item) => item.kind === 'giardino');
   const kids = [];
   if (garden) {
     const pick = seeded(7788);
     for (let i = 0; i < 10; i += 1) {
-      const kid = new T.Group();
+      const kid = new THREE.Group();
       cyl(kid, 1.5, 5, [RED, 0x3b8de0, GREEN, 0xffd74a, 0x9b59b6][i % 5], 0, 2.5, 0, 8);
-      mesh(kid, new T.SphereGeometry(1.7, 10, 8), 0xe8b98a, 0, 6.2, 0);
+      mesh(kid, new THREE.SphereGeometry(1.7, 10, 8), 0xe8b98a, 0, 6.2, 0);
       playing.add(kid);
       kids.push({ kid, radius: 6 + pick() * 16, speed: 0.5 + pick() * 0.8, phase: pick() * 6.3, bob: pick() * 6.3 });
     }

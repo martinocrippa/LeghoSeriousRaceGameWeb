@@ -201,7 +201,12 @@ a { color: inherit; text-decoration: none; }
 .car-image img { width: 100%; height: 100%; object-fit: contain; }
 .car-selection { position: absolute; top: var(--s2); right: var(--s2); background: var(--accent); color: var(--accent-ink); display: none; place-items: center; width: 22px; height: 22px; }
 .selected .car-selection { display: grid; }
-.photo-peek { position: absolute; bottom: var(--s2); right: var(--s2); display: grid; place-items: center; width: 26px; height: 26px; background: var(--ink-70); color: var(--text); cursor: pointer; z-index: 2; }
+/* the photo button is the card's sibling (a button cannot hold a button): placed over the bottom-right corner of
+   the card's picture, which is --peek-image tall, and lifted with the card on hover */
+.car-slot { position: relative; display: grid; min-width: 0; --peek-image: 118px; }
+.car-slot:hover .car-card { border-color: var(--accent-2); transform: translateY(-3px); }
+.car-slot:hover .photo-peek { transform: translateY(-3px); }
+.photo-peek { position: absolute; top: calc(var(--bw) + var(--peek-image) - var(--s2) - 26px); right: calc(var(--bw) + var(--s2)); padding: 0; border: 0; display: grid; place-items: center; width: 26px; height: 26px; background: var(--ink-70); color: var(--text); cursor: pointer; z-index: 2; }
 .photo-peek:hover, .photo-peek:focus-visible { background: var(--accent); color: var(--accent-ink); outline: none; }
 .photo-peek.on { background: var(--accent); color: var(--accent-ink); }
 .from-photo { position: absolute; top: var(--s2); left: var(--s2); font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 1.5px; color: var(--text); background: var(--ink-70); padding: 3px 6px; }
@@ -376,6 +381,9 @@ a { color: inherit; text-decoration: none; }
 .confetti-decoration > span { color: var(--gold); margin-top: 36px; }
 .graphics-error { height: 100%; padding: 60px 30px; display: flex; flex-direction: column; justify-content: center; gap: 20px; text-align: center; color: var(--text); }
 .graphics-error p { line-height: 1.8; font-size: var(--fs-body); }
+/* the graphics card reset mid-game (main.js showGraphicsLost): above the pause modal and the toast */
+.graphics-lost { position: fixed; inset: 0; z-index: 60; background: var(--chrome); }
+.graphics-lost .graphics-error { align-items: center; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%) skewX(var(--skew)); bottom: 26px; background: var(--attention); color: var(--attention-ink); font-family: var(--font-ui); font-size: var(--fs-label); letter-spacing: .5px; padding: 14px 24px; box-shadow: var(--shadow-hard); z-index: 50; max-width: 90%; text-align: center; }
 
 /* Help */
@@ -521,6 +529,7 @@ kbd { font-family: var(--font-ui); display: inline-block; background: var(--bg-2
   .press-start { font-size: 15px; padding: var(--s3) 20px; letter-spacing: 2px; }
   .segmented button { font-size: var(--fs-micro); padding: 10px 12px; }
   .car-image { height: 100px; flex-basis: 100px; }
+  .car-slot { --peek-image: 100px; }
   .car-card { min-height: 162px; }
   .grid-section small, .grid-section i { display: none; }
   .showroom, .track-preview { height: 260px; }

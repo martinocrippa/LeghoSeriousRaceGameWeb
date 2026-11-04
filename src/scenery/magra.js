@@ -48,8 +48,8 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, wood, darkWood, stone } = kit;
-  const roadPoint = (d, lane, y = 0) => { const f = track.frame(d); return new T.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
+  const { box, cyl, cone, mesh, cream, glass, wood, darkWood, stone } = kit;
+  const roadPoint = (d, lane, y = 0) => { const f = track.frame(d); return new THREE.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
   const animated = [];
 
   // --- Landmarks ---------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ export function build(kit, scene, track, layout) {
     box(p, 3.6, 1.6, 3.6, 0xf4ecd8, 20, 5, 0); kit.roofTop(p, 4, 4, 5.8, 0xd8542f);
     p.children[p.children.length - 1].position.set(20, 6.6, 0);
     const pedalo = box(p, 3.4, 0.9, 5.4, 0xf4ecd8, -22, 0.6, 6); pedalo.rotation.y = 0.4;
-    for (let i = 0; i < 9; i++) mesh(p, new T.IcosahedronGeometry(0.3 + random() * 0.25, 0), 0xd6c8a2, (random() - 0.5) * 40, 0.25, 8 + random() * 6);
+    for (let i = 0; i < 9; i++) mesh(p, new THREE.IcosahedronGeometry(0.3 + random() * 0.25, 0), 0xd6c8a2, (random() - 0.5) * 40, 0.25, 8 + random() * 6);
   }
   function cave(p) {
     // The marble quarries: white terraces cut into the mountain, blocks stacked on the yard, a loading crane.
@@ -90,7 +90,7 @@ export function build(kit, scene, track, layout) {
     for (const x of [-17, 17]) cyl(p, 0.45, 14, 0x8a9198, x, 7, 3, 8);
     box(p, 37, 1, 1.4, 0x8a9198, 0, 14.4, 3);
     box(p, 2.6, 3.4, 2, 0xd8542f, 6, 12.3, 3);
-    for (let i = 0; i < 4; i++) mesh(p, new T.IcosahedronGeometry(0.9 + random() * 1.1, 0), MARBLE, -15 + i * 10, 0.8, 5);
+    for (let i = 0; i < 4; i++) mesh(p, new THREE.IcosahedronGeometry(0.9 + random() * 1.1, 0), MARBLE, -15 + i * 10, 0.8, 5);
   }
   function apuane(p) {
     // The Apuan Alps behind, quarried white at the top where the marble is.
@@ -103,7 +103,7 @@ export function build(kit, scene, track, layout) {
       cap.rotation.y = peak.rotation.y; cap.castShadow = false;
       if (i % 2 === 0) { const cut = box(p, r * 0.8, 4, 7, MARBLE, x + r * 0.25, h * 0.55, -26, false); cut.castShadow = false; }
     }
-    const base = mesh(p, new T.CylinderGeometry(190, 220, 18, 14), 0x5f6b44, 0, 2, -70); base.castShadow = false;
+    const base = mesh(p, new THREE.CylinderGeometry(190, 220, 18, 14), 0x5f6b44, 0, 2, -70); base.castShadow = false;
   }
   function luni(p) {
     // Luni: the broken colonnade, the paved forum, a stretch of the amphitheatre wall and fallen capitals.
@@ -135,8 +135,8 @@ export function build(kit, scene, track, layout) {
     box(p, 4, 2.8, 3.4, 0xf4ecd8, -10, 1.4, -4); kit.roofTop(p, 4.4, 3.8, 2.8, 0xd8542f);
     p.children[p.children.length - 1].position.set(-10, 3.9, -4);
     for (let i = 0; i < 3; i++) {
-      const boat = new T.Group(); boat.position.set(-6 + i * 7, 0.35, 9.5); boat.rotation.y = 0.12 * i; p.add(boat);
-      const hull = mesh(boat, new T.SphereGeometry(1, 10, 6), [0xf4ecd8, 0xd8542f, 0x3f7f9b][i], 0, 0, 0);
+      const boat = new THREE.Group(); boat.position.set(-6 + i * 7, 0.35, 9.5); boat.rotation.y = 0.12 * i; p.add(boat);
+      const hull = mesh(boat, new THREE.SphereGeometry(1, 10, 6), [0xf4ecd8, 0xd8542f, 0x3f7f9b][i], 0, 0, 0);
       hull.scale.set(1.1, 0.45, 3);
       box(boat, 1.6, 0.8, 1.8, 0xe8e4d8, 0, 0.6, -0.6);
       cyl(boat, 0.07, 4, cream, 0, 2.2, 0, 5);
@@ -145,16 +145,16 @@ export function build(kit, scene, track, layout) {
   }
   function monastero(p) {
     // Santa Croce del Corvo: the Romanesque church and cloister on their headland above the river mouth.
-    const knoll = mesh(p, new T.SphereGeometry(30, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f7a44, 0, -2, -10);
+    const knoll = mesh(p, new THREE.SphereGeometry(30, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f7a44, 0, -2, -10);
     knoll.scale.y = 0.45; knoll.castShadow = false;
-    const top = new T.Group(); top.position.set(0, 11, -8); p.add(top);
+    const top = new THREE.Group(); top.position.set(0, 11, -8); p.add(top);
     box(top, 13, 8, 20, 0xe4d9be, 0, 4, -2);
     box(top, 14, 0.7, 21, 0xd0c4a6, 0, 8.4, -2);
     box(top, 13.4, 10, 1.4, 0xece2c8, 0, 5, 8.2);
     kit.roofTop(top, 14, 2.2, 10, 0xa8654a);
     top.children[top.children.length - 1].position.set(0, 11.2, 8.2);
     box(top, 2.8, 4.6, 0.5, 0x6b4a32, 0, 2.3, 9);
-    const rose = mesh(top, new T.CylinderGeometry(1.5, 1.5, 0.3, 16), 0x9fc6d9, 0, 7.4, 9); rose.rotation.x = Math.PI / 2;
+    const rose = mesh(top, new THREE.CylinderGeometry(1.5, 1.5, 0.3, 16), 0x9fc6d9, 0, 7.4, 9); rose.rotation.x = Math.PI / 2;
     // Square bell tower with its paired windows.
     box(top, 4.2, 20, 4.2, 0xe4d9be, 9, 10, 2);
     box(top, 5, 0.6, 5, 0xd0c4a6, 9, 20.3, 2);
@@ -167,7 +167,7 @@ export function build(kit, scene, track, layout) {
     box(top, 16, 0.3, 14, 0xd9cdae, -13, -0.4, -6, false);
     for (let i = 0; i < 7; i++) for (const z of [-12, 0]) cyl(top, 0.3, 3, 0xece2c8, -20 + i * 2.4, 1.5, z, 8);
     for (const z of [-12, 0]) box(top, 17, 0.6, 1, 0xd0c4a6, -13, 3.3, z);
-    mesh(top, new T.IcosahedronGeometry(1.8, 1), 0x4f7f3f, -13, 1, -6);
+    mesh(top, new THREE.IcosahedronGeometry(1.8, 1), 0x4f7f3f, -13, 1, -6);
     const random = seeded(1176);
     for (let i = 0; i < 9; i++) {
       const a = random() * Math.PI * 2, r = 16 + random() * 12;
@@ -181,13 +181,13 @@ export function build(kit, scene, track, layout) {
   }
 
   // --- The sea, rolling along the shore --------------------------------------------------------------------
-  const sea = new T.Group(); sea.name = 'magra-mare'; scene.add(sea);
+  const sea = new THREE.Group(); sea.name = 'magra-mare'; scene.add(sea);
   const shoreMid = track.frame((SHORE.from + SHORE.to) / 2);
-  const water = mesh(sea, new T.BoxGeometry(620, 0.4, 420), SEA, shoreMid.x, 0.15, shoreMid.z + 220);
+  const water = mesh(sea, new THREE.BoxGeometry(620, 0.4, 420), SEA, shoreMid.x, 0.15, shoreMid.z + 220);
   water.castShadow = false; water.receiveShadow = true;
   // Rows of white crests that roll towards the beach: the sea is up today.
   for (let row = 0; row < 7; row++) {
-    const crest = new T.Group();
+    const crest = new THREE.Group();
     const out = 42 + row * 22;                       // how far out this row starts
     crest.position.set(shoreMid.x, 0.42, shoreMid.z + out);
     sea.add(crest);
@@ -201,13 +201,13 @@ export function build(kit, scene, track, layout) {
 
   // --- The Magra, its bridges and the motorboats -----------------------------------------------------------
   const banks = riverCentre(track);
-  const band = (extra) => new T.Shape([
-    ...banks.map((p) => new T.Vector2(p.x + p.nx * (RIVER.halfWidth + extra), -(p.z + p.nz * (RIVER.halfWidth + extra)))),
-    ...[...banks].reverse().map((p) => new T.Vector2(p.x - p.nx * (RIVER.halfWidth + extra), -(p.z - p.nz * (RIVER.halfWidth + extra)))),
+  const band = (extra) => new THREE.Shape([
+    ...banks.map((p) => new THREE.Vector2(p.x + p.nx * (RIVER.halfWidth + extra), -(p.z + p.nz * (RIVER.halfWidth + extra)))),
+    ...[...banks].reverse().map((p) => new THREE.Vector2(p.x - p.nx * (RIVER.halfWidth + extra), -(p.z - p.nz * (RIVER.halfWidth + extra)))),
   ]);
-  const shore = new T.Mesh(new T.ShapeGeometry(band(5)), new T.MeshStandardMaterial({ color: SAND, roughness: 0.95 }));
+  const shore = new THREE.Mesh(new THREE.ShapeGeometry(band(5)), new THREE.MeshStandardMaterial({ color: SAND, roughness: 0.95 }));
   shore.rotation.x = -Math.PI / 2; shore.position.y = 0.06; shore.receiveShadow = true; scene.add(shore);
-  const river = new T.Mesh(new T.ShapeGeometry(band(0)), new T.MeshStandardMaterial({ color: 0x3d7f9b, roughness: 0.3, metalness: 0.06 }));
+  const river = new THREE.Mesh(new THREE.ShapeGeometry(band(0)), new THREE.MeshStandardMaterial({ color: 0x3d7f9b, roughness: 0.3, metalness: 0.06 }));
   river.rotation.x = -Math.PI / 2; river.position.y = 0.2; river.name = 'magra-fiume'; scene.add(river);
   // Iron railings on both bridges, plus the timber decking under them.
   for (const [at, span] of [[RIVER.from, 44], [RIVER.to, 48]]) {
@@ -217,7 +217,7 @@ export function build(kit, scene, track, layout) {
         const d = at - span / 2 + (span * i) / 12;
         rail.push(roadPoint(d, side * 7.4, track.elevation(d) + 1.2));
       }
-      mesh(scene, new T.TubeGeometry(new T.CatmullRomCurve3(rail), 24, 0.16, 5, false), 0x4a4f57).castShadow = false;
+      mesh(scene, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rail), 24, 0.16, 5, false), 0x4a4f57).castShadow = false;
       for (let i = 0; i <= 12; i += 2) {
         const d = at - span / 2 + (span * i) / 12, y = track.elevation(d);
         const post = roadPoint(d, side * 7.4, y);
@@ -227,13 +227,13 @@ export function build(kit, scene, track, layout) {
   }
   // Motorboats running in and out of the river mouth, leaving a wake behind them.
   function motorboat(colour) {
-    const g = new T.Group();
-    const hull = mesh(g, new T.SphereGeometry(1, 10, 6), colour, 0, 0.35, 0); hull.scale.set(1.1, 0.5, 3.4);
+    const g = new THREE.Group();
+    const hull = mesh(g, new THREE.SphereGeometry(1, 10, 6), colour, 0, 0.35, 0); hull.scale.set(1.1, 0.5, 3.4);
     box(g, 2, 0.18, 6.6, 0xf2efe4, 0, 0.72, 0);
     box(g, 1.7, 0.9, 2.2, 0xf2efe4, 0, 1.2, -0.6);
     box(g, 1.75, 0.5, 0.14, glass, 0, 1.5, 0.5);
     cyl(g, 0.07, 2.2, 0xdfe3e6, 0, 2.2, -1.4, 5);
-    const wake = mesh(g, new T.BoxGeometry(3.4, 0.14, 7), 0xdff0f4, 0, 0.14, -5.2, false);
+    const wake = mesh(g, new THREE.BoxGeometry(3.4, 0.14, 7), 0xdff0f4, 0, 0.14, -5.2, false);
     wake.castShadow = false;
     return g;
   }
@@ -246,7 +246,7 @@ export function build(kit, scene, track, layout) {
   });
 
   // --- The quarry tunnels ----------------------------------------------------------------------------------
-  const tunnels = new T.Group(); tunnels.name = 'magra-gallerie'; scene.add(tunnels);
+  const tunnels = new THREE.Group(); tunnels.name = 'magra-gallerie'; scene.add(tunnels);
   for (const [from, to] of TUNNELS) {
     for (let d = from; d <= to; d += 4.5) {
       const y = track.elevation(d);
@@ -256,17 +256,17 @@ export function build(kit, scene, track, layout) {
         cyl(tunnels, 1.1, y + 13.6, MARBLE_DARK, foot.x, (y + 13.6) / 2, foot.z, 7);
       }
       // Ribs, not a lid: from the car they flick past overhead, and the chase camera still sees the road.
-      const rib = mesh(tunnels, new T.BoxGeometry(20.4, 1.5, 2.4), MARBLE, mid.x, y + 14.2, mid.z);
+      const rib = mesh(tunnels, new THREE.BoxGeometry(20.4, 1.5, 2.4), MARBLE, mid.x, y + 14.2, mid.z);
       rib.rotation.y = Math.atan2(b.x - a.x, b.z - a.z) + Math.PI / 2;
       rib.castShadow = false;
     }
     for (const [d, sign] of [[from, -1], [to, 1]]) {
       const f = track.frame(d), y = track.elevation(d);
-      const mouth = new T.Group();
+      const mouth = new THREE.Group();
       mouth.position.set(f.x, y, f.z); mouth.rotation.y = Math.atan2(f.dx, f.dz); tunnels.add(mouth);
       box(mouth, 24, 2.6, 1.6, MARBLE, 0, 15.6, sign * 0.8);
       for (const x of [-10.4, 10.4]) box(mouth, 2.6, 15.6, 1.8, MARBLE, x, 7.8, sign * 0.8);
-      const lamp = mesh(mouth, new T.SphereGeometry(0.34, 8, 6), 0xffe9a8, 0, 12.6, -sign * 1.4); lamp.castShadow = false;
+      const lamp = mesh(mouth, new THREE.SphereGeometry(0.34, 8, 6), 0xffe9a8, 0, 12.6, -sign * 1.4); lamp.castShadow = false;
     }
   }
 

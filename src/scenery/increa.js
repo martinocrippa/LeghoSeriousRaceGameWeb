@@ -34,7 +34,7 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass } = kit;
+  const { box, cyl, cone, mesh, cream, glass } = kit;
   const earth = 0x4a3a2c, darkEarth = 0x3b2d22, brick = 0xa8623f, roofTile = 0x8f4b35, wood = 0x8a6238, concrete = 0xb5afa4, grassDawn = 0x6f8a3a;
   let seed = 31;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -88,12 +88,12 @@ export function build(kit, scene, track, layout) {
     for (let i = 0; i < 40; i++) { const g = box(p, 0.2, 0.8 + random() * 0.6, 0.2, i % 3 ? 0x8a9a3a : 0xb0a040, -14 + random() * 28, 0.5, -10 + random() * 18); g.rotation.y = random() * 3; }
     // Quails: small brown bodies, tiny heads with a crest.
     for (const [x, z] of [[-6, -4], [-3, 2], [4, -6], [7, 3], [1, 6], [-9, 5]]) {
-      const body = mesh(p, new T.SphereGeometry(0.42, 8, 6), 0x8a6a3a, x, 0.6, z); body.scale.set(1, 0.8, 1.3);
-      mesh(p, new T.SphereGeometry(0.2, 6, 5), 0x6b4a2f, x, 0.95, z + 0.5); box(p, 0.06, 0.28, 0.06, 0x2b2b2b, x, 1.2, z + 0.55);
+      const body = mesh(p, new THREE.SphereGeometry(0.42, 8, 6), 0x8a6a3a, x, 0.6, z); body.scale.set(1, 0.8, 1.3);
+      mesh(p, new THREE.SphereGeometry(0.2, 6, 5), 0x6b4a2f, x, 0.95, z + 0.5); box(p, 0.06, 0.28, 0.06, 0x2b2b2b, x, 1.2, z + 0.55);
     }
     // Pointing dog: frozen with one paw lifted and the tail straight out.
     const dogX = -1, dogZ = -2;
-    kit.legs(p, dogX, dogZ, 0.3, 0.55, 0.8, 0xf4f0e2); const dogBody = mesh(p, new T.SphereGeometry(0.5, 10, 7), 0xf4f0e2, dogX, 1.15, dogZ); dogBody.scale.set(0.9, 0.8, 1.8);
+    kit.legs(p, dogX, dogZ, 0.3, 0.55, 0.8, 0xf4f0e2); const dogBody = mesh(p, new THREE.SphereGeometry(0.5, 10, 7), 0xf4f0e2, dogX, 1.15, dogZ); dogBody.scale.set(0.9, 0.8, 1.8);
     box(p, 0.5, 0.45, 0.7, 0xd9642a, dogX, 1.45, dogZ + 1.1); box(p, 0.12, 0.12, 0.9, 0xf4f0e2, dogX, 1.45, dogZ - 1.3); for (const s of [-0.2, 0.2]) box(p, 0.12, 0.3, 0.1, 0xd9642a, dogX + s, 1.75, dogZ + 1.15);
     // Trainer's shed and sign.
     box(p, 6, 3.2, 4, wood, 12, 1.6, -8); kit.roofTop(p, 6.6, 4.6, 3.2, roofTile); p.children[p.children.length - 1].position.set(12, 4.4, -8);
@@ -106,15 +106,15 @@ export function build(kit, scene, track, layout) {
     for (const z of [-13.5, -3]) box(p, 3, 0.12, 0.12, 0x6b4a2f, 0, 1.2, z); for (const x of [-1.5, 1.5]) box(p, 0.12, 0.12, 11, 0x6b4a2f, x, 1.2, -8);
     // Geese: white bodies, black heads and necks, orange beaks and feet.
     for (const [x, z, a] of [[-7, -2, 0.4], [-9.5, 1, -0.6], [6, -1, 2.4], [8.5, 3, 1.6], [-4, 4, 3]]) {
-      const g = new T.Group(); g.position.set(x, 0, z); g.rotation.y = a; p.add(g);
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = a; p.add(g);
       for (const s of [-0.18, 0.18]) box(g, 0.12, 0.55, 0.12, 0xff8a3d, s, 0.35, 0);
-      const body = mesh(g, new T.SphereGeometry(0.5, 10, 7), 0xf4f0e2, 0, 0.95, 0); body.scale.set(0.9, 0.8, 1.4);
-      box(g, 0.16, 0.9, 0.16, 0x14161d, 0, 1.6, 0.55); mesh(g, new T.SphereGeometry(0.2, 8, 6), 0x14161d, 0, 2.1, 0.62); box(g, 0.1, 0.1, 0.32, 0xff8a3d, 0, 2.05, 0.9);
+      const body = mesh(g, new THREE.SphereGeometry(0.5, 10, 7), 0xf4f0e2, 0, 0.95, 0); body.scale.set(0.9, 0.8, 1.4);
+      box(g, 0.16, 0.9, 0.16, 0x14161d, 0, 1.6, 0.55); mesh(g, new THREE.SphereGeometry(0.2, 8, 6), 0x14161d, 0, 2.1, 0.62); box(g, 0.1, 0.1, 0.32, 0xff8a3d, 0, 2.05, 0.9);
       box(g, 0.1, 0.1, 0.5, 0x14161d, 0, 1.05, -0.8);
     }
     // Turtles sunning on a log.
     const log = cyl(p, 0.45, 5, 0x6b4a2f, 6, 0.45, -11, 9); log.rotation.z = Math.PI / 2;
-    for (const x of [4.6, 6.2, 7.6]) { const shell = mesh(p, new T.SphereGeometry(0.42, 8, 6), 0x3f6b2f, x, 1.05, -11); shell.scale.y = 0.55; mesh(p, new T.SphereGeometry(0.16, 6, 5), 0x6b8a3a, x + 0.45, 0.95, -11); }
+    for (const x of [4.6, 6.2, 7.6]) { const shell = mesh(p, new THREE.SphereGeometry(0.42, 8, 6), 0x3f6b2f, x, 1.05, -11); shell.scale.y = 0.55; mesh(p, new THREE.SphereGeometry(0.16, 6, 5), 0x6b8a3a, x + 0.45, 0.95, -11); }
     for (let i = 0; i < 16; i++) cyl(p, 0.08, 1.6 + (i % 3) * 0.4, 0x5e7f2f, -12 + i * 1.5 + (i % 2) * 0.4, 0.9, -6 - (i % 3) * 1.2, 5);
     for (const x of [-11, 11]) kit.tree(p, x, 6, false);
     box(p, 2.6, 1.6, 0.12, wood, -5, 1.6, 8); for (const x of [-6, -4]) box(p, 0.12, 1.6, 0.12, wood, x, 0.8, 8);
@@ -125,41 +125,41 @@ export function build(kit, scene, track, layout) {
 
   // --- The quarry pit: sloping banks down to the water, carps under the surface, a ring of trees -------
   const centre = pitCentre(track);
-  const profile = [new T.Vector2(PIT_RADIUS + 0.4, 0.02), new T.Vector2(PIT_RADIUS - 2, -0.6), new T.Vector2(WATER_RADIUS + 4, -DEPTH + 1.2), new T.Vector2(WATER_RADIUS - 1, -DEPTH), new T.Vector2(0, -DEPTH - 0.4)];
-  const bank = mesh(scene, new T.LatheGeometry(profile, 40), darkEarth, centre.x, 0, centre.z); bank.castShadow = false; bank.material.side = T.DoubleSide;
-  const rim = mesh(scene, new T.RingGeometry(PIT_RADIUS - 0.5, PIT_RADIUS + 3, 40), earth, centre.x, 0.03, centre.z); rim.rotation.x = -Math.PI / 2; rim.castShadow = false;
-  const water = new T.Mesh(new T.CircleGeometry(WATER_RADIUS, 40), new T.MeshStandardMaterial({ color: 0x2f7f8a, transparent: true, opacity: 0.72, roughness: 0.3, metalness: 0.05 }));
+  const profile = [new THREE.Vector2(PIT_RADIUS + 0.4, 0.02), new THREE.Vector2(PIT_RADIUS - 2, -0.6), new THREE.Vector2(WATER_RADIUS + 4, -DEPTH + 1.2), new THREE.Vector2(WATER_RADIUS - 1, -DEPTH), new THREE.Vector2(0, -DEPTH - 0.4)];
+  const bank = mesh(scene, new THREE.LatheGeometry(profile, 40), darkEarth, centre.x, 0, centre.z); bank.castShadow = false; bank.material.side = THREE.DoubleSide;
+  const rim = mesh(scene, new THREE.RingGeometry(PIT_RADIUS - 0.5, PIT_RADIUS + 3, 40), earth, centre.x, 0.03, centre.z); rim.rotation.x = -Math.PI / 2; rim.castShadow = false;
+  const water = new THREE.Mesh(new THREE.CircleGeometry(WATER_RADIUS, 40), new THREE.MeshStandardMaterial({ color: 0x2f7f8a, transparent: true, opacity: 0.72, roughness: 0.3, metalness: 0.05 }));
   water.rotation.x = -Math.PI / 2; water.position.set(centre.x, -DEPTH + 0.35, centre.z); water.name = 'lake-water'; water.castShadow = false; scene.add(water);
   // Red carp near the surface, and four catfish cruising slowly along the bottom: a "siluro" is twice as long as a
   // carp, dark grey, flat-headed and has whiskers, so it has to be built rather than recoloured.
   for (let i = 0; i < 16; i++) {
     const a = random() * Math.PI * 2, r = 6 + random() * (WATER_RADIUS - 10);
-    const fish = new T.Group();
+    const fish = new THREE.Group();
     fish.position.set(centre.x + Math.cos(a) * r, -DEPTH + 0.05, centre.z + Math.sin(a) * r);
     scene.add(fish);
     const red = i % 4 ? 0xd94a1e : 0xe8873a;
-    const body = mesh(fish, new T.SphereGeometry(0.7, 8, 6), red, 0, 0, 0);
+    const body = mesh(fish, new THREE.SphereGeometry(0.7, 8, 6), red, 0, 0, 0);
     body.scale.set(0.6, 0.35, 1.6); body.castShadow = false;
-    const tail = mesh(fish, new T.ConeGeometry(0.34, 0.8, 4), red, 0, 0, -1.4);
+    const tail = mesh(fish, new THREE.ConeGeometry(0.34, 0.8, 4), red, 0, 0, -1.4);
     tail.rotation.x = -Math.PI / 2; tail.castShadow = false;
-    const fin = mesh(fish, new T.ConeGeometry(0.26, 0.5, 4), 0xf0a058, 0, 0.26, 0.1);
+    const fin = mesh(fish, new THREE.ConeGeometry(0.26, 0.5, 4), 0xf0a058, 0, 0.26, 0.1);
     fin.castShadow = false;
     kit.dynamic(fish); animated.push({ kind: 'carp', object: fish, angle: a, radius: r, speed: 0.08 + random() * 0.08, phase: random() * 6, depth: 0.05 });
   }
   for (let i = 0; i < 4; i++) {
     const a = random() * Math.PI * 2, r = 9 + random() * (WATER_RADIUS - 16);
-    const siluro = new T.Group();
+    const siluro = new THREE.Group();
     siluro.position.set(centre.x + Math.cos(a) * r, -DEPTH - 0.6, centre.z + Math.sin(a) * r);
     scene.add(siluro);
-    const body = mesh(siluro, new T.SphereGeometry(0.9, 9, 7), 0x4a4f48, 0, 0, 0);
+    const body = mesh(siluro, new THREE.SphereGeometry(0.9, 9, 7), 0x4a4f48, 0, 0, 0);
     body.scale.set(0.7, 0.55, 3.1); body.castShadow = false;
-    const head = mesh(siluro, new T.SphereGeometry(0.7, 8, 6), 0x565c52, 0, 0, 2.3);
+    const head = mesh(siluro, new THREE.SphereGeometry(0.7, 8, 6), 0x565c52, 0, 0, 2.3);
     head.scale.set(1.1, 0.5, 0.9); head.castShadow = false;
     for (const side of [-1, 1]) {
       const whisker = cyl(siluro, 0.05, 1.6, 0x6f7568, side * 0.45, -0.05, 2.9, 4);
       whisker.rotation.set(-1.2, 0, side * 0.5); whisker.castShadow = false;
     }
-    const tail = mesh(siluro, new T.ConeGeometry(0.45, 1.4, 4), 0x4a4f48, 0, 0, -3.1);
+    const tail = mesh(siluro, new THREE.ConeGeometry(0.45, 1.4, 4), 0x4a4f48, 0, 0, -3.1);
     tail.rotation.x = -Math.PI / 2; tail.castShadow = false;
     kit.dynamic(siluro); animated.push({ kind: 'carp', object: siluro, angle: a, radius: r, speed: 0.04 + random() * 0.03, phase: random() * 6, depth: -0.6 });
   }
@@ -183,13 +183,13 @@ export function build(kit, scene, track, layout) {
   // the water in the middle, where a driver never looks.
   const duckRadius = PIT_RADIUS + 62;
   for (let i = 0; i < 9; i++) {
-    const duck = new T.Group();
-    const body = mesh(duck, new T.SphereGeometry(0.55, 9, 7), 0x6b5a3a, 0, 0, 0);
+    const duck = new THREE.Group();
+    const body = mesh(duck, new THREE.SphereGeometry(0.55, 9, 7), 0x6b5a3a, 0, 0, 0);
     body.scale.set(0.8, 0.75, 1.7); body.castShadow = false;
-    const neck = mesh(duck, new T.SphereGeometry(0.28, 7, 6), 0x2f6b4a, 0, 0.18, 0.85);
+    const neck = mesh(duck, new THREE.SphereGeometry(0.28, 7, 6), 0x2f6b4a, 0, 0.18, 0.85);
     neck.scale.set(1, 1.2, 1); neck.castShadow = false;
     const beak = box(duck, 0.18, 0.12, 0.42, 0xffb02e, 0, 0.14, 1.28); beak.castShadow = false;
-    const tail = mesh(duck, new T.ConeGeometry(0.22, 0.6, 4), 0x4a3f2a, 0, 0.08, -1.2);
+    const tail = mesh(duck, new THREE.ConeGeometry(0.22, 0.6, 4), 0x4a3f2a, 0, 0.08, -1.2);
     tail.rotation.x = Math.PI / 2; tail.castShadow = false;
     const wings = [];
     for (const side of [-1, 1]) {
@@ -226,7 +226,7 @@ export function build(kit, scene, track, layout) {
     leaf.castShadow = false; kit.dynamic(leaf);
     leaves.push({ object: leaf, phase: random() * 6.3, lift: 0.8 + random() * 3.5, speed: 0.8 + random() * 0.5 });
   }
-  const wind = new T.Vector3(1, 0, 0.35).normalize();
+  const wind = new THREE.Vector3(1, 0, 0.35).normalize();
   kit.animate((clock, dt) => {
     const gust = 7 + Math.sin(clock * 0.7) * 3 + Math.sin(clock * 1.9) * 1.5;
     for (const leaf of leaves) {

@@ -20,7 +20,7 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, mesh, cream, glass } = kit;
+  const { box, cyl, mesh, cream, glass } = kit;
   const blue = 0x1e5bd8, black = 0x14161d, concrete = 0xb9b3a8, dark = 0x2a2f3a, grass = 0x2f8f3c, white = 0xf4f0e2;
   const crowd = [];
   const stands = [];
@@ -54,7 +54,7 @@ export function build(kit, scene, track, layout) {
     for (let i = 0; i < 9; i++) box(p, 10, 0.02, 54, i % 2 ? 0x2f8f3c : 0x3a9a44, -40 + i * 10, 0.34, -20);
     for (const z of [-46.8, 6.8]) box(p, 90, 0.05, 0.35, white, 0, 0.36, z);
     for (const x of [-44.8, 0, 44.8]) box(p, 0.35, 0.05, 54, white, x, 0.36, -20);
-    const ring = mesh(p, new T.RingGeometry(6.2, 6.7, 32), white, 0, 0.37, -20); ring.rotation.x = -Math.PI / 2;
+    const ring = mesh(p, new THREE.RingGeometry(6.2, 6.7, 32), white, 0, 0.37, -20); ring.rotation.x = -Math.PI / 2;
     for (const x of [-44.5, 44.5]) { for (const z of [-24, -16]) box(p, 0.25, 2.6, 0.25, white, x, 1.3, z); box(p, 0.25, 0.25, 8.3, white, x, 2.6, -20); }
     // Stands: main stand by the road (z 53–63), far stand (z -66 – -56), end stands with a gate for the road.
     stand(p, 0, 58, 176, 10, -1);
@@ -82,7 +82,7 @@ export function build(kit, scene, track, layout) {
     // Blue-and-black banners hanging from the roofs.
     for (let i = 0; i < 12; i++) { const x = -72 + i * 13; box(p, 4, 3.2, 0.2, i % 2 ? blue : black, x, 9.3, 51.6); box(p, 4, 3.2, 0.2, i % 2 ? black : blue, x, 9.3, -54.6); }
     // Crowd: instanced bricks on every tier (blue, black and a few white/orange), remembered for the cheer animation.
-    const geometry = new T.BoxGeometry(0.9, 1.35, 0.7);
+    const geometry = new THREE.BoxGeometry(0.9, 1.35, 0.7);
     const palettes = [[blue, 0.46], [black, 0.4], [white, 0.09], [0xff7a12, 0.05]];
     const seats = [];
     let seed = 77;
@@ -102,7 +102,7 @@ export function build(kit, scene, track, layout) {
     }
     const meshes = palettes.map(([color]) => {
       const list = seats.filter((s) => s.palette === palettes.findIndex(([c]) => c === color));
-      const instanced = new T.InstancedMesh(geometry, kit.mat(color), Math.max(1, list.length));
+      const instanced = new THREE.InstancedMesh(geometry, kit.mat(color), Math.max(1, list.length));
       instanced.castShadow = false; instanced.receiveShadow = false; instanced.userData.dynamic = true;
       p.add(instanced);
       return { instanced, list };

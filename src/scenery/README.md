@@ -1,6 +1,7 @@
 # Scenery modules (per-circuit scenography)
 
-Each circuit with `theme.local` may have a module here, registered in `index.js` under the same key.
+Each circuit with `theme.local` may have a module here, registered under the same key in two places: `LOADERS` in
+`index.js` (the browser loads it on demand, with `loadScenery`) and `all.js` (Node: the tests and the RetroPie export).
 The module builds the circuit's landmarks and extras with a shared **kit** so nothing here imports the
 renderer, and it never touches `local-scenery.js`, `renderer.js`, `race.js` or `track.js`.
 
@@ -60,7 +61,10 @@ Geometry helpers (all create shadow-casting meshes with a cached `MeshStandardMa
 | `kit.inside(x, z, polygon)` | point in polygon `[{x,z}]` | it is `insidePolygon` from `src/geometry.js`: import it directly when you need it in `isReserved`/`groundHoles`, which run without the kit — do not write a second copy |
 | `kit.groundAt(x, z)` | terrain height (hills), 0 on flat circuits | place things at `y = kit.groundAt(x, z)` on circuits with `elevation` |
 | colours | `kit.cream, kit.roof, kit.glass, kit.green, kit.stone, kit.lampGlow, kit.wood, kit.darkWood, kit.snow` | |
-| `kit.THREE` | the three.js namespace | |
+
+three.js is not in the kit: each scenery does `import * as THREE from 'three'` and writes `THREE.Group`, `THREE.Mesh`…
+Never pass the namespace around as a value (in an object, as an argument, `const T = THREE`): the bundler then has to
+ship all of three.js. When the kit carried it, the three chunk weighed 724 KB instead of 547.
 
 Randomness comes from `seeded()` in `src/random.js`, never from `Math.random()` or a hand-rolled generator:
 a scenery must rebuild identically every time.

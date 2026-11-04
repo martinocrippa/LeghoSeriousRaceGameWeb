@@ -9,21 +9,21 @@ export const streetHouses = 18;
 export const RESERVED = { porta: 30, sopraelevata: 30, industrial: 44, stadiomonza: 46 };
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, green } = kit;
+  const { box, cyl, cone, mesh, cream, glass, green } = kit;
   const red = 0xe0503c, white = 0xf4f0e2, stone = 0xd9cfbf, iron = 0x3a3f45, cobble = 0x8d8983, shed = 0x9fb3c4, shedDark = 0x6f8494;
 
   function church(p, item) {
     // The parish church with its square: cobbles, a fountain, café umbrellas and lamps.
     const square = box(p, 34, 0.18, 26, cobble, 0, 0.08, 1); square.receiveShadow = true;
     kit.builders.church(p);
-    cyl(p, 2.6, 0.5, stone, -10, 0.45, 8, 20); cyl(p, 2.2, 0.15, 0x68cbd4, -10, 0.75, 8, 20); cyl(p, 0.35, 2.2, stone, -10, 1.6, 8, 8); mesh(p, new T.SphereGeometry(0.55, 10, 7), 0x9ae8ed, -10, 2.9, 8);
+    cyl(p, 2.6, 0.5, stone, -10, 0.45, 8, 20); cyl(p, 2.2, 0.15, 0x68cbd4, -10, 0.75, 8, 20); cyl(p, 0.35, 2.2, stone, -10, 1.6, 8, 8); mesh(p, new THREE.SphereGeometry(0.55, 10, 7), 0x9ae8ed, -10, 2.9, 8);
     for (let i = 0; i < 3; i++) { const x = 11 + i * 3.4; cyl(p, 0.08, 2.4, cream, x, 1.2, 9, 5); cone(p, 1.5, 0.9, i % 2 ? red : white, x, 2.7, 9, 10); box(p, 1.2, 0.1, 1.2, 0x6b4a2f, x, 0.8, 9); }
     for (const x of [-15, 15]) kit.lamp(p, x, 11, 4);
   }
   function porta(p) {
     // Porta di Villasanta: two stone pillars with urns, iron gates, park wall and the woods behind.
     box(p, 44, 0.2, 14, 0xb5ad9c, 0, 0.08, -2);
-    for (const x of [-4.5, 4.5]) { box(p, 2.2, 7, 2.2, stone, x, 3.5, 4); box(p, 2.8, 0.5, 2.8, stone, x, 7.25, 4); mesh(p, new T.SphereGeometry(0.9, 10, 7), stone, x, 8.4, 4); }
+    for (const x of [-4.5, 4.5]) { box(p, 2.2, 7, 2.2, stone, x, 3.5, 4); box(p, 2.8, 0.5, 2.8, stone, x, 7.25, 4); mesh(p, new THREE.SphereGeometry(0.9, 10, 7), stone, x, 8.4, 4); }
     for (let x = -3.2; x <= 3.2; x += 0.8) box(p, 0.12, 5.2, 0.12, iron, x, 2.6, 4);
     box(p, 7, 0.16, 0.16, iron, 0, 5.2, 4); box(p, 7, 0.16, 0.16, iron, 0, 1.2, 4);
     for (const side of [-1, 1]) { box(p, 14, 3.2, 1, stone, side * 13, 1.6, 4); box(p, 14.4, 0.4, 1.3, 0xc9bfae, side * 13, 3.4, 4); }
@@ -61,7 +61,7 @@ export function build(kit, scene, track, layout) {
     // The Monza stadium in red and white: four stands round a pitch, floodlights, banners.
     box(p, 60, 0.2, 46, 0x7a7f88, 0, 0.08, 0);
     box(p, 34, 0.12, 22, 0x2f8f3c, 0, 0.24, 0); for (const z of [-10.8, 10.8]) box(p, 34, 0.06, 0.3, white, 0, 0.32, z); for (const x of [-16.8, 0, 16.8]) box(p, 0.3, 0.06, 22, white, x, 0.32, 0);
-    const ring = mesh(p, new T.RingGeometry(2.6, 2.9, 24), white, 0, 0.33, 0); ring.rotation.x = -Math.PI / 2;
+    const ring = mesh(p, new THREE.RingGeometry(2.6, 2.9, 24), white, 0, 0.33, 0); ring.rotation.x = -Math.PI / 2;
     for (const [x, z, w, d] of [[0, -16.5, 50, 8], [0, 16.5, 50, 8], [-24, 0, 8, 26], [24, 0, 8, 26]]) {
       box(p, w, 3.2, d, red, x, 1.6, z); box(p, w * 0.92, 3, d * 0.92, white, x, 4.6, z); box(p, w * 0.84, 2.6, d * 0.84, red, x, 7.4, z);
     }

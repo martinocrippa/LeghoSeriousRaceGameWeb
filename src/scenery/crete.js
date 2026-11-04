@@ -9,7 +9,7 @@ export const streetHouses = 0;
 export const RESERVED = { amiata: 270, casale: 34, calanchi: 40, biancane: 34, abbazia: 46 };
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass } = kit;
+  const { box, cyl, cone, mesh, cream, glass } = kit;
   const stone = 0xd8c39a, clay = 0xb9b3a4, clayDark = 0xa39d8f, clayLight = 0xcfc8b6, brick = 0xa8523a, tile = 0x8f4b35, wood = 0x6b4a2f;
   let seed = 1977;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -21,7 +21,7 @@ export function build(kit, scene, track, layout) {
     const main = cone(p, 190, 125, 0x5c6e8a, 0, 61, -60, 8); main.castShadow = false;
     const east = cone(p, 120, 74, 0x6d7f95, 140, 36, -20, 7); east.castShadow = false;
     const west = cone(p, 105, 62, 0x7b8a9c, -150, 30, -10, 7); west.castShadow = false;
-    const summit = mesh(p, new T.SphereGeometry(16, 12, 8), 0xffe9c2, 0, 118, -60); summit.castShadow = false; summit.scale.y = 0.6;
+    const summit = mesh(p, new THREE.SphereGeometry(16, 12, 8), 0xffe9c2, 0, 118, -60); summit.castShadow = false; summit.scale.y = 0.6;
     for (const [x, z] of [[-40, 40], [30, 46], [90, 30], [-95, 24]]) kit.cypress(p, x, z, 9);
   }
   function casale(p) {
@@ -36,7 +36,7 @@ export function build(kit, scene, track, layout) {
     box(p, 4, 0.06, 30, 0xf0e6d2, 0, 0.2, 8);
     for (let z = -4; z <= 14; z += 4.5) for (const x of [-3.4, 3.4]) kit.cypress(p, x, z, 7 + (z % 9) * 0.3);
     for (let i = 0; i < 5; i++) { const bale = cyl(p, 0.9, 1.7, 0xe0c070, 12 + (i % 3) * 2.3, 0.9 + Math.floor(i / 3) * 1.6, 2 + Math.floor(i / 3) * 0.3, 12); bale.rotation.z = Math.PI / 2; }
-    cyl(p, 0.35, 2.4, 0x6b4a2f, -15, 1.2, 0, 6); mesh(p, new T.IcosahedronGeometry(2.6, 1), 0x7f9a5a, -15, 3.8, 0);
+    cyl(p, 0.35, 2.4, 0x6b4a2f, -15, 1.2, 0, 6); mesh(p, new THREE.IcosahedronGeometry(2.6, 1), 0x7f9a5a, -15, 3.8, 0);
     // Tractor and a well.
     box(p, 3.2, 1.6, 1.8, 0xe0503c, 15, 1.5, -6); box(p, 1.4, 1.4, 1.6, 0x14161d, 15.8, 2.9, -6); for (const [x, r] of [[13.8, 0.9], [16.4, 0.55]]) for (const z of [-7, -5]) cyl(p, r, 0.5, 0x14161d, x, r, z, 10).rotation.x = Math.PI / 2;
   }
@@ -54,7 +54,7 @@ export function build(kit, scene, track, layout) {
     // White clay domes ("biancane") with a few thin ridges between them.
     box(p, 40, 0.16, 28, 0xcfc1a4, 0, 0.06, -2);
     for (const [x, z, r] of [[-12, -6, 6], [-2, -9, 7.5], [9, -5, 5.5], [16, -11, 4.5], [-16, -13, 4], [4, 2, 4.2]]) {
-      const dome = mesh(p, new T.SphereGeometry(r, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xdcd6c8, x, 0.1, z); dome.scale.y = 0.55; dome.castShadow = false;
+      const dome = mesh(p, new THREE.SphereGeometry(r, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xdcd6c8, x, 0.1, z); dome.scale.y = 0.55; dome.castShadow = false;
     }
     for (let i = 0; i < 5; i++) { const ridge = cone(p, 1.4, 5 + i, clayLight, -14 + i * 7, 2.5 + i / 2, 4, 4); ridge.castShadow = false; }
     kit.cypress(p, 19, 4, 7);
@@ -67,7 +67,7 @@ export function build(kit, scene, track, layout) {
     box(p, 12, 11, 9, brick, 18, 9.5, -8); kit.roofTop(p, 13, 10.5, 15, tile); p.children[p.children.length - 1].position.set(18, 16.2, -8);
     box(p, 4.2, 22, 4.2, brick, 24, 15, -12); box(p, 5, 0.6, 5, cream, 24, 26.3, -12); kit.roofTop(p, 5, 5, 26.6, tile); p.children[p.children.length - 1].position.set(24, 27.8, -12);
     for (const y of [18, 22]) for (const s of [-1.2, 1.2]) box(p, 0.7, 1.6, 0.2, glass, 24 + s, y, -9.8);
-    const rose = mesh(p, new T.CylinderGeometry(1.6, 1.6, 0.3, 18), cream, 18, 12, -3.4); rose.rotation.x = Math.PI / 2;
+    const rose = mesh(p, new THREE.CylinderGeometry(1.6, 1.6, 0.3, 18), cream, 18, 12, -3.4); rose.rotation.x = Math.PI / 2;
     box(p, 2.2, 4, 0.3, wood, 18, 6, -3.4);
     // Cloister: a square of columns in front of the monastery.
     for (let x = -14; x <= 6; x += 4) for (const z of [-3, 1]) cyl(p, 0.35, 3.8, cream, x, 4 + 1.9, z, 8);
@@ -86,7 +86,7 @@ export function build(kit, scene, track, layout) {
   const golds = [0xe8c56d, 0xd9a54a, 0xf2cd7a, 0xc9963a, 0xf0d98a, 0xdcb85c];
   const browns = [0x7a5a3a, 0x8f6b48];
   const patchMaterials = new Map();
-  const patchMaterial = (color) => { if (!patchMaterials.has(color)) patchMaterials.set(color, new T.MeshStandardMaterial({ color, roughness: 0.95 })); return patchMaterials.get(color); };
+  const patchMaterial = (color) => { if (!patchMaterials.has(color)) patchMaterials.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.95 })); return patchMaterials.get(color); };
   function patch(cx, cz, w, d, color, turn) {
     // A gently rounded quad grid whose vertices sit just above the terrain, so fields follow the hills.
     const n = 6;
@@ -101,11 +101,11 @@ export function build(kit, scene, track, layout) {
       positions.push(x, kit.groundAt(x, z) + 0.07, z);
     }
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const a = j * (n + 1) + i, b = a + 1, cc = a + n + 1, dd = cc + 1; indices.push(a, cc, b, b, cc, dd); }
-    const geometry = new T.BufferGeometry();
-    geometry.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
-    const field = new T.Mesh(geometry, patchMaterial(color));
+    const field = new THREE.Mesh(geometry, patchMaterial(color));
     field.receiveShadow = true;
     scene.add(field);
   }
@@ -121,7 +121,7 @@ export function build(kit, scene, track, layout) {
     patches++;
   }
   // Rows of wheat stalks along the road edges, swaying in the summer breeze.
-  const stalk = new T.BoxGeometry(0.16, 1.5, 0.16);
+  const stalk = new THREE.BoxGeometry(0.16, 1.5, 0.16);
   const stalkMaterials = [0xe0b85a, 0xd9a54a, 0xf0c86a].map((c) => kit.mat(c));
   const rows = [];
   const instances = [[], [], []];
@@ -135,18 +135,18 @@ export function build(kit, scene, track, layout) {
       instances[Math.floor(random() * 3)].push({ x, y: kit.groundAt(x, z) + 0.75, z, phase: random() * 6.3, lean: random() * Math.PI * 2 });
     }
   }
-  const dummy = new T.Object3D();
+  const dummy = new THREE.Object3D();
   instances.forEach((list, k) => {
     if (!list.length) return;
-    const wheat = new T.InstancedMesh(stalk, stalkMaterials[k], list.length);
+    const wheat = new THREE.InstancedMesh(stalk, stalkMaterials[k], list.length);
     wheat.castShadow = false; wheat.receiveShadow = false; wheat.userData.dynamic = true;
     list.forEach((s, i) => { dummy.position.set(s.x, s.y, s.z); dummy.rotation.set(0, s.lean, 0); dummy.updateMatrix(); wheat.setMatrixAt(i, dummy.matrix); });
     scene.add(wheat);
     rows.push({ wheat, list });
   });
-  const ear = new T.SphereGeometry(0.22, 6, 5);
+  const ear = new THREE.SphereGeometry(0.22, 6, 5);
   rows.forEach(({ list }, k) => {
-    const ears = new T.InstancedMesh(ear, stalkMaterials[(k + 1) % 3], list.length);
+    const ears = new THREE.InstancedMesh(ear, stalkMaterials[(k + 1) % 3], list.length);
     ears.castShadow = false; ears.receiveShadow = false; ears.userData.dynamic = true;
     list.forEach((s, i) => { dummy.position.set(s.x, s.y + 0.8, s.z); dummy.rotation.set(0, 0, 0); dummy.scale.set(1, 1.6, 1); dummy.updateMatrix(); ears.setMatrixAt(i, dummy.matrix); });
     scene.add(ears);
@@ -159,7 +159,7 @@ export function build(kit, scene, track, layout) {
       const lane = side * (track.roadWidth / 2 + 5.5);
       const x = f.x + f.dz * lane, z = f.z - f.dx * lane;
       if (!clear(x, z, track.roadWidth / 2 + 4)) continue;
-      const g = new T.Group(); g.position.set(x, kit.groundAt(x, z), z); scene.add(g);
+      const g = new THREE.Group(); g.position.set(x, kit.groundAt(x, z), z); scene.add(g);
       kit.cypress(g, 0, 0, 6.5 + (d % 40) / 10); kit.cypress(g, side * 2.8, 2.6, 5.5);
     }
   }

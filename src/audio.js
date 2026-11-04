@@ -194,6 +194,11 @@ export function createAudio({ storage = null, tracks = MUSIC } = {}) {
     /** Development helper: listen to a loop from the console without starting a race. */
     preview(id) { return startMusic(id); },
     unlock() { ensure(); },
+    /** Hidden tab: the whole audio clock stops (the scheduler reads ctx.currentTime, so it waits too) and resumes as it was. */
+    suspend(hidden) {
+      if (!ctx) return;
+      (hidden ? ctx.suspend() : ctx.resume()).catch(() => {});
+    },
     dispose() { stopMusic(); ctx?.close?.(); ctx = null; },
   };
 }

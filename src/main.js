@@ -9,6 +9,7 @@ import { CAR_PARTS, normalizeParts } from './parts.js';
 import { GARAGE_STORAGE_KEY, parseGarage } from './garage.js';
 import { RaceSimulation, BASE_SPEED, hasExpertControls } from './race.js';
 import { TRACKS, TRACK_DEFINITIONS, DEFAULT_TRACK, getTrack, createTrack, LANE_SIGN } from './track.js';
+import { loadScenery, isSceneryLoaded } from './scenery/index.js';
 import { racerPose } from './sections.js';
 import { createCup, cupTrackIds, recordRaceResult, sortStandings, isCupFinished, raceSeed, pointsForRank } from './cup.js';
 import { raceTimes, formatRaceTime, formatGap } from './gaps.js';
@@ -203,12 +204,40 @@ function ensureRenderer() {
     renderer.setShowroomLook(theme);
     renderer.canvas.classList.add('fade-in');
     requestAnimationFrame(() => renderer?.canvas.classList.add('is-ready'));
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    renderer.reduceMotion = reduceMotion.matches;
+    reduceMotion.addEventListener('change', (e) => { if (renderer) renderer.reduceMotion = e.matches; });
+    // The graphics card can reset mid-race (driver update, the computer waking up): every mesh is gone. Everything
+    // stops behind a message, and the page reloads by itself if the browser manages to bring the context back.
+    renderer.canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); showGraphicsLost(); });
+    renderer.canvas.addEventListener('webglcontextrestored', () => location.reload());
   } catch (error) {
     rendererFailed = true;
     $('#viewport').innerHTML = '<div class="graphics-error"><h2>Accendiamo i motori!</h2><p>Per la grafica 3D apri il gioco in Chrome o Edge con l’accelerazione grafica attiva.</p></div>'; $('#start-race').disabled = true; console.error(error);
   }
   return renderer;
 }
+let graphicsLost = false;
+function showGraphicsLost() {
+  if (graphicsLost) return;
+  graphicsLost = true;
+  if (screen === 'race') pauseRace();
+  audio.stopMusic();
+  const box = document.createElement('div');
+  box.className = 'graphics-lost'; box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-labelledby', 'graphics-lost-title');
+  box.innerHTML = `<div class="graphics-error"><h2 id="graphics-lost-title">La grafica si è fermata</h2><p>Il computer ha fatto ripartire la scheda grafica. Ricarica la pagina: il garage e i record sono salvati.</p><button class="start-button" type="button">Ricarica</button></div>`;
+  box.querySelector('button').addEventListener('click', () => location.reload());
+  document.body.append(box);
+  box.querySelector('button').focus();
+}
+// A bug somewhere: one toast, once, and the game goes on if it can (the browser console has the details).
+let errorReported = false;
+const reportError = () => { if (errorReported) return; errorReported = true; toast('Qualcosa si è inceppato. Se il gioco si blocca, ricarica la pagina.'); };
+window.addEventListener('error', reportError);
+// The built game keeps itself in the browser (dist/sw.js, scripts/offline-plugin.mjs): no network needed after the
+// first visit. Not in `npm run dev`, where a cache would hide every change.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+window.addEventListener('unhandledrejection', reportError);
 
 const thumbnailKey = car => [car.id,car.color,car.accent,car.shape,car.width,car.length,car.height,car.detail,car.version,(car.parts||[]).join(','),(car.palette||[]).join(',')].join('|');
 function carThumbnail(car) {
@@ -235,10 +264,12 @@ function carCard(car, section) {
   const image = thumbnailCache.get(thumbnailKey(car)) || '';
   const showing = photoShown.has(car.id);
   // Only the cars recreated from a photo carry one, and the file is fetched only when someone asks for it.
-  const peek = car.sourceUrl ? `<span class="photo-peek${showing ? ' on' : ''}" role="button" tabindex="0" data-photo="${escape(car.id)}" aria-label="${showing ? 'Torna al modello 3D' : 'Guarda la foto vera'}" title="${showing ? 'Torna al modello 3D' : 'Guarda la foto vera'}">${icon(showing ? 'brick' : 'camera', 15)}</span>` : '';
+  const peek = car.sourceUrl ? `<button type="button" class="photo-peek${showing ? ' on' : ''}" data-photo="${escape(car.id)}" aria-label="${showing ? 'Torna al modello 3D' : 'Guarda la foto vera'}" title="${showing ? 'Torna al modello 3D' : 'Guarda la foto vera'}">${icon(showing ? 'brick' : 'camera', 15)}</button>` : '';
   const badge = section === 'vostre' ? (customCars.includes(car) ? 'LA TUA FOTO' : 'DALLA FOTO') : car.tag || '';
   const line = car.tagline || (section === 'vostre' ? (customCars.includes(car) ? 'Creata dalla tua foto' : 'Costruita da te, pronta a correre') : 'Bolide di fantasia');
-  return `<button class="car-card ${isSelected ? 'selected primary-focus' : ''}" data-car="${escape(car.id)}" data-section="${section}" aria-pressed="${isSelected}" style="--car-color:${escape(car.color)}"><div class="car-image">${showing ? `<img src="${escape(car.sourceUrl)}" alt="La foto della costruzione ${escape(car.name)}" loading="lazy" />` : image ? `<img src="${image}" alt="Modello 3D ${escape(car.name)}" />` : icon('brick',70)}${peek}<span class="car-selection">${icon('check',13)}</span>${badge ? `<span class="from-photo">${escape(badge)}</span>` : ''}</div><div class="car-card-bottom"><div><h3>${escape(car.name)}</h3><p>${escape(line)}</p></div><span class="color-dot"></span></div></button>`;
+  // The photo button sits next to the card, not inside it: a button inside a button is not valid HTML.
+  const card = `<button class="car-card ${isSelected ? 'selected primary-focus' : ''}" data-car="${escape(car.id)}" data-section="${section}" aria-pressed="${isSelected}" style="--car-color:${escape(car.color)}"><div class="car-image">${showing ? `<img src="${escape(car.sourceUrl)}" alt="La foto della costruzione ${escape(car.name)}" loading="lazy" />` : image ? `<img src="${image}" alt="Modello 3D ${escape(car.name)}" />` : icon('brick',70)}<span class="car-selection">${icon('check',13)}</span>${badge ? `<span class="from-photo">${escape(badge)}</span>` : ''}</div><div class="car-card-bottom"><div><h3>${escape(car.name)}</h3><p>${escape(line)}</p></div><span class="color-dot"></span></div></button>`;
+  return peek ? `<div class="car-slot">${card}${peek}</div>` : card;
 }
 function renderGarage() {
   const sections = garageSections();
@@ -257,7 +288,6 @@ function renderGarage() {
       playTone(560,.05);
     };
     spot.addEventListener('click',flip);
-    spot.addEventListener('keydown',event => { if(event.key==='Enter'||event.key===' ') flip(event); });
   });
   fillThumbnails(cars);
   if(customCars.some(c=>c.id===selected[activePilot].id)) {
@@ -395,7 +425,7 @@ $('#champion-garage').addEventListener('click',goBack);
 function moveFocus(code, container = $(`#screen-${menuScreen}`)) {
   const section = container;
   if (!section) return;
-  const items = [...section.querySelectorAll('button:not([disabled]),input,select')].filter(el => el.getClientRects().length);
+  const items = [...section.querySelectorAll('button:not([disabled]):not(.photo-peek),input,select')].filter(el => el.getClientRects().length);
   if (!items.length) return;
   const current = items.includes(document.activeElement) ? document.activeElement : null;
   if (!current) { (section.querySelector('.primary-focus') || items[0]).focus(); return; }
@@ -452,11 +482,18 @@ function startTour() {
   const next = ids[Math.floor(Math.random() * ids.length)];
   // Never the same circuit twice running, unless there is only one.
   tour = { id: tour && tour.id === next && ids.length > 1 ? ids[(ids.indexOf(next) + 1) % ids.length] : next };
-  renderer.previewTrack(getTrack(tour.id));
-  renderer.startFlyover(10 + Math.random() * 4);
-  $('#attract-car-name').textContent = getTrack(tour.id).name;
   $('#attract-tour').classList.add('is-on');
-  showFlyoverName(getTrack(tour.id).name);
+  const id = tour.id, track = getTrack(id);
+  // The circuit's scenery may still be on its way (scenery/index.js): fly once it is here, unless the tour was
+  // stopped or moved on meanwhile.
+  const fly = () => {
+    if (tour?.id !== id) return;
+    renderer.previewTrack(track);
+    renderer.startFlyover(10 + Math.random() * 4);
+    $('#attract-car-name').textContent = track.name;
+    showFlyoverName(track.name);
+  };
+  if (isSceneryLoaded(track.theme.local)) fly(); else loadScenery(track.theme.local).then(fly, reportError);
 }
 function stopTour() {
   if (!tour) return;
@@ -524,7 +561,14 @@ function trackOutline(track){
   return `<svg viewBox="0 0 84 56" aria-hidden="true"><path d="${d}" fill="none" stroke="var(--road)" stroke-width="5.5" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#ffffffaa" stroke-width="1" stroke-dasharray="3 3"/></svg>`;
 }
 let exploring=false;
-function previewSelectedTrack(){ exploring=false; try { renderer?.previewTrack(getTrack(trackId)); } catch (e) { console.warn('Anteprima pista', e); } updateExploreButton(); }
+function previewSelectedTrack(){
+  exploring=false;
+  const track=getTrack(trackId);
+  // First look at a circuit: its scenery comes on demand, then the preview is drawn if the picker still shows it.
+  if(!isSceneryLoaded(track.theme.local)){loadScenery(track.theme.local).then(()=>{if(menuScreen==='track'&&getTrack(trackId)===track)previewSelectedTrack();},reportError);updateExploreButton();return;}
+  try { renderer?.previewTrack(track); } catch (e) { console.warn('Anteprima pista', e); }
+  updateExploreButton();
+}
 /**
  * "Esplora le piste": ten seconds or so of helicopter over the circuit you are looking at. It replaces the slow
  * orbit of the preview until it has flown a whole lap, and any other click on this screen puts it back.
@@ -726,6 +770,8 @@ function startRace() {
   keys.clear();keyEdges.clear();touchPointers.clear();touchInputs.forEach(x=>{x.steer=0;x.useItem=false;x.brake=false;});
   if(mode==='cup'&&!cup)cup=newCup();
   const track=raceTrack(cup?cup.trackIds[cup.index]:trackId);
+  // The first race on a circuit waits for its scenery file (scenery/index.js), then starts from the top again.
+  if(!isSceneryLoaded(track.theme.local)){loadScenery(track.theme.local).then(startRace,()=>toast('Non riesco a caricare la pista: ricarica la pagina.'));return;}
   renderer.setTrack(track);
   race=new RaceSimulation({players,difficulty,cars:selected.slice(0,players),aiCars:[...CAR_PRESETS,...SAMPLE_CARS],seed:cup?raceSeed(cup,cup.index):Date.now(),fieldSeed:cup?cup.seed:null,track,opponents:effectiveOpponents()});
   lapTiming=Array.from({length:players},()=>({start:0,best:null,last:null}));
@@ -876,6 +922,7 @@ function getInputs(){
   keyEdges.clear();return inputs;
 }
 document.addEventListener('keydown',e=>{
+  if(graphicsLost)return;
   if(captureControlKey(e))return;
   if(bindingsDraft&&e.code==='Escape'){e.preventDefault();closeControls();return;}
   if(e.code==='Escape'){
@@ -898,7 +945,8 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{keys.clear();keyEdges.clear();if(screen==='race')pauseRace();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&screen==='race')pauseRace();});
+// Hidden tab: the audio clock stops, so the music scheduler stops with it instead of catching up in bursts.
+document.addEventListener('visibilitychange',()=>{audio.suspend(document.hidden);if(document.hidden&&screen==='race')pauseRace();});
 window.addEventListener('resize',()=>renderer?.resize());
 window.addEventListener('gamepadconnected',()=>toast('Gamepad collegato! Croce o levetta per muoverti, A conferma, B indietro.'));
 
@@ -1024,7 +1072,7 @@ function drawMap(){
 let previousTime=performance.now();
 function animate(now){
   requestAnimationFrame(animate);const dt=Math.min(.05,(now-previousTime)/1000);previousTime=now;
-  if(!renderer||document.hidden)return;
+  if(!renderer||document.hidden||graphicsLost)return;
   if(screen==='menu'){
     pollMenuGamepad(dt);
     if(menuScreen==='attract'&&!tour){attractTimer+=dt;if(attractTimer>4.5){attractTimer=0;attractIndex=(attractIndex+1)%attractCars.length;updateAttractCar();}}

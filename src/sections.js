@@ -7,7 +7,8 @@
  * metres of progress one metre driven on the section is worth (> 1 on a bridge, < 1 in a loop).
  * Pure maths: no three.js, no DOM, so the race simulation and the tests can use it in Node.
  */
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+import { clamp } from './math.js';
+
 const smooth = (u) => u * u * (3 - 2 * u);
 const normalize = (v) => {
   const magnitude = Math.hypot(v.x, v.y, v.z) || 1;

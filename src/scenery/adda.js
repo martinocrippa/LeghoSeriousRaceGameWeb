@@ -45,7 +45,7 @@ export function isReserved(track, layout, x, z) {
 }
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, wood, darkWood, stone } = kit;
+  const { box, cyl, cone, mesh, cream, glass, wood, darkWood, stone } = kit;
   const rust = 0xc4622a, amber = 0xe0a33a, iron = 0x4a4f57, concrete = 0x9aa0a4, gold = 0xe8bf4a,
     water = 0x4d7f9c, gravel = 0xc3bba6, moss = 0x6f8a45;
 
@@ -57,11 +57,11 @@ export function build(kit, scene, track, layout) {
       bough.rotation.z = -side * 0.42;
     }
     const tone = [rust, amber, 0xb5473a, 0xd08a2c][Math.floor(random() * 4)];
-    const crown = mesh(parent, new T.IcosahedronGeometry(height * 0.42, 1), tone, x, height * 0.82, z);
+    const crown = mesh(parent, new THREE.IcosahedronGeometry(height * 0.42, 1), tone, x, height * 0.82, z);
     crown.scale.set(1.25, 0.82, 1.25);
     for (let i = 0; i < 3; i++) {
       const a = random() * Math.PI * 2, r = height * 0.34;
-      mesh(parent, new T.IcosahedronGeometry(0.42, 0), 0x8a9b3f, x + Math.cos(a) * r, height * 0.72, z + Math.sin(a) * r);
+      mesh(parent, new THREE.IcosahedronGeometry(0.42, 0), 0x8a9b3f, x + Math.cos(a) * r, height * 0.72, z + Math.sin(a) * r);
     }
   }
 
@@ -75,10 +75,10 @@ export function build(kit, scene, track, layout) {
     const belt = box(p, 1.8, 0.5, 22, 0x7e8489, 4, 11, 1); belt.rotation.x = -0.34;
     for (const z of [-4, 4]) cyl(p, 0.3, 9, iron, 4, 4.5, z, 6);
     // The chimney: red and white bands, a wisp of steam on top.
-    const stack = new T.Group(); stack.position.set(-16, 0, -10); p.add(stack);
+    const stack = new THREE.Group(); stack.position.set(-16, 0, -10); p.add(stack);
     for (let i = 0; i < 7; i++) cyl(stack, 2.1 - i * 0.12, 5, i % 2 ? 0xd94141 : 0xf1ece0, 0, 2.5 + i * 5, 0, 14);
     cyl(stack, 1.4, 1.2, iron, 0, 36, 0, 14);
-    for (let i = 0; i < 4; i++) { const puff = mesh(stack, new T.IcosahedronGeometry(2.2 + i * 0.7, 0), 0xf4f4f0, (i % 2 ? 1 : -1) * i * 1.4, 38.5 + i * 3, i * 0.8); puff.castShadow = false; }
+    for (let i = 0; i < 4; i++) { const puff = mesh(stack, new THREE.IcosahedronGeometry(2.2 + i * 0.7, 0), 0xf4f4f0, (i % 2 ? 1 : -1) * i * 1.4, 38.5 + i * 3, i * 0.8); puff.castShadow = false; }
   }
   function galleria(p) {
     // The wooded rock spur the covered gallery is cut into, with its retaining wall along the road.
@@ -102,26 +102,26 @@ export function build(kit, scene, track, layout) {
   function madonnadelbosco(p) {
     // The wooded hill above the straight, the sanctuary on top with its golden Madonna, the sacred stairway
     // down through the trees and two gilded statues of Pope John XXIII (Roncalli) watching over it.
-    const hill = mesh(p, new T.SphereGeometry(34, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f7a3f, 0, -2, -12);
+    const hill = mesh(p, new THREE.SphereGeometry(34, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f7a3f, 0, -2, -12);
     hill.scale.y = 0.62; hill.castShadow = false;
-    const shoulder = mesh(p, new T.SphereGeometry(20, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x6b8447, -26, -2, 4);
+    const shoulder = mesh(p, new THREE.SphereGeometry(20, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x6b8447, -26, -2, 4);
     shoulder.scale.y = 0.5; shoulder.castShadow = false;
     // Sanctuary: baroque front, nave, dome and bell tower on the flattened top.
-    const top = new T.Group(); top.position.set(0, 18.5, -12); p.add(top);
+    const top = new THREE.Group(); top.position.set(0, 18.5, -12); p.add(top);
     cyl(top, 15, 1.4, 0xd9cfb6, 0, -0.5, 0, 16);
     box(top, 12, 8, 16, 0xf2e6cd, 0, 4, -2); box(top, 13, 0.7, 17, 0xe0d3b4, 0, 8.4, -2);
     box(top, 13, 10, 1.6, 0xf7eeda, 0, 5, 6.6); kit.roofTop(top, 13.6, 2.4, 10, 0xb9553f);
     top.children[top.children.length - 1].position.set(0, 11.2, 6.6);
     for (const x of [-4, 4]) box(top, 1.3, 9, 1.3, 0xe8dcc0, x, 4.5, 7.3);
     box(top, 2.6, 4.6, 0.4, 0x7a5236, 0, 2.3, 7.5);
-    const rose = mesh(top, new T.CylinderGeometry(1.5, 1.5, 0.3, 18), 0x8fb3d9, 0, 7, 7.5); rose.rotation.x = Math.PI / 2;
+    const rose = mesh(top, new THREE.CylinderGeometry(1.5, 1.5, 0.3, 18), 0x8fb3d9, 0, 7, 7.5); rose.rotation.x = Math.PI / 2;
     cyl(top, 4.4, 3, 0xf2e6cd, 0, 9.4, -6, 16);
-    const dome = mesh(top, new T.SphereGeometry(4.5, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f8f6f, 0, 10.6, -6); dome.castShadow = false;
+    const dome = mesh(top, new THREE.SphereGeometry(4.5, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x5f8f6f, 0, 10.6, -6); dome.castShadow = false;
     cyl(top, 0.45, 2, cream, 0, 15.8, -6, 8);
     // The golden Madonna standing on the very top of the church.
-    const madonna = new T.Group(); madonna.position.set(0, 16.8, -6); top.add(madonna);
-    cone(madonna, 1.35, 4.2, gold, 0, 2.1, 0, 10); mesh(madonna, new T.SphereGeometry(0.72, 10, 8), gold, 0, 4.6, 0);
-    const halo = mesh(madonna, new T.TorusGeometry(1.05, 0.13, 6, 16), gold, 0, 4.9, -0.3); halo.rotation.x = Math.PI / 2; halo.castShadow = false;
+    const madonna = new THREE.Group(); madonna.position.set(0, 16.8, -6); top.add(madonna);
+    cone(madonna, 1.35, 4.2, gold, 0, 2.1, 0, 10); mesh(madonna, new THREE.SphereGeometry(0.72, 10, 8), gold, 0, 4.6, 0);
+    const halo = mesh(madonna, new THREE.TorusGeometry(1.05, 0.13, 6, 16), gold, 0, 4.9, -0.3); halo.rotation.x = Math.PI / 2; halo.castShadow = false;
     for (const s of [-1, 1]) { const arm = cyl(madonna, 0.24, 2.4, gold, s * 1.15, 2.6, 0.35, 6); arm.rotation.z = s * 0.7; }
     // Bell tower.
     box(top, 3.4, 20, 3.4, 0xe8dcc0, 9, 10, -4); box(top, 4.2, 0.6, 4.2, cream, 9, 20.3, -4);
@@ -135,9 +135,9 @@ export function build(kit, scene, track, layout) {
     }
     // Two gilded statues of Pope Roncalli: one at the top of the stairway, one at its foot by the road.
     const roncalli = (x, y, z, scale) => {
-      const g = new T.Group(); g.position.set(x, y, z); g.scale.setScalar(scale); g.rotation.y = Math.PI; p.add(g);
+      const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(scale); g.rotation.y = Math.PI; p.add(g);
       box(g, 2.6, 1.8, 2.6, 0xcfc6ae, 0, 0.9, 0); box(g, 2.1, 0.5, 2.1, 0xe3d9c2, 0, 2, 0);
-      cone(g, 1.15, 3.6, gold, 0, 4.1, 0, 10); mesh(g, new T.SphereGeometry(0.62, 10, 8), gold, 0, 6.2, 0);
+      cone(g, 1.15, 3.6, gold, 0, 4.1, 0, 10); mesh(g, new THREE.SphereGeometry(0.62, 10, 8), gold, 0, 6.2, 0);
       cone(g, 0.5, 1.4, gold, 0, 6.9, 0, 8);
       const blessing = cyl(g, 0.2, 2, gold, 0.95, 4.9, 0.4, 6); blessing.rotation.z = -0.9;
       const crook = cyl(g, 0.14, 3.4, gold, -1.05, 4.6, 0.2, 6); crook.rotation.z = 0.16;
@@ -151,7 +151,7 @@ export function build(kit, scene, track, layout) {
       if (Math.abs(x) < 6 && z > -4) continue;                       // keep the stairway clear
       const y = Math.max(0, 16 - (Math.hypot(x, (z + 12) / 0.62) / 34) ** 2 * 16);
       cyl(p, 0.3, 3, 0x6a4a33, x, y + 1.5, z, 6);
-      mesh(p, new T.IcosahedronGeometry(2 + random() * 1.4, 0), [rust, amber, 0xb5473a, moss][i % 4], x, y + 4.4, z);
+      mesh(p, new THREE.IcosahedronGeometry(2 + random() * 1.4, 0), [rust, amber, 0xb5473a, moss][i % 4], x, y + 4.4, z);
     }
   }
   function castagneto(p) {
@@ -165,11 +165,11 @@ export function build(kit, scene, track, layout) {
     // Burrs and chestnuts scattered under the trees, and a basket full of them.
     for (let i = 0; i < 22; i++) {
       const x = (random() - 0.5) * 34, z = -8 + (random() - 0.5) * 22;
-      if (random() < 0.45) mesh(p, new T.IcosahedronGeometry(0.55, 0), 0x8a9b3f, x, 0.4, z);
-      else { const nut = mesh(p, new T.SphereGeometry(0.34, 8, 6), 0x6b3f22, x, 0.3, z); nut.scale.set(1, 0.8, 1); }
+      if (random() < 0.45) mesh(p, new THREE.IcosahedronGeometry(0.55, 0), 0x8a9b3f, x, 0.4, z);
+      else { const nut = mesh(p, new THREE.SphereGeometry(0.34, 8, 6), 0x6b3f22, x, 0.3, z); nut.scale.set(1, 0.8, 1); }
     }
     cyl(p, 1.2, 1.4, 0xa9784c, 9, 0.7, 4, 10);
-    for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; mesh(p, new T.SphereGeometry(0.34, 8, 6), 0x6b3f22, 9 + Math.cos(a) * 0.6, 1.6, 4 + Math.sin(a) * 0.6); }
+    for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; mesh(p, new THREE.SphereGeometry(0.34, 8, 6), 0x6b3f22, 9 + Math.cos(a) * 0.6, 1.6, 4 + Math.sin(a) * 0.6); }
     // The "essiccatoio": the little stone hut where the chestnuts were dried.
     box(p, 5.4, 4, 5, 0xd6cdb6, -12, 2, 2); kit.roofTop(p, 5.8, 5.4, 4, 0x8a5a3a);
     p.children[p.children.length - 1].position.set(-12, 5.2, 2);
@@ -197,13 +197,13 @@ export function build(kit, scene, track, layout) {
 
   // --- The river ---------------------------------------------------------------------------------------
   const banks = riverCentre(track);
-  const bandShape = (extra) => new T.Shape([
-    ...banks.map((p) => new T.Vector2(p.x + p.nx * (HALF_WIDTH + extra), -(p.z + p.nz * (HALF_WIDTH + extra)))),
-    ...[...banks].reverse().map((p) => new T.Vector2(p.x - p.nx * (HALF_WIDTH + extra), -(p.z - p.nz * (HALF_WIDTH + extra)))),
+  const bandShape = (extra) => new THREE.Shape([
+    ...banks.map((p) => new THREE.Vector2(p.x + p.nx * (HALF_WIDTH + extra), -(p.z + p.nz * (HALF_WIDTH + extra)))),
+    ...[...banks].reverse().map((p) => new THREE.Vector2(p.x - p.nx * (HALF_WIDTH + extra), -(p.z - p.nz * (HALF_WIDTH + extra)))),
   ]);
-  const shore = new T.Mesh(new T.ShapeGeometry(bandShape(6)), new T.MeshStandardMaterial({ color: gravel, roughness: 0.95 }));
+  const shore = new THREE.Mesh(new THREE.ShapeGeometry(bandShape(6)), new THREE.MeshStandardMaterial({ color: gravel, roughness: 0.95 }));
   shore.rotation.x = -Math.PI / 2; shore.position.y = 0.05; shore.receiveShadow = true; shore.name = 'adda-shore'; scene.add(shore);
-  const river = new T.Mesh(new T.ShapeGeometry(bandShape(0)), new T.MeshStandardMaterial({ color: water, roughness: 0.3, metalness: 0.08 }));
+  const river = new THREE.Mesh(new THREE.ShapeGeometry(bandShape(0)), new THREE.MeshStandardMaterial({ color: water, roughness: 0.3, metalness: 0.08 }));
   river.rotation.x = -Math.PI / 2; river.position.y = 0.2; river.receiveShadow = true; river.name = 'adda-water'; scene.add(river);
   // Poplars and reed beds along both banks, clear of the road and of the landmarks.
   const roadLine = track.points(240);
@@ -216,7 +216,7 @@ export function build(kit, scene, track, layout) {
       const x = p.x + p.nx * side * off, z = p.z + p.nz * side * off;
       if (roadGap(x, z) < 26) continue;
       if (layout.landmarks.some((m) => Math.hypot(m.x - x, m.z - z) < (RESERVED[m.kind] || 23))) continue;
-      const g = new T.Group(); g.position.set(x, 0, z); scene.add(g);
+      const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
       if (random() < 0.34) chestnut(g, 0, 0, 7 + random() * 2.5, random);
       else if (random() < 0.7) { cyl(g, 0.34, 7, 0x6a4a33, 0, 3.5, 0, 6); const crown = cone(g, 2.3, 11, [rust, amber, moss][i % 3], 0, 10, 0, 7); crown.castShadow = false; }
       else for (let r = 0; r < 5; r++) cyl(g, 0.09, 2.4 + random(), 0x9c9a54, (random() - 0.5) * 5, 1.4, (random() - 0.5) * 5, 5);
@@ -224,8 +224,8 @@ export function build(kit, scene, track, layout) {
   }
 
   // --- The covered gallery on the descent from Calusco ----------------------------------------------------
-  const roadPoint = (d, lane, y = 0) => { const f = track.frame(d); return new T.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
-  const gallery = new T.Group(); gallery.name = 'adda-gallery'; scene.add(gallery);
+  const roadPoint = (d, lane, y = 0) => { const f = track.frame(d); return new THREE.Vector3(f.x + f.dz * lane, y, f.z - f.dx * lane); };
+  const gallery = new THREE.Group(); gallery.name = 'adda-gallery'; scene.add(gallery);
   for (let d = 95; d <= 145; d += 5) {
     const y = track.elevation(d);
     for (const side of [-1, 1]) {
@@ -233,12 +233,12 @@ export function build(kit, scene, track, layout) {
       cyl(gallery, 0.55, y + 13.4, concrete, base.x, (y + 13.4) / 2, base.z, 8);
     }
     const a = roadPoint(d, -9.6), b = roadPoint(d, 9.6);
-    const beam = mesh(gallery, new T.BoxGeometry(20.6, 0.9, 2.4), concrete, (a.x + b.x) / 2, y + 13.8, (a.z + b.z) / 2);
+    const beam = mesh(gallery, new THREE.BoxGeometry(20.6, 0.9, 2.4), concrete, (a.x + b.x) / 2, y + 13.8, (a.z + b.z) / 2);
     beam.rotation.y = Math.atan2(b.x - a.x, b.z - a.z) + Math.PI / 2;
     beam.castShadow = false;
   }
   for (const [d, sign] of [[95, -1], [145, 1]]) {
-    const portal = new T.Group(), f = track.frame(d);
+    const portal = new THREE.Group(), f = track.frame(d);
     portal.position.set(f.x, track.elevation(d), f.z); portal.rotation.y = Math.atan2(f.dx, f.dz); gallery.add(portal);
     box(portal, 23, 1.8, 1.2, 0xd8d3c6, 0, 15.2, sign * 0.6);
     for (const x of [-10.2, 10.2]) box(portal, 1.6, 15.4, 1.4, 0xd8d3c6, x, 7.7, sign * 0.6);
@@ -249,24 +249,24 @@ export function build(kit, scene, track, layout) {
   // Everything here is built along the straight bridge axis. The road curves away from it within 50 m, so the
   // railway leaves the bridge on its own embankment instead of staying under the cars.
   const span = track.frame(SOUTH_CROSSING);
-  const axis = (s, lateral = 0, y = 0) => new T.Vector3(
+  const axis = (s, lateral = 0, y = 0) => new THREE.Vector3(
     span.x + span.dx * s + span.dz * lateral, y, span.z + span.dz * s - span.dx * lateral);
   const railY = Math.max(3.2, track.elevation(SOUTH_CROSSING) - 6.5);
-  const bridge = new T.Group(); bridge.name = 'adda-ponte'; scene.add(bridge);
+  const bridge = new THREE.Group(); bridge.name = 'adda-ponte'; scene.add(bridge);
   for (const side of [-1, 1]) {
     const arc = [];
     for (let i = 0; i <= 24; i++) {
       const t = i / 24;
       arc.push(axis(-48 + t * 96, side * 5.2, 0.3 + Math.sin(t * Math.PI) * (railY - 0.9)));
     }
-    mesh(bridge, new T.TubeGeometry(new T.CatmullRomCurve3(arc), 44, 0.55, 6, false), iron).castShadow = false;
+    mesh(bridge, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arc), 44, 0.55, 6, false), iron).castShadow = false;
     for (let i = 2; i < 23; i += 2) {
       const q = arc[i], h = railY - q.y;
       if (h > 0.6) cyl(bridge, 0.17, h, iron, q.x, q.y + h / 2, q.z, 5);
     }
   }
   const RAIL_HALF = 95;
-  const deck = new T.Group();
+  const deck = new THREE.Group();
   deck.position.copy(axis(0)); deck.rotation.y = Math.atan2(span.dx, span.dz); bridge.add(deck);
   box(deck, 11.4, 0.4, RAIL_HALF * 2, iron, 0, railY, 0);
   for (const x of [-5.2, 5.2]) { box(deck, 0.7, 1.2, RAIL_HALF * 2, iron, x, railY - 0.75, 0); box(deck, 0.16, 1.1, RAIL_HALF * 2, iron, x + Math.sign(x) * 0.4, railY + 0.75, 0); }
@@ -303,21 +303,21 @@ export function build(kit, scene, track, layout) {
       const d = TRUSS_FROM + (TRUSS_TO - TRUSS_FROM) * (i / 20);
       return roadPoint(d, side * 8.2, trussTop(d));
     });
-    mesh(bridge, new T.TubeGeometry(new T.CatmullRomCurve3(chord), 34, 0.22, 5, false), iron).castShadow = false;
+    mesh(bridge, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(chord), 34, 0.22, 5, false), iron).castShadow = false;
     // Diagonal bracing, one zig per bay.
     for (let i = 0; i < 20; i += 2) {
       const d0 = TRUSS_FROM + (TRUSS_TO - TRUSS_FROM) * (i / 20), d1 = TRUSS_FROM + (TRUSS_TO - TRUSS_FROM) * ((i + 2) / 20);
       const a = roadPoint(d0, side * 8.2, track.elevation(d0)), b = roadPoint(d1, side * 8.2, trussTop(d1));
       const len = a.distanceTo(b);
       if (len < 1) continue;
-      const brace = mesh(bridge, new T.BoxGeometry(0.16, len, 0.16), iron, (a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
-      brace.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+      const brace = mesh(bridge, new THREE.BoxGeometry(0.16, len, 0.16), iron, (a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+      brace.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
       brace.castShadow = false;
     }
   }
   for (let d = TRUSS_FROM + 11.5; d < TRUSS_TO; d += 11.5) {
     const y = trussTop(d), a = roadPoint(d, -8.2, y), b = roadPoint(d, 8.2, y);
-    const beam = mesh(bridge, new T.BoxGeometry(17, 0.3, 0.3), iron, (a.x + b.x) / 2, y, (a.z + b.z) / 2);
+    const beam = mesh(bridge, new THREE.BoxGeometry(17, 0.3, 0.3), iron, (a.x + b.x) / 2, y, (a.z + b.z) / 2);
     beam.rotation.y = Math.atan2(b.x - a.x, b.z - a.z) + Math.PI / 2; beam.castShadow = false;
   }
   kit.dynamic(bridge);
@@ -329,8 +329,8 @@ export function build(kit, scene, track, layout) {
     const a = banks.at(-6), b = banks.at(-2), dx = b.x - a.x, dz = b.z - a.z, m = Math.hypot(dx, dz) || 1;
     return { x: dx / m, z: dz / m };
   })();
-  const mirrorMaterial = new T.MeshBasicMaterial({ color: 0x1f4a66, transparent: true, opacity: 0.38, depthWrite: false });
-  const reflection = new T.Group(); reflection.name = 'adda-riflesso'; scene.add(reflection);
+  const mirrorMaterial = new THREE.MeshBasicMaterial({ color: 0x1f4a66, transparent: true, opacity: 0.38, depthWrite: false });
+  const reflection = new THREE.Group(); reflection.name = 'adda-riflesso'; scene.add(reflection);
   // Squashed almost flat and held just above the water, so every part of it draws on top of the river
   // instead of sinking into the river bed.
   reflection.scale.y = 0.08; reflection.position.y = 0.241;
@@ -338,9 +338,9 @@ export function build(kit, scene, track, layout) {
   const mirror = (at) => {
     const points = Array.from({ length: 19 }, (_, i) => {
       const p = at(-REACH + (REACH * 2) * (i / 18));
-      return new T.Vector3(p.x + downstream.x * p.y * 0.9, 0.24, p.z + downstream.z * p.y * 0.9);
+      return new THREE.Vector3(p.x + downstream.x * p.y * 0.9, 0.24, p.z + downstream.z * p.y * 0.9);
     });
-    const m = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points), 30, 0.62, 4, false), mirrorMaterial);
+    const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 30, 0.62, 4, false), mirrorMaterial);
     m.castShadow = false; m.receiveShadow = false; m.renderOrder = 3; reflection.add(m);
   };
   for (const side of [-1, 1]) {
@@ -351,7 +351,7 @@ export function build(kit, scene, track, layout) {
   }
 
   // --- The little wooden bridge at the north crossing ------------------------------------------------------
-  const little = new T.Group(); little.name = 'adda-ponticello'; scene.add(little);
+  const little = new THREE.Group(); little.name = 'adda-ponticello'; scene.add(little);
   for (const side of [-1, 1]) {
     const rail = [], feet = [];
     for (let i = 0; i <= 14; i++) {
@@ -359,7 +359,7 @@ export function build(kit, scene, track, layout) {
       rail.push(roadPoint(d, side * 8.2, base + Math.sin(t * Math.PI) * 2.2));
       feet.push(base);
     }
-    mesh(little, new T.TubeGeometry(new T.CatmullRomCurve3(rail), 26, 0.34, 5, false), darkWood).castShadow = false;
+    mesh(little, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rail), 26, 0.34, 5, false), darkWood).castShadow = false;
     for (let i = 1; i < 14; i += 2) {
       const h = rail[i].y - feet[i];
       if (h > 0.4) cyl(little, 0.16, h, wood, rail[i].x, feet[i] + h / 2, rail[i].z, 5);
@@ -374,15 +374,15 @@ export function build(kit, scene, track, layout) {
   const near = { x: anchor.x + anchor.nx * towardJetty * (HALF_WIDTH - 1), z: anchor.z + anchor.nz * towardJetty * (HALF_WIDTH - 1) };
   const far = { x: anchor.x - anchor.nx * towardJetty * (HALF_WIDTH - 1), z: anchor.z - anchor.nz * towardJetty * (HALF_WIDTH - 1) };
   for (const end of [near, far]) {
-    const mast = new T.Group(); mast.position.set(end.x, 0, end.z); scene.add(mast);
+    const mast = new THREE.Group(); mast.position.set(end.x, 0, end.z); scene.add(mast);
     cyl(mast, 0.34, 11, darkWood, 0, 5.5, 0, 7); box(mast, 2.6, 0.4, 0.4, iron, 0, 10.6, 0);
     box(mast, 4.5, 0.3, 3.4, wood, 0, 0.5, 0);
   }
-  const cable = mesh(scene, new T.TubeGeometry(new T.CatmullRomCurve3([
-    new T.Vector3(near.x, 10.4, near.z), new T.Vector3((near.x + far.x) / 2, 8.4, (near.z + far.z) / 2), new T.Vector3(far.x, 10.4, far.z),
+  const cable = mesh(scene, new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+    new THREE.Vector3(near.x, 10.4, near.z), new THREE.Vector3((near.x + far.x) / 2, 8.4, (near.z + far.z) / 2), new THREE.Vector3(far.x, 10.4, far.z),
   ]), 20, 0.09, 4, false), 0x6f757c); cable.castShadow = false;
-  const ferry = new T.Group(); ferry.name = 'adda-traghetto'; scene.add(ferry);
-  for (const x of [-1.9, 1.9]) { const hull = mesh(ferry, new T.SphereGeometry(1, 10, 6), darkWood, x, 0.45, 0); hull.scale.set(0.8, 0.45, 4.2); }
+  const ferry = new THREE.Group(); ferry.name = 'adda-traghetto'; scene.add(ferry);
+  for (const x of [-1.9, 1.9]) { const hull = mesh(ferry, new THREE.SphereGeometry(1, 10, 6), darkWood, x, 0.45, 0); hull.scale.set(0.8, 0.45, 4.2); }
   box(ferry, 5.4, 0.3, 7.6, wood, 0, 0.95, 0);
   for (const z of [-3.5, 3.5]) box(ferry, 5.4, 0.7, 0.24, wood, 0, 1.4, z);
   cyl(ferry, 0.22, 5.2, darkWood, 0, 3.5, -0.6, 6);
@@ -391,9 +391,9 @@ export function build(kit, scene, track, layout) {
   kit.dynamic(ferry);
 
   // --- The train that passes under the cars ----------------------------------------------------------------
-  const train = new T.Group(); train.name = 'adda-treno'; scene.add(train);
+  const train = new THREE.Group(); train.name = 'adda-treno'; scene.add(train);
   for (let c = 0; c < 4; c++) {
-    const car = new T.Group(); car.position.z = c * 9.4; train.add(car);
+    const car = new THREE.Group(); car.position.z = c * 9.4; train.add(car);
     box(car, 3.1, 2.3, 8.8, c === 0 ? 0x2f6b3a : 0xf1ece0, 0, 1.75, 0);
     box(car, 3.2, 0.4, 9, 0x2f6b3a, 0, 3.05, 0);
     for (let i = 0; i < 4; i++) for (const x of [-1.6, 1.6]) box(car, 0.12, 1.1, 1.6, glass, x, 2.1, -3 + i * 2);

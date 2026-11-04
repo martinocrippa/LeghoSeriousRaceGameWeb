@@ -13,11 +13,11 @@ export const RESERVED = { chalet: 34, skislope: 40, village: 28, river: 30, chai
 const WOOD = 0x6b4a2f, WOOD_DARK = 0x4e3521, STONE = 0x8d8578, SNOW = 0xf4f7fb, WATER = 0x5f93b0;
 
 export function build(kit, scene, track, layout) {
-  const { THREE: T, box, cyl, cone, mesh, cream, glass, snow } = kit;
+  const { box, cyl, cone, mesh, cream, glass, snow } = kit;
 
   /** A baita: stone base, dark timber upper floor, wide snow-covered roof and a woodpile. */
   function baita(parent, x, z, size = 1, turn = 0) {
-    const hut = new T.Group();
+    const hut = new THREE.Group();
     hut.position.set(x, 0, z);
     hut.rotation.y = turn;
     hut.scale.setScalar(size);
@@ -57,7 +57,7 @@ export function build(kit, scene, track, layout) {
     for (const [x, z] of [[-16, -8], [16, -10], [-15, 8], [18, 2], [6, 12], [-8, 13]]) kit.tree(p, x, z, true);
     for (let i = 0; i < 7; i++) {
       const a = random() * Math.PI * 2, r = 12 + random() * 8;
-      mesh(p, new T.IcosahedronGeometry(0.5 + random() * 0.5, 0), STONE, Math.cos(a) * r, 0.4, -2 + Math.sin(a) * r);
+      mesh(p, new THREE.IcosahedronGeometry(0.5 + random() * 0.5, 0), STONE, Math.cos(a) * r, 0.4, -2 + Math.sin(a) * r);
     }
   }
 
@@ -65,23 +65,23 @@ export function build(kit, scene, track, layout) {
     // The river at Campo Vecchio: it runs between snowy banks and widens into still pools among the boulders.
     // Aprica is a figure of eight, so this stays compact: the other arm of the loop passes close by.
     box(p, 26, 0.3, 17, snow, 0, 0.1, -1, false);
-    const bed = new T.Shape();
+    const bed = new THREE.Shape();
     bed.moveTo(-12, -3); bed.quadraticCurveTo(-4, -7, 1, -2);
     bed.quadraticCurveTo(6, 2, 12, 0); bed.lineTo(12, 3.4);
     bed.quadraticCurveTo(6, 6, 0.6, 1.4); bed.quadraticCurveTo(-4, -2.6, -12, 0.6);
-    const water = mesh(p, new T.ShapeGeometry(bed), WATER, 0, 0.22, -1);
+    const water = mesh(p, new THREE.ShapeGeometry(bed), WATER, 0, 0.22, -1);
     water.rotation.x = -Math.PI / 2; water.castShadow = false;
     // Three pools where the current slows, each ringed with stones.
     const random = seeded(8181);
     for (const [cx, cz, r] of [[-8, -3, 2.2], [1, -1, 2.8], [8.5, 1, 2]]) {
-      const pool = mesh(p, new T.CircleGeometry(r, 18), 0x4a7f9c, cx, 0.24, cz);
+      const pool = mesh(p, new THREE.CircleGeometry(r, 18), 0x4a7f9c, cx, 0.24, cz);
       pool.rotation.x = -Math.PI / 2; pool.castShadow = false;
       for (let i = 0; i < 9; i++) {
         const a = i / 9 * Math.PI * 2;
-        mesh(p, new T.IcosahedronGeometry(0.4 + random() * 0.3, 0), STONE, cx + Math.cos(a) * (r + 0.6), 0.3, cz + Math.sin(a) * (r + 0.6));
+        mesh(p, new THREE.IcosahedronGeometry(0.4 + random() * 0.3, 0), STONE, cx + Math.cos(a) * (r + 0.6), 0.3, cz + Math.sin(a) * (r + 0.6));
       }
     }
-    for (const [x, z] of [[-6, -1], [-2, -4], [3, 1], [7, -2], [0, -2]]) mesh(p, new T.IcosahedronGeometry(0.5, 0), 0x9aa3ad, x, 0.35, z);
+    for (const [x, z] of [[-6, -1], [-2, -4], [3, 1], [7, -2], [0, -2]]) mesh(p, new THREE.IcosahedronGeometry(0.5, 0), 0x9aa3ad, x, 0.35, z);
     // The plank bridge and the trees crowding both banks.
     box(p, 5, 0.3, 1.2, WOOD, 2, 1.05, -2, false);
     for (const x of [0.2, 3.8]) cyl(p, 0.16, 1, WOOD_DARK, x, 0.5, -2.5, 6);
@@ -144,14 +144,14 @@ export function build(kit, scene, track, layout) {
 
     /** One skier: helmet, jacket, salopettes, two skis and two poles. Built facing down the hill (+z). */
     function skier(colour) {
-      const person = new T.Group();
+      const person = new THREE.Group();
       for (const side of [-1, 1]) {
         box(person, 0.34, 0.1, 3.1, 0xf4f0e2, side * 0.32, 0.05, 0.2, false);
         box(person, 0.3, 0.75, 0.32, 0x2b3038, side * 0.3, 0.5, 0);
       }
       box(person, 0.86, 1.05, 0.62, colour, 0, 1.4, 0);
-      mesh(person, new T.SphereGeometry(0.34, 9, 7), 0xf0c9a0, 0, 2.1, 0.05);
-      const helmet = mesh(person, new T.SphereGeometry(0.38, 9, 7), colour === 0xe0503c ? 0x1e5bd8 : 0xe0503c, 0, 2.2, 0);
+      mesh(person, new THREE.SphereGeometry(0.34, 9, 7), 0xf0c9a0, 0, 2.1, 0.05);
+      const helmet = mesh(person, new THREE.SphereGeometry(0.38, 9, 7), colour === 0xe0503c ? 0x1e5bd8 : 0xe0503c, 0, 2.2, 0);
       helmet.scale.y = 0.85;
       box(person, 0.6, 0.2, 0.1, 0x2b3038, 0, 2.16, 0.3, false);
       const arms = [];
@@ -173,7 +173,7 @@ export function build(kit, scene, track, layout) {
 
     // The snowcat: orange cab, yellow blade in front, the tiller behind and a beacon on the roof. It works the
     // fast piste — down the middle, then back up along the edge, the way a groomer really does it.
-    const cat = new T.Group();
+    const cat = new THREE.Group();
     p.add(cat);
     kit.dynamic(cat);
     box(cat, 3.4, 1.5, 5.4, 0xff7a12, 0, 1.5, 0);
@@ -186,7 +186,7 @@ export function build(kit, scene, track, layout) {
     box(cat, 5, 1.3, 0.5, 0xffd766, 0, 1.1, 3.4);
     for (const side of [-1, 1]) box(cat, 0.22, 0.22, 1.6, 0x8d9299, side * 1.2, 1.2, 2.7, false);
     box(cat, 4.4, 1, 1.4, 0x3d4149, 0, 0.9, -3.4);
-    const beacon = mesh(cat, new T.SphereGeometry(0.28, 8, 6), 0xffb02e, 0, 3.8, 0);
+    const beacon = mesh(cat, new THREE.SphereGeometry(0.28, 8, 6), 0xffb02e, 0, 3.8, 0);
     beacon.castShadow = false;
     moving.push({ object: cat, beacon, u: 0.15, dir: 1 });
 
