@@ -323,8 +323,23 @@ a { color: inherit; text-decoration: none; }
 .map-panel { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); padding: var(--s2) var(--s2) 10px; border: var(--bw) solid var(--white-15); background: var(--ink-70); display: flex; flex-direction: column; align-items: center; gap: var(--s1); pointer-events: none; }
 .map-panel > span { font-family: var(--font-ui); font-size: var(--fs-micro); letter-spacing: 2px; color: var(--muted); }
 .race-screen:not(.split-race) .map-panel { left: auto; right: 24px; transform: none; }
-.split-race .race-notice { top: calc(16px + min(360px, 13.5vw) * .375 + 10px); }
-.split-race::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: var(--white-30); pointer-events: none; }
+/* Split screen: a solid bar down the middle and a frame in each pilot's colour (their car's: pilots.js racingColors,
+   set as --frame by startRace) round their half, so each child finds theirs at a glance. Their card, tag and dial
+   take the same colour; the countdown and the notices come once in each half instead of across the bar. */
+.split-race::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 10px; transform: translateX(-50%); background: var(--chrome); pointer-events: none; }
+.split-frames { display: none; }
+.split-race .split-frames { display: block; position: absolute; inset: 0; pointer-events: none; }
+.split-frames > i { position: absolute; top: 0; bottom: 0; left: 0; width: calc(50% - 5px); border: 6px solid var(--frame, var(--p1)); }
+.split-frames > i + i { left: auto; right: 0; border-color: var(--frame, var(--p2)); }
+.split-race .player-hud { border-color: var(--frame); }
+.split-race .hud-tag { background: var(--frame); color: var(--on-p1); }
+.split-race .gauge-fill { stroke: var(--frame); }
+.countdown-2, .race-notice-2 { display: none; }
+.split-race .countdown-2, .split-race .race-notice-2 { display: block; }
+.split-race .countdown { left: 25%; font-size: 84px; }
+.split-race .countdown-2 { left: 75%; }
+.split-race .race-notice { left: 25%; max-width: 44%; top: 212px; } /* under the pilots' cards, not on them */
+.split-race .race-notice-2 { left: 75%; }
 .countdown { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); font-family: var(--font-title); font-size: 104px; color: var(--attention); -webkit-text-stroke: 2px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 var(--title-ink); pointer-events: none; letter-spacing: 4px; }
 .countdown.pop { animation: countPop .5s ease-out; }
 /* Just under the rear-view mirror (renderer.renderMirror: 27% of the view wide, at most 360 px, 16 px from the top),

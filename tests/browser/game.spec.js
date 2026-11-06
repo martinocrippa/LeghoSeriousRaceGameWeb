@@ -84,7 +84,9 @@ test('arcade flow: start screen, garage, editing a saved car, two independent dr
   await expect(page.locator('#play-again')).toBeVisible();
   // Where each pilot finished: under the results' title and, a moment before, big over the finish line.
   await expect(page.locator('#modal p').first()).toHaveText(/^Pilota 1: \d+° posto · Pilota 2: \d+° posto su 6\. /);
-  await expect(page.locator('#race-notice')).toHaveText(/^PILOTA [12]: \d+° POSTO!$/);
+  // Each in their own half (split screen): the same words as with one pilot.
+  await expect(page.locator('#race-notice')).toHaveText(/^(1° POSTO: HAI VINTO!|\d+° POSTO SU 6!)$/);
+  await expect(page.locator('#race-notice-2')).toHaveText(/^(1° POSTO: HAI VINTO!|\d+° POSTO SU 6!)$/);
   // Gaps are measured from Pilot 1: its row has none, every other row (Pilot 2's too) has one, signed, decimal comma.
   await expect(page.locator('.result-row .gap-own')).toHaveCount(1);
   const gaps=await page.locator('.result-row .gap:not(.gap-own)').allTextContents();

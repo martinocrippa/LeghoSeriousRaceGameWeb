@@ -14,7 +14,7 @@ import { racerPose } from './sections.js';
 import { createCup, cupTrackIds, recordRaceResult, sortStandings, isCupFinished, raceSeed, pointsForRank } from './cup.js';
 import { raceTimes, formatRaceTime, formatGap } from './gaps.js';
 import { GameRenderer } from './renderer.js';
-import { PILOT_COLORS, PILOTS_STORAGE_KEY, MAX_PILOT_NAME, cleanPilotName, rememberPilot, parsePilots } from './pilots.js';
+import { PILOT_COLORS, PILOTS_STORAGE_KEY, MAX_PILOT_NAME, cleanPilotName, rememberPilot, parsePilots, racingColors } from './pilots.js';
 import { RECORDS_STORAGE_KEY, recordKey as trackRecordKey, parseRecords, beatsRecord } from './records.js';
 import { createAudio, AUDIO_MODE_LABELS } from './audio.js';
 import { musicForTheme } from './music-tracks.js';
@@ -184,11 +184,11 @@ $('#app').innerHTML = `
     </section>
   </main>
   <section id="race-screen" class="race-screen" hidden aria-label="Gara">
-    <div id="race-viewport" class="race-viewport"></div>
+    <div id="race-viewport" class="race-viewport"></div><div id="split-frames" class="split-frames" aria-hidden="true"><i></i><i></i></div>
     <div class="race-top"><div><button class="icon-button sound-button" aria-label="Disattiva audio">${icon('sound')}</button><button id="pause-button" class="icon-button" aria-label="Metti in pausa">${icon('pause')}</button></div><span id="cup-badge" class="cup-badge" hidden></span></div>
-    <div id="huds" class="huds"></div><div id="countdown" class="countdown"></div>
+    <div id="huds" class="huds"></div><div id="countdown" class="countdown"></div><div id="countdown-2" class="countdown countdown-2" aria-hidden="true"></div>
     <div class="map-panel"><canvas id="minimap" width="180" height="125" aria-label="Mappa della pista"></canvas><span id="map-label">CIRCUITO DELLE NUVOLE</span></div>
-    <div id="race-notice" class="race-notice" role="status"></div><div id="touch-controls" class="touch-controls"></div>
+    <div id="race-notice" class="race-notice" role="status"></div><div id="race-notice-2" class="race-notice race-notice-2" role="status"></div><div id="touch-controls" class="touch-controls"></div>
     <div id="race-key-hint" class="race-key-hint">ACCELERIAMO NOI. TU PENSA A VINCERE! · ESC PAUSA</div>
   </section>
   <div id="modal-overlay" class="modal-overlay" hidden><section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></section></div>
@@ -766,7 +766,7 @@ function bindRecordName(key){
 }
 function startRace() {
   if(!ensureRenderer())return;
-  modalEpoch++; noticeTimer=0;
+  modalEpoch++; noticeTimers.fill(0);
   keys.clear();keyEdges.clear();touchPointers.clear();touchInputs.forEach(x=>{x.steer=0;x.useItem=false;x.brake=false;});
   if(mode==='cup'&&!cup)cup=newCup();
   const track=raceTrack(cup?cup.trackIds[cup.index]:trackId);
@@ -787,6 +787,10 @@ function startRace() {
   $('#huds').classList.toggle('two-players',players===2);
   const position=(i)=>mode==='time'?`<div class="position time-mode"><strong id="rank-${i}">--</strong><span>giro migliore</span></div>`:`<div class="position"><strong id="rank-${i}">1</strong><span> / ${race.racers.length}</span></div>`;
   $('#huds').innerHTML=Array.from({length:players},(_,i)=>`<div class="player-hud player-${i+1}"><div class="hud-head"><span class="hud-tag">P${i+1}</span><b class="hud-name">${escape(selected[i].name)}</b><span class="timer" id="timer-${i}">0:00</span></div><div class="hud-stats">${position(i)}<div class="lap"><span>GIRO</span><strong id="lap-${i}"><b>1</b> <small>/ ${race.totalLaps}</small></strong><em class="trip" id="trip-${i}">0 m</em></div><div class="gauge"><svg viewBox="-7 -7 134 86" aria-hidden="true"><path class="gauge-bg" d="M12 62 A48 48 0 0 1 108 62"/><path id="gauge-${i}" class="gauge-fill" d="M12 62 A48 48 0 0 1 108 62"/><line id="needle-${i}" class="gauge-needle" x1="60" y1="62" x2="60" y2="24" transform="rotate(-90 60 62)"/></svg><b id="speed-${i}">0</b><small>km/h</small></div></div><div class="item-slot" id="item-${i}"><span class="item-emoji">?</span><div><b>Prendi una cassa</b><small>${escape(keyLabel(bindings[i].bonus).toUpperCase())} · USA IL BONUS</small></div></div><div class="status" id="status-${i}"></div></div>`).join('');
+  // Each pilot's colour (pilots.js racingColors): the frame round their half, their card, their dot on the minimap.
+  raceColors=racingColors(selected.slice(0,players));
+  document.querySelectorAll('#split-frames > i').forEach((el,i)=>el.style.setProperty('--frame',raceColors[i]||raceColors[0]));
+  document.querySelectorAll('#huds .player-hud').forEach((el,i)=>el.style.setProperty('--frame',raceColors[i]));
   bindHUD();prepareMap();makeTouchControls(); window.scrollTo(0,0);playTone(320,.12);
   audio.setIntensity({});audio.setPaused(false);audio.startMusic(musicForTheme(track.theme));
 }
@@ -955,8 +959,12 @@ const itemInfo={boost:['⚡','Super turbo'],rocket:['🚀','Razzo · ↓ per spa
 const critterNotice={turtle:'La tartaruga si è arrabbiata!',sheep:'La pecora si è arrabbiata!',boar:'Il cinghiale si è arrabbiato!',donkey:'L’asino si è arrabbiato!',squirrel:'Lo scoiattolo si è arrabbiato!'};
 /** An animal bowled over by your shot: it rolls off to the side and gets back up, and the notice says so kindly. */
 const critterHitNotice={turtle:'Colpita! La tartaruga rotola via!',sheep:'Colpita! La pecora rotola via!',boar:'Colpito! Il cinghiale rotola via!',donkey:'Colpito! L’asino rotola via!',squirrel:'Colpito! Lo scoiattolo rotola via!',rat:'Colpito! Il topo rotola via!',gull:'Colpito! Il gabbiano rotola via!'};
-let lastCountdown='',noticeTimer=0,noticeShown=false,hudRefs=[],hudHintFaded=false;
-const noticeEl=$('#race-notice'),countdownEl=$('#countdown'),keyHintEl=$('#race-key-hint');
+let lastCountdown='',hudRefs=[],hudHintFaded=false,raceColors=[...PILOT_COLORS];
+const keyHintEl=$('#race-key-hint');
+// One notice and one countdown per half: in split screen each pilot reads theirs in their own half, not across the bar.
+const noticeEls=[$('#race-notice'),$('#race-notice-2')],noticeTimers=[0,0],noticeShown=[false,false],countdownEls=[$('#countdown'),$('#countdown-2')];
+/** A notice for pilot `who` (both when it is not a pilot's): in a one-pilot race there is only the first. */
+function say(text,seconds,who){for(let p=0;p<players;p++)if(players===1||!(who>=0&&who<players)||who===p){noticeEls[p].textContent=text;noticeTimers[p]=seconds;}}
 /** HUD elements are looked up once per race and written only when a value changes: the race loop stays off the layout engine. */
 function bindHUD(){
   hudRefs=Array.from({length:players},(_,i)=>{
@@ -964,7 +972,7 @@ function bindHUD(){
     return {rank:$('#rank-'+i),lap:$('#lap-'+i+' b'),trip:$('#trip-'+i),timer:$('#timer-'+i),slot,emoji:slot.querySelector('.item-emoji'),label:slot.querySelector('b'),speed:$('#speed-'+i),gauge:$('#gauge-'+i),needle:$('#needle-'+i),status:$('#status-'+i),last:{}};
   });
   hudHintFaded=false;keyHintEl.classList.remove('is-faded');
-  noticeShown=false;noticeEl.style.opacity='0';
+  noticeShown.fill(false);noticeEls.forEach(el=>{el.style.opacity='0';});
 }
 const setText=(ref,key,el,value)=>{if(ref.last[key]!==value){ref.last[key]=value;el.textContent=value;}};
 function updateHUD(dt){
@@ -993,16 +1001,17 @@ function updateHUD(dt){
   if(!hudHintFaded&&race.time>6){hudHintFaded=true;keyHintEl.classList.add('is-faded');}
   audio.setIntensity({boost:race.racers.slice(0,players).some(r=>r.boost>0),lastLap:race.racers.slice(0,players).some(r=>!r.finished&&r.lap>=race.totalLaps&&race.totalLaps>1)});
   const countdown=race.countdown>0?String(Math.min(3,Math.ceil(race.countdown))):race.time<.8?'VIA!':'';
-  if(countdown!==lastCountdown){countdownEl.textContent=countdown;countdownEl.classList.remove('pop');void countdownEl.offsetWidth;countdownEl.classList.add('pop');if(countdown)playTone(countdown==='VIA!'?880:440,.17);lastCountdown=countdown;}
+  if(countdown!==lastCountdown){for(const el of countdownEls){el.textContent=countdown;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}if(countdown)playTone(countdown==='VIA!'?880:440,.17);lastCountdown=countdown;}
   const events=race.drainEvents?.()||[];
   renderer.handleEvents?.(events,race);
   for(const ev of events){
     const index=race.racers.findIndex(r=>r.id===(ev.racerId??ev.id));
     const human=ev.playerIndex !== undefined ? ev.playerIndex<players : index>=0&&index<players;
+    const who=ev.playerIndex??index; // the pilots are the first racers, in order
     if(['pickup','item','collect'].includes(ev.type)&&human)playTone(800,.12,'triangle');
     if(ev.type==='machinegun-shot'&&human)playTone(760,.04,'sine',.025);
     if(ev.type==='jump'&&human)playTone(550,.16,'sine');
-    if(ev.type==='section'&&human){noticeEl.textContent=ev.kind==='loop'?'GIRO DELLA MORTE!':'SCORCIATOIA! Ponte di ferro!';noticeTimer=2.2;playTone(ev.kind==='loop'?760:640,.22,'square',.06);}
+    if(ev.type==='section'&&human){say(ev.kind==='loop'?'GIRO DELLA MORTE!':'SCORCIATOIA! Ponte di ferro!',2.2,who);playTone(ev.kind==='loop'?760:640,.22,'square',.06);}
     if(ev.type==='hit'){playTone(ev.source==='bullet'?140:70,ev.source==='bullet'?.12:.42,'sawtooth',human?.09:.04);if(human){playTone(180,.1,'triangle');audio.duck();}}
     if(ev.type==='pop'&&ev.source==='bullet')playTone(900,.03,'square',.02);
     else if(ev.type==='pop')playTone(ev.source==='jelly'?320:ev.source==='gelato'?520:ev.source==='bale'?200:55,ev.source==='jelly'||ev.source==='gelato'?.2:ev.source==='bale'?.25:.5,'square',.07);
@@ -1015,32 +1024,34 @@ function updateHUD(dt){
     if(ev.type==='unstuck'&&human)playTone(600,.1,'square',.04);
     if(ev.type==='shield-hit'&&human)playTone(920,.18,'sine',.05);
     // Oil: a skid, and on a spin-out a falling whistle as the car goes right round.
-    if(ev.type==='slipping'&&human){playTone(ev.spin?620:300,ev.spin?.5:.25,'triangle',.06);if(ev.spin){setTimeout(()=>playTone(260,.35,'triangle',.05),180);noticeEl.textContent='Testacoda!';noticeTimer=1.4;}}
+    if(ev.type==='slipping'&&human){playTone(ev.spin?620:300,ev.spin?.5:.25,'triangle',.06);if(ev.spin){setTimeout(()=>playTone(260,.35,'triangle',.05),180);say('Testacoda!',1.4,who);}}
     // Flattened by a bale: a squelch, then a boing as the car pops back up.
-    if(ev.type==='squashed'){playTone(110,.28,'square',human?.08:.03);if(human){noticeEl.textContent='Schiacciato da una balla!';noticeTimer=1.6;}}
+    if(ev.type==='squashed'){playTone(110,.28,'square',human?.08:.03);if(human){say('Schiacciato da una balla!',1.6,who);}}
     if(ev.type==='unsquashed'&&human){playTone(380,.08,'sine',.06);setTimeout(()=>playTone(760,.14,'sine',.06),70);}
     // An animal on the roof: a growl, and the notice says which one.
-    if(ev.type==='attacked'){playTone(95,.45,'sawtooth',human?.08:.03);if(human){playTone(150,.3,'square',.05);noticeEl.textContent=critterNotice[ev.kind]||'Un animale ti è saltato addosso!';noticeTimer=1.8;audio.duck();}}
+    if(ev.type==='attacked'){playTone(95,.45,'sawtooth',human?.08:.03);if(human){playTone(150,.3,'square',.05);say(critterNotice[ev.kind]||'Un animale ti è saltato addosso!',1.8,who);audio.duck();}}
     if(ev.type==='released'&&human)playTone(560,.1,'square',.04);
     // A shot bowls an animal over: a cartoon boing going down, and for whoever fired it a notice that it rolled away.
-    if(ev.type==='critter-hit'){const owner=race.racers.findIndex(r=>r.id===ev.ownerId),mine=owner>=0&&owner<players;playTone(520,.1,'triangle',mine?.07:.03);setTimeout(()=>playTone(300,.2,'triangle',mine?.06:.025),90);if(mine){noticeEl.textContent=critterHitNotice[ev.kind]||'Colpito! L’animale rotola via!';noticeTimer=1.6;}}
-    if(ev.type==='use-item'&&ev.item==='rainbow'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.12,'triangle',human?.06:.025),i*70));if(human){noticeEl.textContent='ARCOBALENO! Chi tocchi esplode!';noticeTimer=2;}}
+    if(ev.type==='critter-hit'){const owner=race.racers.findIndex(r=>r.id===ev.ownerId),mine=owner>=0&&owner<players;playTone(520,.1,'triangle',mine?.07:.03);setTimeout(()=>playTone(300,.2,'triangle',mine?.06:.025),90);if(mine){say(critterHitNotice[ev.kind]||'Colpito! L’animale rotola via!',1.6,owner);}}
+    if(ev.type==='use-item'&&ev.item==='rainbow'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.12,'triangle',human?.06:.025),i*70));if(human){say('ARCOBALENO! Chi tocchi esplode!',2,who);}}
     if(ev.type==='rainbow-block'&&human)playTone(1180,.12,'sine',.05);
     // The storm cloud: a thunderclap for everybody, and the notice says who is under it.
-    if(ev.type==='use-item'&&ev.item==='storm'){playTone(70,.7,'sawtooth',.08);setTimeout(()=>playTone(55,.9,'square',.06),120);if(human){noticeEl.textContent='TEMPORALE! Tutti gli altri rallentano!';noticeTimer=2.2;}}
-    if(ev.type==='stormed'&&human){playTone(180,.3,'triangle',.06);noticeEl.textContent='Che temporale! Si va piano per 5 secondi';noticeTimer=2.2;}
+    if(ev.type==='use-item'&&ev.item==='storm'){playTone(70,.7,'sawtooth',.08);setTimeout(()=>playTone(55,.9,'square',.06),120);if(human){say('TEMPORALE! Tutti gli altri rallentano!',2.2,who);}}
+    if(ev.type==='stormed'&&human){playTone(180,.3,'triangle',.06);say('Che temporale! Si va piano per 5 secondi',2.2,who);}
     // A desk, a cone or a bin going up: a bang, quieter when it happened far from the children.
     if(ev.type==='obstacle-break'){const owner=race.racers.findIndex(r=>r.id===ev.ownerId);playTone(ev.squash?160:60,ev.squash?.2:.45,'square',owner>=0&&owner<players?.08:.035);}
     if((ev.type==='lap'||ev.type==='finish')&&human){
       const t=lapTiming[index];const lapTime=(ev.time??race.time)-t.start;t.last=lapTime;t.best=t.best===null?lapTime:Math.min(t.best,lapTime);t.start=ev.time??race.time;
-      if(ev.type==='lap'){noticeEl.textContent=mode==='time'?`Giro in ${formatLap(lapTime)}!`:'Un altro giro! Spingi!';noticeTimer=2.5;playTone(670,.15);}
+      if(ev.type==='lap'){say(mode==='time'?`Giro in ${formatLap(lapTime)}!`:'Un altro giro! Spingi!',2.5,who);playTone(670,.15);}
       // Over the line: the place, big, before the results come up (in the time trial, the time).
-      if(ev.type==='finish'){const r=race.racers[index];noticeEl.textContent=mode==='time'?`Traguardo in ${formatLap(r.finishTime)}!`:players===2?`PILOTA ${index+1}: ${r.rank}° POSTO!`:r.rank===1?'1° POSTO: HAI VINTO!':`${r.rank}° POSTO SU ${race.racers.length}!`;noticeTimer=3;}
+      if(ev.type==='finish'){const r=race.racers[index];say(mode==='time'?`Traguardo in ${formatLap(r.finishTime)}!`:r.rank===1?'1° POSTO: HAI VINTO!':`${r.rank}° POSTO SU ${race.racers.length}!`,3,who);}
     }
   }
   // Notices run down half as fast again as the clock: they are there to be glanced at, not to cover the road.
-  noticeTimer=Math.max(0,noticeTimer-dt*1.5);
-  const showNotice=noticeTimer>0;if(showNotice!==noticeShown){noticeShown=showNotice;noticeEl.style.opacity=showNotice?'1':'0';}
+  for(let p=0;p<2;p++){
+    noticeTimers[p]=Math.max(0,noticeTimers[p]-dt*1.5);
+    const show=noticeTimers[p]>0;if(show!==noticeShown[p]){noticeShown[p]=show;noticeEls[p].style.opacity=show?'1':'0';}
+  }
   drawMap();
 }
 const mapCanvas=$('#minimap'),mapContext=mapCanvas.getContext('2d');
@@ -1065,7 +1076,7 @@ function drawMap(){
   ctx.clearRect(0,0,mapCanvas.width,mapCanvas.height);ctx.drawImage(mapBase,0,0);
   for(let index=race.racers.length-1;index>=0;index--){
     const r=race.racers[index],pose=racerPose(race.track,r),[x,y]=mapProject(pose||race.track.frame(r.progress));
-    ctx.beginPath();ctx.arc(x,y,index<players?5:3,0,Math.PI*2);ctx.fillStyle=index<players?PILOT_COLORS[index]:'#ffffff';ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,index<players?5:3,0,Math.PI*2);ctx.fillStyle=index<players?raceColors[index]:'#ffffff';ctx.fill();
     if(index<players){ctx.strokeStyle='#07080f';ctx.lineWidth=2;ctx.stroke();}
   }
 }
