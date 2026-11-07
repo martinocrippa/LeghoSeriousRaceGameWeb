@@ -224,6 +224,24 @@
     "vertices": 7084,
     "meshes": 29
   },
+  "sample-bombolone": {
+    "size": [
+      2.28,
+      1.741,
+      3.282
+    ],
+    "vertices": 2376,
+    "meshes": 25
+  },
+  "sample-pulmino": {
+    "size": [
+      2.02,
+      1.571,
+      4.276
+    ],
+    "vertices": 2928,
+    "meshes": 27
+  },
   "cometa": {
     "size": [
       2.08,

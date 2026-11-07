@@ -17,6 +17,15 @@ test('a dark paint is lifted until it shows on the road', () => {
   for (const car of [...CAR_PRESETS, ...SAMPLE_CARS]) assert.ok(luma(rgb(racingColors([car])[0])) >= 0.38, `${car.id} ${car.color}`);
 });
 
+test('a white, grey or black car races in the pilot’s colour, not one that vanishes on the road', () => {
+  // White against green: the white half lost its frame on the TV, and its dot mixed with the opponents' (7/11).
+  const white = CAR_PRESETS.find((c) => c.id === 'turismo'), green = CAR_PRESETS.find((c) => c.id === 'orso');
+  assert.deepEqual(racingColors([white, green]), [PILOT_COLORS[0], green.color]);
+  assert.deepEqual(racingColors([green, white]), [green.color, PILOT_COLORS[1]]);
+  for (const color of ['#ffffff', '#eef0ea', '#9aa3ab', '#15161c']) assert.equal(racingColors([{ color }])[0], PILOT_COLORS[0], color);
+  assert.equal(racingColors([{ color: '#e58fc4' }])[0], '#e58fc4'); // pink is a colour
+});
+
 test('two cars that look alike keep the pilots’ own colours', () => {
   assert.deepEqual(racingColors([{ color: '#ff0000' }, { color: '#ee1010' }]), PILOT_COLORS);
   const same = CAR_PRESETS[0];

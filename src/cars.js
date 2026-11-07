@@ -73,7 +73,8 @@ export function createCarModel(input = {}) {
   /** Parts that turn on their own vertical axis while the car runs: the gyrocopter's rotor. */
   const spinners = [];
   const wheelWidth = bigfoot ? 0.46 : bigWheels ? 0.34 : 0.27;
-  const wheelMat = new THREE.MeshStandardMaterial({ color: TIRE, roughness: 0.9 });
+  // `tyres` for the builds whose tyres are not black (the smoked-canopy van rolls on white ones).
+  const wheelMat = new THREE.MeshStandardMaterial({ color: spec.tyres || TIRE, roughness: 0.9 });
   // `rims` lets a car name its own hub colour: "cerchi rossi" was written in a description and drawn nowhere.
   const hubMat = new THREE.MeshStandardMaterial({ color: spec.rims || (spec.detail === 'blue-truck' ? '#ffd332' : monster || convoy ? WHITE : spec.accent), roughness: 0.45 });
   const axleZ = flat ? l * 0.29 : l * 0.32;
@@ -158,10 +159,11 @@ export function createCarModel(input = {}) {
    * a full-length block of body colour — and a dinosaur ended up reading as a green wedge with a lump on it, which
    * is exactly what it looked like in the garage.
    */
-  const ownHull = ['rex', 'stego', 'rod', 'pickup', 'minitruck', 'launcher', 'airliner'].includes(spec.detail);
+  const ownHull = ['rex', 'stego', 'rod', 'pickup', 'minitruck', 'launcher', 'airliner', 'bombolone', 'pulmino'].includes(spec.detail);
   // The rod rides on a thin beam between four huge tyres: a full-width pan would run straight through them. The
-  // aeroplane's fuselage is narrower than its declared width, which is there for the wings.
-  const slim = spec.detail === 'rod' || spec.detail === 'airliner';
+  // aeroplane's fuselage is narrower than its declared width, which is there for the wings; the buggy's big rear
+  // tyres stand closer in than a full pan.
+  const slim = spec.detail === 'rod' || spec.detail === 'airliner' || spec.detail === 'bombolone';
   if (!narrow) brick(0, deck, 0, w * (slim ? 0.5 : 0.89), 0.18, l * 0.97, DARK, false);
   else brick(0, deck, 0, 0.3, 0.16, l * 0.8, DARK, false);
   if (trike) {
@@ -927,6 +929,61 @@ export function createCarModel(input = {}) {
     // The undercarriage legs, from the wheels up into the belly.
     brick(0, deck - 0.02, l * 0.42, 0.1, 0.2, 0.1, DARK, false);
     for (const x of [-w * 0.2, w * 0.2]) brick(x, deck - 0.02, -l * 0.08, 0.1, 0.16, 0.1, DARK, false);
+  } else if (spec.detail === 'bombolone') {
+    // Photo buggy-bombolone: a yellow buggy on a dark grey technic frame, small tyres in front and big ones behind.
+    // Rounded yellow nose with two clear headlamps, a big flat yellow panel down each side, a curved dark grey cowl
+    // over the seat, a yellow wing on a post, and behind the driver two tall tanks: black with a tan cap, and blue
+    // and green with a yellow one.
+    const yellow = spec.color, grey = spec.accent, black = '#15161c', tan = spec.palette[3];
+    brick(0, deck + 0.14, -l * 0.02, w * 0.42, 0.22, l * 0.86, grey, false);          // the frame
+    for (const sx of [-1, 1]) brick(sx * w * 0.2, deck + 0.14, -l * 0.46, 0.12, 0.16, 0.24, '#3a3d44', false);
+    brick(0, hoodY - 0.1, l * 0.3, w * 0.6, 0.34, l * 0.24, yellow, true);           // the nose
+    addGeometry(unitBox, yellow, 0, hoodY - 0.02, l * 0.43, w * 0.58, 0.24, 0.2, 0.55);
+    for (const x of [-w * 0.22, w * 0.22]) addGeometry(unitBox, '#e8f0f4', x, hoodY - 0.14, l * 0.47, 0.16, 0.14, 0.1, 0, 0, 0, true);
+    for (const sx of [-1, 1]) addGeometry(unitBox, yellow, sx * w * 0.33, hoodY - 0.04, l * 0.02, 0.06, 0.5, l * 0.26, 0, 0, -sx * 0.12);
+    brick(0, hoodY - 0.08, -l * 0.04, w * 0.44, 0.2, l * 0.22, black, false);         // the seat well
+    driver(-l * 0.06, hoodY - 0.06);
+    // The cowl: two curved grey arches over the front of the seat.
+    addGeometry(unitBox, grey, 0, hoodY + 0.2, l * 0.14, w * 0.46, 0.1, l * 0.16, -0.4);
+    addGeometry(unitBox, grey, 0, hoodY + 0.3, l * 0.03, w * 0.46, 0.1, l * 0.1, 0.25);
+    // The wing on its post, behind the seat.
+    brick(0, hoodY + 0.3, -l * 0.17, 0.12, 0.42, 0.12, grey, false);
+    brick(0, hoodY + 0.54, -l * 0.17, w * 0.78, 0.08, 0.3, yellow, false);
+    // The two tanks on a grey plate at the back.
+    brick(0, hoodY - 0.08, -l * 0.36, w * 0.46, 0.14, l * 0.18, grey, false);
+    const tank = (x, body, cap, band) => {
+      addGeometry(unitStud, body, x, hoodY + 0.3, -l * 0.37, 0.15, 0.62, 0.15);
+      if (band) addGeometry(unitStud, band, x, hoodY + 0.06, -l * 0.37, 0.155, 0.12, 0.155);
+      addGeometry(unitStud, cap, x, hoodY + 0.68, -l * 0.37, 0.15, 0.14, 0.15);
+      addGeometry(unitStud, cap, x, hoodY + 0.78, -l * 0.37, 0.1, 0.08, 0.1);
+    };
+    tank(-w * 0.11, black, tan);
+    tank(w * 0.11, '#1f63d6', yellow, '#2f9a55');
+  } else if (spec.detail === 'pulmino') {
+    // Photo pulmino-fume: at the back a stack of bricks — white, red, yellow and a white one beside it — under a
+    // big studded red plate, a brown chest on the tail with flames of gold, blue and yellow streaming out of it; at
+    // the front a long smoked canopy curving down to the nose over a blue base, with a little figure inside.
+    const red = spec.color, white = spec.accent, yellow = '#f5c518', blue = '#1f5fd0', brown = '#6b2e1f', smoke = '#5d646b';
+    brick(0, baseY - 0.06, 0, w * 0.86, 0.14, l * 0.94, blue, false);                // the blue base
+    brick(0, hoodY - 0.1, -l * 0.18, w * 0.86, 0.34, l * 0.5, white, false);          // the stack
+    brick(0, hoodY + 0.17, -l * 0.18, w * 0.86, 0.2, l * 0.5, red, false);
+    brick(0, hoodY + 0.39, -l * 0.25, w * 0.86, 0.24, l * 0.36, yellow, false);
+    brick(0, hoodY + 0.39, l * 0.0, w * 0.86, 0.24, l * 0.14, white, false);
+    brick(0, hoodY + 0.57, -l * 0.2, w * 0.9, 0.12, l * 0.42, red, true);             // the studded plate
+    brick(0, hoodY + 0.55, l * 0.05, w * 0.6, 0.1, 0.16, white, true);
+    brick(0, hoodY + 0.42, l * 0.07, w * 0.56, 0.3, 0.1, blue, false);
+    brick(0, hoodY + 0.08, -l * 0.47, w * 0.62, 0.5, 0.18, brown, false);             // the chest
+    brick(0, hoodY + 0.08, -l * 0.47 - 0.1, 0.16, 0.12, 0.04, '#3a2016', false);
+    // The flames: wavy streamers out of the back, two of them gold.
+    for (const [x, y, colour] of [[-w * 0.22, hoodY + 0.42, '#d4a72c'], [-w * 0.06, hoodY + 0.28, blue], [w * 0.1, hoodY + 0.46, yellow], [w * 0.24, hoodY + 0.3, '#d4a72c']]) {
+      addGeometry(unitBox, colour, x, y, -l * 0.5 - 0.26, 0.05, 0.1, 0.42, 0.18);
+      addGeometry(unitBox, colour, x, y + 0.03, -l * 0.5 - 0.56, 0.05, 0.09, 0.24, -0.35);
+    }
+    // The smoked canopy: nearly flat from the stack, then curving down to the nose; a glass wall each side.
+    addGeometry(unitBox, smoke, 0, hoodY + 0.5, l * 0.2, w * 0.84, 0.05, l * 0.24, 0.28, 0, 0, true);
+    addGeometry(unitBox, smoke, 0, hoodY + 0.14, l * 0.39, w * 0.84, 0.05, l * 0.2, 1.0, 0, 0, true);
+    for (const sx of [-1, 1]) addGeometry(unitBox, smoke, sx * w * 0.42, hoodY + 0.14, l * 0.22, 0.04, 0.44, l * 0.3, 0, 0, 0, true);
+    driver(l * 0.2, hoodY - 0.14);
   } else if (spec.detail === 'van') {
     // A delivery van: one tall box from nose to tail, sliding-door panel, wide flat sides and twin rear doors.
     // No existing shape makes one — `truck` gives a cab-and-bed pickup — which is why it needed its own body.
