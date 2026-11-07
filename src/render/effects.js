@@ -16,7 +16,7 @@ export const effectsMethods = {
   /** Reacts to the simulation events main.js drained this frame (hits, shield hits, bomb pops). */
   handleEvents(events, race) {
     this.effects ||= [];
-    this.shake ||= [0, 0];
+    this.shake ||= [0, 0, 0, 0];
     for (const event of events) {
       if (event.type === 'hit' || event.type === 'shield-hit') {
         const model = this.racerModels.get(event.racerId);

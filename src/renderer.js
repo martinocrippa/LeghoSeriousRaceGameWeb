@@ -4,6 +4,7 @@ import { DEFAULT_TRACK } from './track.js';
 import { racerPose } from './sections.js';
 import { SPIN_TIME, STORM_TIME, STUCK_TIME } from './race.js';
 import { QUALITY_LEVELS } from './quality.js';
+import { MAX_PLAYERS } from './pilots.js';
 import { seeded } from './random.js';
 import { leansIntoTurns } from './wheels.js';
 import { bendCurvature, leanLimit, leanTarget, stepLean, rest, wheelSteer, slideTarget, slideOffset, leavesMarks } from './lean.js';
@@ -47,8 +48,8 @@ export class GameRenderer {
     this.racerModels = new Map();
     this.boxModels = new Map();
     this.projectileModels = new Map();
-    this.cameras = [0, 1].map(() => new THREE.PerspectiveCamera(56, 1, RACE_NEAR, RACE_FAR));
-    this.cameraInitialized = [false, false];
+    this.cameras = Array.from({ length: MAX_PLAYERS }, () => new THREE.PerspectiveCamera(56, 1, RACE_NEAR, RACE_FAR));
+    this.cameraInitialized = this.cameras.map(() => false);
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xc8e8ef);
     this.scene.fog = new THREE.Fog(0xc8e8ef, 105, 270);
@@ -74,15 +75,31 @@ export class GameRenderer {
     this.renderer.setSize(this.width, this.height, false);
     this.previewCamera.aspect = this.width / this.height;
     this.previewCamera.updateProjectionMatrix();
-    this.cameras.forEach((camera) => {
-      camera.aspect = this.width / this.players / this.height;
+    this.cameras.forEach((camera, player) => {
+      const view = this.viewportFor(Math.min(player, this.players - 1));
+      camera.aspect = view.w / view.h;
       camera.updateProjectionMatrix();
     });
   }
 
+  /**
+   * Each pilot's part of the screen, in WebGL pixels (origin bottom left). One pilot: all of it; two: side by side;
+   * three or four: a 2×2 grid, pilot 1 top left, 2 top right, 3 bottom left, 4 bottom right (with three, the fourth
+   * corner stays empty and main.js puts the minimap there).
+   */
+  viewportFor(player) {
+    const W = this.width, H = this.height;
+    if (this.players <= 2) {
+      const left = Math.floor((player * W) / this.players), right = Math.floor(((player + 1) * W) / this.players);
+      return { x: left, y: 0, w: right - left, h: H };
+    }
+    const half = Math.floor(W / 2), mid = Math.floor(H / 2), col = player % 2, top = player < 2;
+    return { x: col ? half : 0, y: top ? mid : 0, w: col ? W - half : half, h: top ? H - mid : mid };
+  }
+
   setMode(players = 1) {
-    this.players = Math.max(1, Math.min(2, Number(players) || 1));
-    this.cameraInitialized = [false, false];
+    this.players = Math.max(1, Math.min(MAX_PLAYERS, Number(players) || 1));
+    this.cameraInitialized = this.cameras.map(() => false);
     this.resize();
   }
 
@@ -209,10 +226,10 @@ export class GameRenderer {
     this.trackObjects.clear();
     this.skids = null;
     this.projectileModels.clear();
-    this.cameraInitialized = [false, false];
+    this.cameraInitialized = this.cameras.map(() => false);
     for (const object of this.effects || []) { this.scene.remove(object); if (object.userData.kind !== 'debris') { object.material.dispose(); object.geometry.dispose(); } }
     this.effects = [];
-    this.shake = [0, 0];
+    this.shake = this.cameras.map(() => 0);
   }
 
   prepareRace(race) {
@@ -590,18 +607,18 @@ export class GameRenderer {
       camera.up.copy(cameraUp || WORLD_UP);
       camera.lookAt(look);
       camera.fov = (this.players === 2 ? 62 : 56) + (racer.boost > 0 ? 4 : 0);
-      const left = Math.floor((player * this.width) / this.players);
-      const right = Math.floor(((player + 1) * this.width) / this.players);
-      camera.aspect = (right - left) / this.height;
+      const view = this.viewportFor(player);
+      const left = view.x, right = view.x + view.w;
+      camera.aspect = view.w / view.h;
       camera.updateProjectionMatrix();
-      this.renderer.setViewport(left, 0, right - left, this.height);
-      this.renderer.setScissor(left, 0, right - left, this.height);
+      this.renderer.setViewport(view.x, view.y, view.w, view.h);
+      this.renderer.setScissor(view.x, view.y, view.w, view.h);
       this.updateWind(player, camera, racer, step);
       this.renderer.render(this.scene, camera);
       // The mirror re-renders the world into a small texture: lighter profiles refresh it every second or fourth frame,
-      // one player at a time, and redraw the last image in between.
+      // one player at a time, and redraw the last image in between. Three or four pilots: none, the views are small.
       const { mirrorEvery } = this.quality;
-      if (mirrorEvery > 0) this.renderMirror(racer, left, right, (this.frame + player) % mirrorEvery === 0);
+      if (mirrorEvery > 0 && this.players <= 2) this.renderMirror(racer, left, right, (this.frame + player) % mirrorEvery === 0);
       camera.position.copy(restPosition);
     }
     this.renderer.setScissorTest(false);
@@ -620,7 +637,7 @@ export class GameRenderer {
       this.windLayer.frustumCulled = false;
       this.scene.add(this.windLayer);
       this.windRigs = [];
-      this.windLevel = [0, 0];
+      this.windLevel = this.cameras.map(() => 0);
     }
     let rig = this.windRigs[player];
     if (!rig) {

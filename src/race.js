@@ -179,7 +179,8 @@ const FALLBACK_CARS = [
 export class RaceSimulation {
   constructor({ players = 1, difficulty = 'easy', cars = [], aiCars = [], seed = 1847, fieldSeed = null, track = DEFAULT_TRACK, opponents = null } = {}) {
     this.track = track;
-    this.playerCount = players === 2 ? 2 : 1;
+    // One to four pilots (four only in a 2×2 split screen); anything else races alone.
+    this.playerCount = [1, 2, 3, 4].includes(players) ? players : 1;
     // Default field: six cars. `opponents` (0–5) shrinks it, down to a solo time trial.
     const aiCount = Number.isInteger(opponents) ? clamp(opponents, 0, 5) : 6 - this.playerCount;
     this.difficulty = BASE_SPEED[difficulty] ? difficulty : 'easy';

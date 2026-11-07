@@ -27,15 +27,27 @@ test('a white, grey or black car races in the pilot’s colour, not one that van
 });
 
 test('two cars that look alike keep the pilots’ own colours', () => {
-  assert.deepEqual(racingColors([{ color: '#ff0000' }, { color: '#ee1010' }]), PILOT_COLORS);
+  assert.deepEqual(racingColors([{ color: '#ff0000' }, { color: '#ee1010' }]), PILOT_COLORS.slice(0, 2));
   const same = CAR_PRESETS[0];
-  assert.deepEqual(racingColors([same, same]), PILOT_COLORS);
+  assert.deepEqual(racingColors([same, same]), PILOT_COLORS.slice(0, 2));
   const [a, b] = racingColors([{ color: '#ff0000' }, { color: '#0000ff' }]).map(rgb);
   assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) >= RACING_COLOR_DISTANCE);
 });
 
 test('a car without a usable colour gets the pilot’s colour, and another fallback can be given', () => {
-  assert.deepEqual(racingColors([{ color: 'rosso' }, {}]), PILOT_COLORS);
+  assert.deepEqual(racingColors([{ color: 'rosso' }, {}]), PILOT_COLORS.slice(0, 2));
   assert.deepEqual(racingColors([{}, { color: '#00ff00' }], ['#f48637', '#55c2c9']).length, 2);
   assert.deepEqual(racingColors(null), []);
+});
+
+test('four pilots: four colours that stay apart, the pilots’ own as soon as two cars look alike', () => {
+  assert.equal(PILOT_COLORS.length, 4);
+  const distinct = [{ color: '#ff6445' }, { color: '#28c2b4' }, { color: '#f5e04a' }, { color: '#e58fc4' }];
+  assert.deepEqual(racingColors(distinct), ['#ff6445', '#28c2b4', '#f5e04a', '#e58fc4']);
+  assert.deepEqual(racingColors([...distinct.slice(0, 3), { color: '#ee5a40' }]), PILOT_COLORS);
+  const rgbs = PILOT_COLORS.map(rgb);
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) {
+    const [a, b] = [rgbs[i], rgbs[j]];
+    assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) >= RACING_COLOR_DISTANCE, `${PILOT_COLORS[i]} ${PILOT_COLORS[j]}`);
+  }
 });
