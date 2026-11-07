@@ -121,7 +121,9 @@ export function createCarModel(input = {}) {
     const tire = new THREE.Mesh(new THREE.CylinderGeometry(spec.knobby ? r * 0.88 : r, spec.knobby ? r * 0.88 : r, tread, 14), wheelMat);
     tire.rotation.z = Math.PI / 2;
     wheel.add(tire);
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.54, r * 0.54, tread + 0.022, 10), hubFor(rimColour));
+    // `hub`: the share of the wheel the rim takes (the smoked-canopy van has big red hubs inside a thin rim of tyre).
+    const hub = r * (spec.hub > 0 && spec.hub < 0.95 ? spec.hub : 0.54);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(hub, hub, tread + 0.022, 10), hubFor(rimColour));
     rim.rotation.z = Math.PI / 2;
     wheel.add(rim);
     const axle = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.17, r * 0.17, tread + 0.04, 8), wheelMat);
@@ -940,7 +942,12 @@ export function createCarModel(input = {}) {
     brick(0, hoodY - 0.1, l * 0.3, w * 0.6, 0.34, l * 0.24, yellow, true);           // the nose
     addGeometry(unitBox, yellow, 0, hoodY - 0.02, l * 0.43, w * 0.58, 0.24, 0.2, 0.55);
     for (const x of [-w * 0.22, w * 0.22]) addGeometry(unitBox, '#e8f0f4', x, hoodY - 0.14, l * 0.47, 0.16, 0.14, 0.1, 0, 0, 0, true);
-    for (const sx of [-1, 1]) addGeometry(unitBox, yellow, sx * w * 0.33, hoodY - 0.04, l * 0.02, 0.06, 0.5, l * 0.26, 0, 0, -sx * 0.12);
+    // The big flat yellow doors, as on the photo (the builder is proud of them): hinged along the side at seat height,
+    // they hang down and out like a skirt, the lower edge wide and low. Worked out from the hinge: 0.62 tall, 0.6 rad.
+    const door = 0.62, lean = 0.6;
+    for (const sx of [-1, 1]) {
+      addGeometry(unitBox, yellow, sx * (w * 0.3 + Math.sin(lean) * door / 2), hoodY + 0.05 - Math.cos(lean) * door / 2, l * 0.02, 0.06, door, l * 0.32, 0, 0, sx * lean);
+    }
     brick(0, hoodY - 0.08, -l * 0.04, w * 0.44, 0.2, l * 0.22, black, false);         // the seat well
     driver(-l * 0.06, hoodY - 0.06);
     // The cowl: two curved grey arches over the front of the seat.
